@@ -1,6 +1,14 @@
 # Status
 
-Last updated: 2026-07-25 — **Retroactive documentation pass: D-36 and D-37
+Last updated: 2026-07-25 — **D-37's Open Question resolved: no `joblib`
+requirement.** User confirmed directly: "No downstream consumer of the
+artifact format has actually confirmed a `joblib` requirement." D-37 now
+carries a resolution note recording this as the artifact format's current,
+stated absence of any such requirement (not a permanent guarantee — a
+future consumer raising one would reopen the decision). **Awaiting User is
+empty again.**
+
+Prior update, 2026-07-25 — **Retroactive documentation pass: D-36 and D-37
 locked.** `PLAN.md` §11's five open questions were all resolved in practice
 by what got built, but items 2 (pooling mode) and 4 (artifact serialization)
 were never promoted to `DECISIONS.md` entries — a gap relative to this
@@ -8,9 +16,9 @@ project's own process. No code changed. **D-36:** pooling is mean-only,
 `max`/`mean_max` never implemented (matches `embed.py` as built). **D-37:**
 artifact format is `.npz` + JSON, no `joblib` anywhere in the codebase —
 but the "confirm `joblib` not required by downstream consumers" half of
-§11 item 4 was never actually put to the user, so that question moves to
-Awaiting User below rather than being marked resolved. `PLAN.md` §11 items
-2 and 4 updated to cross-reference D-36/D-37.
+§11 item 4 was never actually put to the user at the time, so that question
+was moved to Awaiting User rather than being marked resolved (now resolved,
+see above). `PLAN.md` §11 items 2 and 4 updated to cross-reference D-36/D-37.
 
 Prior update, 2026-07-25 — **Queue item 3 landed: `hrc-predict`. This
 closes the entire CLI skin (D-35) and the whole `VERIFICATION.md` backlog —
@@ -499,17 +507,20 @@ neither is queued speculatively._
 
 ## Awaiting User
 
-- **D-37's own Open Question:** has any downstream consumer of the artifact
-  format actually confirmed a `joblib` requirement? The shipped format
-  (`.npz` + JSON, no `joblib`) is locked as-is, but this specific
-  confirmation — named explicitly in `PLAN.md` §11 item 4 — has never been
-  put to the user. Not blocking any queued work; flagged per META_PLAN §3
-  rather than answered silently.
-
-Otherwise empty. P-N1 and DI-N1 (the two remaining nice-to-have findings)
-were resolved in a prior session — see Recently Completed.
+_Empty. D-37's own Open Question (whether any downstream consumer has
+confirmed a `joblib` requirement) was resolved this session — see Recently
+Completed. P-N1 and DI-N1 (the two remaining nice-to-have findings) were
+resolved in a prior session — see Recently Completed._
 
 ## Recently Completed
+
+- 2026-07-25 — Open Question resolved, scope: **D-37's `joblib`
+  confirmation**. User answered directly: "No downstream consumer of the
+  artifact format has actually confirmed a `joblib` requirement." Added a
+  resolution note to `DECISIONS.md` D-37 recording this as the current,
+  stated absence of any such requirement — not a permanent guarantee; if a
+  consumer raises one later, D-37 would need reopening then. **The
+  Awaiting-User list is now fully empty again.**
 
 - 2026-07-25 — Bookkeeping/documentation pass, scope: **`PLAN.md` §11 open
   questions 2 and 4** (user-directed: "go ahead and make the DECISION

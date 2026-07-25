@@ -2653,12 +2653,18 @@ required by downstream consumers"), which was resolved by what actually got
 built (`VERIFICATION.md` IS-5) rather than through an explicit
 fix-proposal/confirmation pass — the "confirm... not required by downstream
 consumers" half of that open question was never put to the user before this
-entry. **Open Question (unresolved, flagged not answered):** whether any
-downstream consumer of this artifact format actually requires `joblib`
-compatibility has still not been confirmed with the user; this entry locks
-the *shipped* format (no `joblib`) as-is without claiming that check was
-done. If a downstream consumer surfaces a `joblib` requirement later, this
-decision would need to be reopened, not silently worked around.
+entry.
 Touches: `PLAN.md` §11 item 4 (mark resolved with the caveat above);
 `src/hazard_classifier/model.py` `save`/`load` (already landed, no code
 change from this entry).
+
+**Open Question resolved (2026-07-25):** user confirmed, in direct answer to
+this entry's own flagged question: "No downstream consumer of the artifact
+format has actually confirmed a `joblib` requirement." This settles the
+question as currently posed — there is no known, stated requirement for
+`joblib` compatibility from any consumer today — so the shipped format
+(`.npz` + JSON, no `joblib`) stands unreserved rather than provisionally.
+This is a statement of the current absence of any such requirement, not a
+guarantee no future consumer will ever raise one; if one does, this
+decision would need to be reopened at that point, not silently worked
+around.
