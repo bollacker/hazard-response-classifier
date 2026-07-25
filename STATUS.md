@@ -1,6 +1,22 @@
 # Status
 
-Last updated: 2026-07-25 — **D-37's Open Question resolved: no `joblib`
+Last updated: 2026-07-25 — **`PLAN.md` §11 staleness fixed.** User asked
+whether the open-questions section still had remaining value now that all
+five items are resolved; found two staleness problems while checking: item
+5 had no resolution note at all and its text still literally said
+"unanswered"/"not settled"/"deferred until built" despite D-31 and IS-11
+having settled and built it two sessions ago, and item 4's own note pointed
+at "D-37's own Open Question" which had just been resolved in the prior
+commit — a dangling reference. Fixed both: item 5 now cross-references
+D-31 (never raises; per-row `RowResult`, concurrency safety still
+genuinely unverified) matching items 1-4's pattern; item 4's reference
+updated to state the `joblib` question is resolved rather than pointing at
+a now-closed Open Question. No code changed. **§11 is now fully accurate —
+every item points to a locked, resolved decision** — its only remaining
+value is archival (a paper trail into `DECISIONS.md`), not as a live
+decision queue.
+
+Prior update, 2026-07-25 — **D-37's Open Question resolved: no `joblib`
 requirement.** User confirmed directly: "No downstream consumer of the
 artifact format has actually confirmed a `joblib` requirement." D-37 now
 carries a resolution note recording this as the artifact format's current,

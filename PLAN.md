@@ -1084,15 +1084,18 @@ without `torch`/network in CI.
    *component* metric only, not the final-label headline.
 4. **Artifact serialization choice.** Proposal: numpy `.npz` + JSON (no pickle).
    Confirm `joblib` is not required by downstream consumers.
-   **Resolved by `DECISIONS.md` D-37 (locked), with a caveat:** `model.py`'s
-   `save`/`load` ship `.npz` + JSON only, no `joblib` anywhere in the
-   codebase — but whether any downstream consumer actually requires `joblib`
-   compatibility has still not been confirmed with the user; see D-37's own
-   Open Question.
+   **Resolved by `DECISIONS.md` D-37 (locked):** `model.py`'s `save`/`load`
+   ship `.npz` + JSON only, no `joblib` anywhere in the codebase. D-37's own
+   Open Question — whether any downstream consumer actually requires
+   `joblib` compatibility — is also resolved: user confirmed no downstream
+   consumer has stated such a requirement (see D-37's resolution note).
 5. **`HazardResponseClassifier.score(rows)` single-row error contract**
-   (critique `critiques/2026-07-23-deliverable-3.md` P-N2, unanswered). The
-   batch CLI splits hard-fail rows into a failures output (`DECISIONS.md`
-   D-22), but the in-process Python API's behavior on a hard-fail row — raise,
-   or return per-row error entries alongside successes — is not settled, and
-   whether `score` is safe to call concurrently for an embedded service is
-   also open. Deferred until the API is actually built.
+   (critique `critiques/2026-07-23-deliverable-3.md` P-N2). The batch CLI
+   splits hard-fail rows into a failures output (`DECISIONS.md` D-22).
+   **Resolved by `DECISIONS.md` D-31 (locked):** the in-process API never
+   raises on a hard-fail row — it returns one `RowResult` per input row,
+   matching D-14/D-22's never-abort philosophy for the batch paths. Built as
+   `HazardResponseClassifier.score` (`VERIFICATION.md` IS-11). Concurrency
+   safety for calling `score` from an embedded service remains genuinely
+   unverified — documented as such in `score`'s own docstring, not tested or
+   assumed either way.
