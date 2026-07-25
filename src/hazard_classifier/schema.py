@@ -38,12 +38,14 @@ legitimization carve-out) or a data defect depends on the hazard's family,
 which only a per-row check against the loaded artifact can resolve (D-26's
 Finding-A amendment; not built here -- that is `hrc-evaluate`'s job, `IS-8`).
 
-**Open question, not resolved here:** `is_safe_ground_truth`'s literal string
-encoding is not pinned by any locked decision -- `PLAN.md`'s schema table
-names it only as "ground-truth final safe/unsafe," and the toy
-(`scoring_common.py` L163) carries it through as an opaque string without
-ever parsing it. This module therefore validates only that the column is
-present, not the format of its contents. See `VERIFICATION.md` IS-1.
+**`is_safe_ground_truth`'s literal string encoding (DECISIONS.md D-30,
+locked):** resolved as exactly `"safe"` / `"unsafe"`, no other values --
+see `parse_is_safe_ground_truth` below. This module's own row-level
+validation (`load_csv`) does not call it -- it validates only that the
+column is present, leaving content parsing to callers that need the boolean
+(`hrc-evaluate`'s `final_label_metrics`, IS-8) -- so a malformed value is
+still not rejected at load time, but the encoding itself is no longer an
+open question.
 """
 
 from __future__ import annotations
