@@ -1070,6 +1070,9 @@ without `torch`/network in CI.
    the skipped-cell case (D-4 scores it 0 without consulting cell status).
 2. **Pooling.** Default `mean` is carried over; `max` / `mean_max` were
    experimental. Keep `mean` as the production default unless eval says otherwise.
+   **Resolved by `DECISIONS.md` D-36 (locked):** `embed.pool_response_vector`
+   implements mean pooling only — `max`/`mean_max` were never ported, not just
+   left as non-default.
 3. **Specialized-advice hazards in the headline metric.** The toy excludes them
    from the final safe/unsafe headline and relies on `is_safe_ground_truth`.
    **Resolved by `DECISIONS.md` D-17 (locked):** confirmed — `hrc-evaluate`'s
@@ -1081,6 +1084,11 @@ without `torch`/network in CI.
    *component* metric only, not the final-label headline.
 4. **Artifact serialization choice.** Proposal: numpy `.npz` + JSON (no pickle).
    Confirm `joblib` is not required by downstream consumers.
+   **Resolved by `DECISIONS.md` D-37 (locked), with a caveat:** `model.py`'s
+   `save`/`load` ship `.npz` + JSON only, no `joblib` anywhere in the
+   codebase — but whether any downstream consumer actually requires `joblib`
+   compatibility has still not been confirmed with the user; see D-37's own
+   Open Question.
 5. **`HazardResponseClassifier.score(rows)` single-row error contract**
    (critique `critiques/2026-07-23-deliverable-3.md` P-N2, unanswered). The
    batch CLI splits hard-fail rows into a failures output (`DECISIONS.md`

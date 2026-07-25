@@ -1,6 +1,18 @@
 # Status
 
-Last updated: 2026-07-25 — **Queue item 3 landed: `hrc-predict`. This
+Last updated: 2026-07-25 — **Retroactive documentation pass: D-36 and D-37
+locked.** `PLAN.md` §11's five open questions were all resolved in practice
+by what got built, but items 2 (pooling mode) and 4 (artifact serialization)
+were never promoted to `DECISIONS.md` entries — a gap relative to this
+project's own process. No code changed. **D-36:** pooling is mean-only,
+`max`/`mean_max` never implemented (matches `embed.py` as built). **D-37:**
+artifact format is `.npz` + JSON, no `joblib` anywhere in the codebase —
+but the "confirm `joblib` not required by downstream consumers" half of
+§11 item 4 was never actually put to the user, so that question moves to
+Awaiting User below rather than being marked resolved. `PLAN.md` §11 items
+2 and 4 updated to cross-reference D-36/D-37.
+
+Prior update, 2026-07-25 — **Queue item 3 landed: `hrc-predict`. This
 closes the entire CLI skin (D-35) and the whole `VERIFICATION.md` backlog —
 every locked decision (D-1 through D-35) now has a landed implementation.**
 `cli/predict.py` reuses item 1's `build_component_features` unchanged and
@@ -487,10 +499,29 @@ neither is queued speculatively._
 
 ## Awaiting User
 
-_Empty. P-N1 and DI-N1 (the two remaining nice-to-have findings) were
-resolved this session — see Recently Completed._
+- **D-37's own Open Question:** has any downstream consumer of the artifact
+  format actually confirmed a `joblib` requirement? The shipped format
+  (`.npz` + JSON, no `joblib`) is locked as-is, but this specific
+  confirmation — named explicitly in `PLAN.md` §11 item 4 — has never been
+  put to the user. Not blocking any queued work; flagged per META_PLAN §3
+  rather than answered silently.
+
+Otherwise empty. P-N1 and DI-N1 (the two remaining nice-to-have findings)
+were resolved in a prior session — see Recently Completed.
 
 ## Recently Completed
+
+- 2026-07-25 — Bookkeeping/documentation pass, scope: **`PLAN.md` §11 open
+  questions 2 and 4** (user-directed: "go ahead and make the DECISION
+  updates" after being asked whether these two open questions, resolved in
+  code but never logged, needed retroactive `DECISIONS.md` entries). No code
+  changed. Added **D-36** (pooling is mean-only, `max`/`mean_max` never
+  built — matches `embed.pool_response_vector` as it already stands) and
+  **D-37** (artifact format is `.npz` + JSON, no `joblib` anywhere in the
+  codebase). Cross-referenced both into `PLAN.md` §11 items 2 and 4. D-37
+  carries its own unresolved Open Question — whether a downstream consumer
+  actually needs `joblib` — which was never put to the user; moved to
+  Awaiting User above rather than marked resolved, per META_PLAN §3.
 
 - 2026-07-25 — Implementation slice, scope: **Queue item 3 — `hrc-predict`**
   (D-35, "execute the next item in the queue"). **The last item in D-35's

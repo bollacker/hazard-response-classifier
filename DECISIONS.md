@@ -2621,3 +2621,44 @@ header and zero data rows.
 
 **This closes D-35 entirely and the whole `VERIFICATION.md` backlog** — the
 CLI skin was the last unbuilt piece of the plan; nothing else is queued.
+
+## D-36: Pooling mode is mean-only; `max`/`mean_max` are not implemented
+Date: 2026-07-25
+Status: locked
+Decision: `embed.pool_response_vector` implements mean pooling only. The
+toy's `"max"`/`"mean_max"` pooling modes (experimental research variants) are
+not ported and no mode parameter is exposed to any caller.
+Rationale: retroactively documenting `PLAN.md` §11 open question 2 ("keep
+`mean` as the production default unless eval says otherwise"), which was
+resolved by what actually got built (`embed.py`, `VERIFICATION.md`
+`embed.py`/IS-9 slices) rather than through a fix-proposal pass, leaving no
+ledger entry — a gap relative to this project's own META_PLAN.md process.
+No eval result ever argued for `max`/`mean_max`, so there was nothing
+prompting a deviation from the stated default; this entry locks that default
+as the actual, sole implementation rather than leaving it as an unresolved
+open question that reads as still-live.
+Touches: `PLAN.md` §11 item 2 (mark resolved, cross-reference this entry);
+`src/hazard_classifier/embed.py` `pool_response_vector` (already landed, no
+code change from this entry).
+
+## D-37: Artifact serialization is `.npz` + JSON only; no `joblib` dependency
+Date: 2026-07-25
+Status: locked
+Decision: `model.py`'s `save`/`load` serialize the artifact as `heads.npz`
+(numpy) plus `thresholds.json`/`rules.json`/`manifest.json` (plain JSON) —
+no `joblib`, no pickle, anywhere in the codebase or `pyproject.toml`.
+Rationale: retroactively documenting `PLAN.md` §11 open question 4
+("proposal: numpy `.npz` + JSON (no pickle); confirm `joblib` is not
+required by downstream consumers"), which was resolved by what actually got
+built (`VERIFICATION.md` IS-5) rather than through an explicit
+fix-proposal/confirmation pass — the "confirm... not required by downstream
+consumers" half of that open question was never put to the user before this
+entry. **Open Question (unresolved, flagged not answered):** whether any
+downstream consumer of this artifact format actually requires `joblib`
+compatibility has still not been confirmed with the user; this entry locks
+the *shipped* format (no `joblib`) as-is without claiming that check was
+done. If a downstream consumer surfaces a `joblib` requirement later, this
+decision would need to be reopened, not silently worked around.
+Touches: `PLAN.md` §11 item 4 (mark resolved with the caveat above);
+`src/hazard_classifier/model.py` `save`/`load` (already landed, no code
+change from this entry).
