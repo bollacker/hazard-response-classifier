@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hazard-response-classifier"
+version = "0.0.1"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "torch",
+    "sentence-transformers",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+hrc-train = "hazard_classifier.cli.train:main"
+hrc-evaluate = "hazard_classifier.cli.evaluate:main"
+hrc-predict = "hazard_classifier.cli.predict:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"hazard_classifier.preprocess" = ["data/*.txt"]
