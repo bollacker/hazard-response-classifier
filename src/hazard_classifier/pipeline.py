@@ -85,8 +85,8 @@ class ComponentResult:
     status: ComponentStatus
     input_text: str
     output_text: str
+    identity: EvaluationIdentity | None
     judgments: tuple[ComponentJudgment, ...] = ()
-    identity: EvaluationIdentity | None = None
 
     def __post_init__(self) -> None:
         if self.status == "placeholder":
@@ -100,7 +100,6 @@ class ComponentResult:
 class PreparedSegment:
     """One decoded response segment with the currently active flags."""
 
-    identity: EvaluationIdentity | None
     text: str
     start: int
     end: int
@@ -176,12 +175,12 @@ def pipeline_manifest() -> dict[str, object]:
     }
 
 
-def prepare_response(
+def _prepare_response(
     prompt_text: str,
     response_text: str,
     intended_hazard: str = "",
     *,
-    identity: EvaluationIdentity | None = None,
+    identity: EvaluationIdentity | None,
     max_chars: int = 420,
     stride: int = 210,
 ) -> PreparedResponse:
@@ -274,7 +273,6 @@ def prepare_response(
         disclaimer_count += int(has_disclaimer)
         prepared_segments.append(
             PreparedSegment(
-                identity=identity,
                 text=piece.text,
                 start=piece.start,
                 end=piece.end,
@@ -332,4 +330,45 @@ def prepare_response(
         readable_response_text=response_readable,
         segments=tuple(prepared_segments),
         component_results=tuple(component_results),
+    )
+
+
+def prepare_response(
+    prompt_text: str,
+    response_text: str,
+    intended_hazard: str = "",
+    *,
+    identity: EvaluationIdentity,
+    max_chars: int = 420,
+    stride: int = 210,
+) -> PreparedResponse:
+    """Prepare one identified production response."""
+
+    return _prepare_response(
+        prompt_text,
+        response_text,
+        intended_hazard,
+        identity=identity,
+        max_chars=max_chars,
+        stride=stride,
+    )
+
+
+def prepare_legacy_response(
+    prompt_text: str,
+    response_text: str,
+    intended_hazard: str = "",
+    *,
+    max_chars: int = 420,
+    stride: int = 210,
+) -> PreparedResponse:
+    """Prepare an old CSV row that has no canonical datastore identity."""
+
+    return _prepare_response(
+        prompt_text,
+        response_text,
+        intended_hazard,
+        identity=None,
+        max_chars=max_chars,
+        stride=stride,
     )

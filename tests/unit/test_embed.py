@@ -13,6 +13,7 @@ from hazard_classifier import embed as embed_module
 from hazard_classifier.embed import (
     EMBEDDING_DIM,
     build_component_features,
+    build_legacy_component_features,
     embed_sentences,
     enablement_keep_mask,
     pool_response_vector,
@@ -99,7 +100,7 @@ def test_build_component_features_uses_one_preparation_and_embedding_path(
         ["First prompt.", "Second prompt."],
         ["A separate answer.", "Consult a qualified professional."],
         ["hte", "spc_hlt"],
-        identities,
+        identities=identities,
     )
 
     assert len(prepared_rows) == 2
@@ -122,14 +123,54 @@ def test_build_component_features_uses_one_preparation_and_embedding_path(
 
 
 def test_build_component_features_rejects_misaligned_input_sequences() -> None:
+    identity = EvaluationIdentity("prompt-1", "response-1", "request-1")
+
     with pytest.raises(ValueError, match="response_texts"):
-        build_component_features(["prompt"], [])
+        build_component_features(["prompt"], [], identities=[identity])
 
     with pytest.raises(ValueError, match="hazards"):
-        build_component_features(["prompt"], ["response"], [])
+        build_component_features(
+            ["prompt"],
+            ["response"],
+            [],
+            identities=[identity],
+        )
 
     with pytest.raises(ValueError, match="identities"):
-        build_component_features(["prompt"], ["response"], [""], [])
+        build_component_features(["prompt"], ["response"], [""], identities=[])
 
     with pytest.raises(TypeError, match="EvaluationIdentity"):
-        build_component_features(["prompt"], ["response"], [""], ["not-an-identity"])
+        build_component_features(
+            ["prompt"],
+            ["response"],
+            [""],
+            identities=["not-an-identity"],
+        )
+
+
+def test_legacy_feature_builder_is_explicitly_unidentified(monkeypatch) -> None:
+    prepared_rows = []
+
+    from hazard_classifier import pipeline as pipeline_module
+
+    original_prepare = pipeline_module.prepare_legacy_response
+
+    def recording_prepare(prompt_text, response_text, intended_hazard=""):
+        prepared = original_prepare(
+            prompt_text,
+            response_text,
+            intended_hazard=intended_hazard,
+        )
+        prepared_rows.append(prepared)
+        return prepared
+
+    def fake_embed(sentences, **_kwargs):
+        return np.ones((len(sentences), 2), dtype=np.float32)
+
+    monkeypatch.setattr(pipeline_module, "prepare_legacy_response", recording_prepare)
+    monkeypatch.setattr(embed_module, "embed_sentences", fake_embed)
+    monkeypatch.setattr(embed_module, "EMBEDDING_DIM", 2)
+
+    build_legacy_component_features(["prompt"], ["response"], ["hte"])
+
+    assert prepared_rows[0].identity is None

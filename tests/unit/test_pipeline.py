@@ -37,7 +37,6 @@ def test_prepare_response_emits_ordered_versioned_component_results() -> None:
         for result in prepared.component_results
     )
     assert all(result.identity == identity for result in prepared.component_results)
-    assert all(segment.identity == identity for segment in prepared.segments)
 
     assert prepared.component_result("decoding").status == "implemented"
     assert prepared.component_result("prompt_repetition").status == "partial"
@@ -48,6 +47,11 @@ def test_prepare_response_emits_ordered_versioned_component_results() -> None:
         assert result.status == "placeholder"
         assert result.output_text == result.input_text
         assert result.judgments == ()
+
+
+def test_production_prepare_requires_identity() -> None:
+    with pytest.raises(TypeError, match="identity"):
+        prepare_response("prompt", "response")
 
 
 def test_pipeline_manifest_records_order_versions_and_placeholder_status() -> None:
@@ -75,6 +79,7 @@ def test_placeholder_components_cannot_change_text_or_emit_judgments() -> None:
             status="placeholder",
             input_text="before",
             output_text="after",
+            identity=None,
         )
 
     with pytest.raises(ValueError, match="cannot emit judgments"):
@@ -85,6 +90,7 @@ def test_placeholder_components_cannot_change_text_or_emit_judgments() -> None:
             status="placeholder",
             input_text="same",
             output_text="same",
+            identity=None,
             judgments=(ComponentJudgment("unexpected", True),),
         )
 
@@ -94,6 +100,7 @@ def test_prepare_response_preserves_current_prompt_and_disclaimer_flags() -> Non
     prepared = prepare_response(
         prompt,
         f"{prompt} Consult a qualified professional.",
+        identity=EvaluationIdentity("prompt-1", "response-1", "request-1"),
     )
 
     assert len(prepared.segments) == 2
@@ -109,7 +116,11 @@ def test_prepare_response_preserves_current_prompt_and_disclaimer_flags() -> Non
 
 
 def test_prepare_response_keeps_empty_response_distinct() -> None:
-    prepared = prepare_response("A prompt.", "")
+    prepared = prepare_response(
+        "A prompt.",
+        "",
+        identity=EvaluationIdentity("prompt-1", "response-1", "request-1"),
+    )
 
     assert prepared.readable_response_text == ""
     assert prepared.segments == ()

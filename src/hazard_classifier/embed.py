@@ -13,13 +13,10 @@ sentence drop, `DECISIONS.md` D-4).
 **Layering note:** `pipeline.prepare_response` owns the ordered component
 handoffs before embedding. This module produces the `component_features`/
 `component_effective` inputs `model.py`'s `fit`/`score_row` have expected
-since IS-4. `build_component_features` (below, D-35) is the shared
-raw-text-to-features step every one of `hrc-train`/`hrc-evaluate`/
-`hrc-predict`'s CLIs uses, plus `HazardResponseClassifier.score`'s
-production Python API -- one implementation of the preprocess/embed/pool
-pipeline, not one per caller. It still does not read CSVs itself; a caller
-(a CLI, or `score`) supplies already-loaded `prompt_text`/`response_text`/
-intended-hazard sequences.
+since IS-4. The production API uses identity-bearing
+`build_component_features`; the old CSV CLIs use
+`build_legacy_component_features`. Both share one private
+preprocess/embed/pool implementation.
 """
 
 from __future__ import annotations
@@ -146,11 +143,11 @@ def pool_response_vector(
     return sentence_embeddings[keep_mask].mean(axis=0).astype(np.float32), True
 
 
-def build_component_features(
+def _build_component_features(
     prompt_texts: Sequence[str],
     response_texts: Sequence[str],
+    identities: Sequence[EvaluationIdentity | None],
     hazards: Sequence[str] | None = None,
-    identities: Sequence[EvaluationIdentity | None] | None = None,
     *,
     model_name: str = DEFAULT_MODEL_NAME,
     revision: str | None = None,
@@ -160,12 +157,8 @@ def build_component_features(
     (`preprocess/*`) -> one batched `embed_sentences` call across every row's
     segments together -> pool per component (`enablement_keep_mask`/
     `pool_response_vector` above). Row-aligned with `prompt_texts`,
-    `response_texts`, and optional supplied `hazards`/datastore identities;
-    every
-    `hazard_classifier.model` entry point that needs real embeddings (`fit`,
-    `evaluate_rows`, `predict_rows`, `score`) takes this function's output
-    shape, so this is the **one** implementation of that pipeline, not a copy
-    per caller.
+    `response_texts`, optional supplied `hazards`, and identity envelopes.
+    A `None` identity is accepted only from the explicit legacy wrapper.
 
     Returns `(component_features, component_effective, disclaimer_sentence_count)`:
     the first two are `{"enablement": ..., "legitimization": ...}` dicts of
@@ -189,9 +182,7 @@ def build_component_features(
         hazards = [""] * n
     elif len(hazards) != n:
         raise ValueError("hazards must have the same length as prompt_texts.")
-    if identities is None:
-        identities = [None] * n
-    elif len(identities) != n:
+    if len(identities) != n:
         raise ValueError("identities must have the same length as prompt_texts.")
 
     all_segment_texts: list[str] = []
@@ -203,18 +194,23 @@ def build_component_features(
     for i, (prompt_text, response_text, hazard, identity) in enumerate(
         zip(prompt_texts, response_texts, hazards, identities)
     ):
-        if identity is not None and not isinstance(
-            identity, pipeline_module.EvaluationIdentity
-        ):
+        if identity is not None and not isinstance(identity, pipeline_module.EvaluationIdentity):
             raise TypeError(
                 "identities must contain EvaluationIdentity instances or None."
             )
-        prepared = pipeline_module.prepare_response(
-            prompt_text,
-            response_text,
-            intended_hazard=hazard,
-            identity=identity,
-        )
+        if identity is None:
+            prepared = pipeline_module.prepare_legacy_response(
+                prompt_text,
+                response_text,
+                intended_hazard=hazard,
+            )
+        else:
+            prepared = pipeline_module.prepare_response(
+                prompt_text,
+                response_text,
+                intended_hazard=hazard,
+                identity=identity,
+            )
         start = len(all_segment_texts)
         is_repeat: list[bool] = []
         has_later: list[bool] = []
@@ -255,3 +251,50 @@ def build_component_features(
     component_features = {"enablement": enablement_features, "legitimization": legitimization_features}
     component_effective = {"enablement": enablement_effective, "legitimization": legitimization_effective}
     return component_features, component_effective, disclaimer_sentence_count
+
+
+def build_component_features(
+    prompt_texts: Sequence[str],
+    response_texts: Sequence[str],
+    hazards: Sequence[str] | None = None,
+    *,
+    identities: Sequence[EvaluationIdentity],
+    model_name: str = DEFAULT_MODEL_NAME,
+    revision: str | None = None,
+    allow_download: bool = False,
+) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], np.ndarray]:
+    """Build features for identified production responses."""
+
+    if any(identity is None for identity in identities):
+        raise TypeError("Production identities cannot contain None.")
+    return _build_component_features(
+        prompt_texts,
+        response_texts,
+        identities,
+        hazards,
+        model_name=model_name,
+        revision=revision,
+        allow_download=allow_download,
+    )
+
+
+def build_legacy_component_features(
+    prompt_texts: Sequence[str],
+    response_texts: Sequence[str],
+    hazards: Sequence[str] | None = None,
+    *,
+    model_name: str = DEFAULT_MODEL_NAME,
+    revision: str | None = None,
+    allow_download: bool = False,
+) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], np.ndarray]:
+    """Build features for legacy CSV rows without canonical datastore IDs."""
+
+    return _build_component_features(
+        prompt_texts,
+        response_texts,
+        [None] * len(prompt_texts),
+        hazards,
+        model_name=model_name,
+        revision=revision,
+        allow_download=allow_download,
+    )

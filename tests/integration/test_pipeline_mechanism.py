@@ -27,6 +27,7 @@ import pandas as pd
 
 from hazard_classifier.embed import build_component_features
 from hazard_classifier.model import fit, load, save, score_row
+from hazard_classifier.pipeline import EvaluationIdentity
 
 _ENABLEMENT_ONLY = frozenset({"prv"})
 
@@ -62,6 +63,14 @@ def test_real_bge_embeddings_flow_through_fit_save_load_and_score_row(tmp_path) 
         df["prompt_text"].tolist(),
         df["response_text"].tolist(),
         df["hazard"].tolist(),
+        identities=[
+            EvaluationIdentity(
+                prompt_id=f"prompt-{i}",
+                response_id=f"response-{i}",
+                request_id=f"request-{i}",
+            )
+            for i in range(len(df))
+        ],
         allow_download=True,
     )
     assert component_features["enablement"].shape == (len(df), 768)

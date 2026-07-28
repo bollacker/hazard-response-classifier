@@ -1,7 +1,7 @@
 """`hrc-train` (`PLAN.md` §3): labeled CSV -> deployable model artifact.
 
 Thin wrapper around already-built, already-tested logic:
-`schema.load_csv` (validation) -> `embed.build_component_features`
+`schema.load_csv` (validation) -> `embed.build_legacy_component_features`
 (preprocess/embed/pool, D-35) -> `model.fit` -> `model.save`.
 """
 
@@ -14,7 +14,7 @@ from importlib.metadata import version as package_version
 from pathlib import Path
 
 from hazard_classifier import config
-from hazard_classifier.embed import build_component_features
+from hazard_classifier.embed import build_legacy_component_features
 from hazard_classifier.model import WhollySkippedEnablementError, fit, save
 from hazard_classifier.schema import SchemaError, load_csv
 
@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> None:
 
     print(f"Loaded {len(df)} rows, {df['hazard'].nunique()} hazards, from {args.input}")
     print(f"Preprocessing and embedding responses (model={args.model_name})...")
-    component_features, component_effective, _ = build_component_features(
+    component_features, component_effective, _ = build_legacy_component_features(
         df["prompt_text"].tolist(),
         df["response_text"].tolist(),
         df["hazard"].tolist(),

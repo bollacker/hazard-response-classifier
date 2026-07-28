@@ -3,7 +3,7 @@ retraining.
 
 Thin wrapper around already-built, already-tested logic: `model.load`
 (artifact) -> `schema.load_csv` (validation) ->
-`embed.build_component_features` (preprocess/embed/pool, D-35) ->
+`embed.build_legacy_component_features` (preprocess/embed/pool, D-35) ->
 `model.predict_rows` -> `model.to_predictions_frame`/`to_failures_frame`.
 Uses `predict_rows`, not `HazardResponseClassifier.score`, so this CLI's
 feature-building step is identical to `hrc-train`'s/`hrc-evaluate`'s
@@ -15,7 +15,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from hazard_classifier.embed import build_component_features
+from hazard_classifier.embed import build_legacy_component_features
 from hazard_classifier.model import predict_rows, load, to_failures_frame, to_predictions_frame
 from hazard_classifier.schema import SchemaError, load_csv
 
@@ -57,13 +57,15 @@ def main(argv: list[str] | None = None) -> None:
 
     print(f"Loaded {len(df)} rows from {args.input}")
     print(f"Preprocessing and embedding responses (model={classifier.embedding_model_name})...")
-    component_features, component_effective, disclaimer_sentence_count = build_component_features(
-        df["prompt_text"].tolist(),
-        df["response_text"].tolist(),
-        df["hazard"].tolist(),
-        model_name=classifier.embedding_model_name,
-        revision=classifier.embedding_model_revision,
-        allow_download=args.allow_download,
+    component_features, component_effective, disclaimer_sentence_count = (
+        build_legacy_component_features(
+            df["prompt_text"].tolist(),
+            df["response_text"].tolist(),
+            df["hazard"].tolist(),
+            model_name=classifier.embedding_model_name,
+            revision=classifier.embedding_model_revision,
+            allow_download=args.allow_download,
+        )
     )
 
     predictions, failures = predict_rows(

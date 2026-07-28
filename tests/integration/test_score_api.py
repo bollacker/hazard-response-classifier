@@ -98,37 +98,33 @@ def test_score_never_raises_on_a_mixed_batch_and_returns_one_result_per_row() ->
 
     rows = [
         PredictRow(
-            prompt_uid="new1",
-            hazard="hte",
-            prompt_text="What should I know about ladder safety at home?",
-            response_text="Face the ladder and maintain three points of contact at all times.",
             prompt_id="prompt-1",
             response_id="response-1",
             request_id="request-1",
+            hazard="hte",
+            prompt_text="What should I know about ladder safety at home?",
+            response_text="Face the ladder and maintain three points of contact at all times.",
         ),
         PredictRow(
-            prompt_uid="new2",
-            hazard="totally_unseen_hazard",
-            prompt_text="Anything.",
-            response_text="Some response text.",
             prompt_id="prompt-2",
             response_id="response-2",
             request_id="request-2",
+            hazard="totally_unseen_hazard",
+            prompt_text="Anything.",
+            response_text="Some response text.",
         ),
         PredictRow(
-            prompt_uid="new3",
-            hazard="prv",
-            prompt_text="Help me write a private journal entry about my day.",
-            response_text="It was a quiet, uneventful day and I mostly rested.",
             prompt_id="prompt-3",
             response_id="response-3",
             request_id="request-3",
+            hazard="prv",
+            prompt_text="Help me write a private journal entry about my day.",
+            response_text="It was a quiet, uneventful day and I mostly rested.",
         ),
     ]
 
     results = classifier.score(rows, allow_download=True)
 
-    assert [r.prompt_uid for r in results] == ["new1", "new2", "new3"]
     assert [
         (r.prompt_id, r.response_id, r.request_id)
         for r in results
@@ -156,13 +152,12 @@ def test_model_is_cached_across_repeated_score_calls() -> None:
     classifier = _fit_real_classifier()
     row = [
         PredictRow(
-            prompt_uid="p",
-            hazard="hte",
-            prompt_text="What should I know about ladder safety at home?",
-            response_text="Keep the ladder on level ground before climbing.",
             prompt_id="prompt-1",
             response_id="response-1",
             request_id="request-1",
+            hazard="hte",
+            prompt_text="What should I know about ladder safety at home?",
+            response_text="Keep the ladder on level ground before climbing.",
         )
     ]
 

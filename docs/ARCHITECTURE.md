@@ -14,8 +14,8 @@ preprocess/
   segment.py       Pure sentence/bullet/code segmentation helper.
   flags.py         Pure prompt-repetition / disclaimer flag helpers.
 embed.py           BGE sentence embedding (CPU-only) + mean pooling.
-                   build_component_features() is the ONE shared raw-text→
-                   features pipeline every entry point uses (see below).
+                   Production and legacy entry points share one internal
+                   raw-text→features implementation.
 heads.py           BinaryHead: standardize + logistic regression + centering.
                    No notion of hazard or component identity — fits/serves
                    one already-filtered, already-weighted binary head.
@@ -46,10 +46,11 @@ config.py          Hazard-family sets (installed defaults only — never
 
 ## One shared feature-building pipeline
 
-Every entry point that needs real embeddings — `hrc-train`, `hrc-evaluate`,
-`hrc-predict`, and the in-process `HazardResponseClassifier.score` API — goes
-through the same function, `embed.build_component_features`. There is no
-per-CLI copy of the preprocess→embed→pool pipeline.
+Every entry point uses the same preprocess→embed→pool implementation.
+`HazardResponseClassifier.score` calls the identity-bearing
+`build_component_features`; the CSV CLIs call
+`build_legacy_component_features`. Both delegate to the same internal
+builder.
 
 ```mermaid
 flowchart TD
@@ -81,22 +82,16 @@ through unchanged and cannot emit judgments. The current hazard-detection,
 narrative-analysis, and refusal-analysis entries are placeholders; their
 presence does not change a score.
 
-## Identity and provenance
+## Identity
 
-The production identity is the combination of three opaque datastore IDs:
-`prompt_id`, `response_id`, and `request_id`. The same prompt and response
-text may appear in more than one request, so text and row order are not
-identities. `pipeline.EvaluationIdentity` carries all three IDs unchanged on
-the prepared response, every prepared segment, and every component result.
-Text-only helpers such as `preprocess.decode.best_readable_view` do not know
-about IDs; `pipeline.prepare_response` owns the identity envelope around them.
+Production requests use `EvaluationIdentity(prompt_id, response_id,
+request_id)`. `prepare_response` requires it, and prepared responses,
+component results, and final results return it unchanged. Segments inherit
+identity from their response instead of repeating it. Text helpers such as
+the decoder remain unaware of IDs.
 
-The in-process `HazardResponseClassifier.score` API requires these three IDs
-on every `PredictRow` and returns them on every `RowResult`, including failed
-rows. Its existing `prompt_uid` field remains as a legacy caller row key for
-compatibility; it is not the datastore identity. The CSV CLIs still accept
-that legacy schema and do not yet supply the three datastore IDs. They are a
-temporary adapter, not the production datastore contract.
+The CSV CLIs keep their legacy `prompt_uid` row key and use an explicitly
+unidentified adapter. They do not invent datastore IDs.
 
 `model.score_row` is the shared per-row scoring function underneath
 `evaluate_rows`/`predict_rows`/`score` — all three differ only in what they
@@ -134,7 +129,7 @@ Two deliberate architectural choices worth knowing about:
 ## CLI layer
 
 Each of the three CLIs is a thin wrapper: argparse → `schema.load_csv` →
-(`model.load` for evaluate/predict) → `embed.build_component_features` →
-one `model.py` orchestration call → file output. None of them contain
-business logic of their own — see
+(`model.load` for evaluate/predict) →
+`embed.build_legacy_component_features` → one `model.py` orchestration call
+→ file output. None of them contain business logic of their own — see
 [`docs/howto/`](howto/) for each command's actual flags and outputs.

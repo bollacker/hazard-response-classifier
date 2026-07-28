@@ -106,17 +106,15 @@ class PredictRow:
     """One raw input row for `HazardResponseClassifier.score` (`PLAN.md` §6,
     §11 item 5) -- unlike `score_row`, which takes already-pooled features,
     this is the production-facing shape: raw prompt/response text plus the
-    opaque prompt/response/request datastore identity. `prompt_uid` remains
-    a legacy caller row key and is not that identity.
+    opaque prompt/response/request datastore identity.
     """
 
-    prompt_uid: str
-    hazard: str
-    prompt_text: str
-    response_text: str
     prompt_id: str
     response_id: str
     request_id: str
+    hazard: str
+    prompt_text: str
+    response_text: str
 
 
 @dataclass(frozen=True)
@@ -128,7 +126,6 @@ class RowResult:
     `"skipped_or_absent_cell"`, D-25's vocabulary) for a hard-fail one.
     """
 
-    prompt_uid: str
     prompt_id: str
     response_id: str
     request_id: str
@@ -193,7 +190,7 @@ class HazardResponseClassifier:
                 [row.prompt_text for row in rows],
                 [row.response_text for row in rows],
                 [row.hazard for row in rows],
-                identities,
+                identities=identities,
                 model_name=self.embedding_model_name,
                 revision=self.embedding_model_revision,
                 allow_download=allow_download,
@@ -215,7 +212,6 @@ class HazardResponseClassifier:
             except HardFailError as exc:
                 results.append(
                     RowResult(
-                        prompt_uid=row.prompt_uid,
                         prompt_id=row.prompt_id,
                         response_id=row.response_id,
                         request_id=row.request_id,
@@ -228,7 +224,6 @@ class HazardResponseClassifier:
 
             results.append(
                 RowResult(
-                    prompt_uid=row.prompt_uid,
                     prompt_id=row.prompt_id,
                     response_id=row.response_id,
                     request_id=row.request_id,
