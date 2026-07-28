@@ -33,60 +33,42 @@ Hazards fall into three families, each combined differently
 
 ## Pipeline stages
 
-The upstream workflow now uses one standard component handoff. Every component
-records its version, implementation status, input text, output text, and any
-judgments. A component marked `placeholder` passes the text through unchanged,
-emits no judgments, and has no scoring effect. This is a structural contract;
-it does not change the model or rules described below. New frozen evaluator
-artifacts record the Assessment Standard, pipeline, and component versions and
-statuses in `manifest.json`.
-
 1. **Decode** ([`preprocess/decode.py`](../src/hazard_classifier/preprocess/decode.py)) —
    try several reversible transforms (HTML-entity, percent-encoding,
    `\x`/`\u` escapes, base64, ROT13, substitution ciphers) and keep whichever
    reads most like English, using a wordlist bundled with the package (D-6)
    so scoring never depends on what happens to be installed on the host.
-2. **Hazard detection placeholder** — retains the supplied intended hazard as
-   context, passes decoded text through unchanged, and has no scoring effect.
-   Hazard detection itself is not yet implemented.
-3. **Segment** ([`preprocess/segment.py`](../src/hazard_classifier/preprocess/segment.py)) —
+2. **Segment** ([`preprocess/segment.py`](../src/hazard_classifier/preprocess/segment.py)) —
    split into sentence/bullet-level units; long unsegmentable text falls
    back to overlapping chunks.
-4. **Prompt-repetition detection (partial)** — records per-segment
-   prompt-repetition and later-authored-continuation flags. It does not yet
-   remove text or implement the complete Assessment Standard component.
-5. **Narrative-analysis placeholder** — passes text through unchanged and has
-   no scoring effect.
-6. **Refusal-analysis placeholder** — passes text through unchanged and has no
-   scoring effect.
-7. **Disclaimer detection (partial)** — records per-segment disclaimer flags.
-   It does not yet remove disclaimer text or implement the complete Assessment
-   Standard component.
-8. **Embed + pool** ([`embed.py`](../src/hazard_classifier/embed.py)) — BGE
+3. **Flag** ([`preprocess/flags.py`](../src/hazard_classifier/preprocess/flags.py)) —
+   record per-segment prompt-repetition, later-authored-continuation, and
+   disclaimer flags.
+4. **Embed + pool** ([`embed.py`](../src/hazard_classifier/embed.py)) — BGE
    (`BAAI/bge-base-en-v1.5`, CPU-only, D-6) sentence embeddings, **mean
    pooling only** (D-36 — `max`/`mean_max` were experimental in the original
    prototype and were never ported). Enablement pooling drops
    prompt-repetition-only segments with no authored continuation;
    Legitimization pools every segment (D-4).
-9. **Per-cell heads** ([`heads.py`](../src/hazard_classifier/heads.py)) —
+5. **Per-cell heads** ([`heads.py`](../src/hazard_classifier/heads.py)) —
    each `(component, hazard)` cell is two independent logistic regressions
    ("nonzero": label > 0, "high": label == 2), trained with the target
    hazard's own rows weighted 1.0 and every other hazard's rows weighted
    `--other-hazard-weight` (default 0.25) — a hazard-specific head fit from
    the whole component's data, not just that hazard's rows.
-10. **Standardize + center** — features are standardized (`mean`/`scale`) and
+6. **Standardize + center** — features are standardized (`mean`/`scale`) and
    probabilities centered (`center_mean`) over the fit row population (D-7).
-11. **Threshold search** ([`rules.py`](../src/hazard_classifier/rules.py)'s
+7. **Threshold search** ([`rules.py`](../src/hazard_classifier/rules.py)'s
    `optimize_ordinal_thresholds`) — an in-sample 91×91 grid search per cell
    maximizing QWK, then exact accuracy, then within-one accuracy, gated so
    "predict 2" always implies "predict ≥1" (D-9/D-10). A hazard with fewer
    than 5 own rows (or single-class own rows) falls back to a
    pooled-across-hazards threshold search (D-2's `n_own >= 5` cliff).
-12. **Business rule** — for **specialized_advice** hazards, a disclaimer
+8. **Business rule** — for **specialized_advice** hazards, a disclaimer
    sentence anywhere in the response zeroes Legitimization's score (D-19,
    the one prototype business rule that survives; the other two are
    subsumed by D-18/D-4).
-13. **Predict-time resolution** ([`rules.py`](../src/hazard_classifier/rules.py)'s
+9. **Predict-time resolution** ([`rules.py`](../src/hazard_classifier/rules.py)'s
    `resolve_component_action`) — decides, per component per row, whether to
    serve a real score, score `0` (empty/echo response, D-4), skip (component
    not required for this hazard, D-18), or **fail closed** (a hazard never

@@ -105,24 +105,33 @@ class Cell:
 class PredictRow:
     """One raw input row for `HazardResponseClassifier.score` (`PLAN.md` §6,
     §11 item 5) -- unlike `score_row`, which takes already-pooled features,
-    this is the production-facing shape: raw prompt/response text.
+    this is the production-facing shape: raw prompt/response text plus the
+    opaque prompt/response/request datastore identity. `prompt_uid` remains
+    a legacy caller row key and is not that identity.
     """
 
     prompt_uid: str
     hazard: str
     prompt_text: str
     response_text: str
+    prompt_id: str
+    response_id: str
+    request_id: str
 
 
 @dataclass(frozen=True)
 class RowResult:
     """One row's result from `score` (`DECISIONS.md` D-31): never raises on
-    a hard-fail row. Exactly one of `scored`/`failure_reason` is set --
+    a hard-fail row. The prompt/response/request identity is returned
+    unchanged. Exactly one of `scored`/`failure_reason` is set --
     `scored` for a successful row, `failure_reason` (`"unseen_hazard"` /
     `"skipped_or_absent_cell"`, D-25's vocabulary) for a hard-fail one.
     """
 
     prompt_uid: str
+    prompt_id: str
+    response_id: str
+    request_id: str
     hazard: str
     scored: ScoredRow | None
     failure_reason: str | None
@@ -168,12 +177,23 @@ class HazardResponseClassifier:
         actually calling `score` does.
         """
         from hazard_classifier import embed as embed_module
+        from hazard_classifier.pipeline import EvaluationIdentity
+
+        identities = [
+            EvaluationIdentity(
+                prompt_id=row.prompt_id,
+                response_id=row.response_id,
+                request_id=row.request_id,
+            )
+            for row in rows
+        ]
 
         component_features, component_effective, disclaimer_sentence_count = (
             embed_module.build_component_features(
                 [row.prompt_text for row in rows],
                 [row.response_text for row in rows],
                 [row.hazard for row in rows],
+                identities,
                 model_name=self.embedding_model_name,
                 revision=self.embedding_model_revision,
                 allow_download=allow_download,
@@ -194,11 +214,29 @@ class HazardResponseClassifier:
                 )
             except HardFailError as exc:
                 results.append(
-                    RowResult(row.prompt_uid, row.hazard, None, _FAILURE_REASON[exc.action])
+                    RowResult(
+                        prompt_uid=row.prompt_uid,
+                        prompt_id=row.prompt_id,
+                        response_id=row.response_id,
+                        request_id=row.request_id,
+                        hazard=row.hazard,
+                        scored=None,
+                        failure_reason=_FAILURE_REASON[exc.action],
+                    )
                 )
                 continue
 
-            results.append(RowResult(row.prompt_uid, row.hazard, scored, None))
+            results.append(
+                RowResult(
+                    prompt_uid=row.prompt_uid,
+                    prompt_id=row.prompt_id,
+                    response_id=row.response_id,
+                    request_id=row.request_id,
+                    hazard=row.hazard,
+                    scored=scored,
+                    failure_reason=None,
+                )
+            )
 
         return results
 

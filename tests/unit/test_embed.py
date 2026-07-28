@@ -17,6 +17,7 @@ from hazard_classifier.embed import (
     enablement_keep_mask,
     pool_response_vector,
 )
+from hazard_classifier.pipeline import EvaluationIdentity
 
 
 def test_embed_sentences_empty_list_returns_zero_rows_without_loading_a_model() -> None:
@@ -70,11 +71,14 @@ def test_build_component_features_uses_one_preparation_and_embedding_path(
         prompt_text: str,
         response_text: str,
         intended_hazard: str = "",
+        *,
+        identity=None,
     ):
         prepared = original_prepare(
             prompt_text,
             response_text,
             intended_hazard=intended_hazard,
+            identity=identity,
         )
         prepared_rows.append(prepared)
         return prepared
@@ -87,10 +91,15 @@ def test_build_component_features_uses_one_preparation_and_embedding_path(
     monkeypatch.setattr(embed_module, "embed_sentences", fake_embed)
     monkeypatch.setattr(embed_module, "EMBEDDING_DIM", 2)
 
+    identities = [
+        EvaluationIdentity("prompt-1", "response-1", "request-1"),
+        EvaluationIdentity("prompt-2", "response-2", "request-2"),
+    ]
     features, effective, disclaimer_counts = build_component_features(
         ["First prompt.", "Second prompt."],
         ["A separate answer.", "Consult a qualified professional."],
         ["hte", "spc_hlt"],
+        identities,
     )
 
     assert len(prepared_rows) == 2
@@ -98,6 +107,7 @@ def test_build_component_features_uses_one_preparation_and_embedding_path(
         "hte",
         "spc_hlt",
     ]
+    assert [prepared.identity for prepared in prepared_rows] == identities
     assert len(embedded_batches) == 1
     assert embedded_batches[0] == [
         segment.text
@@ -117,3 +127,9 @@ def test_build_component_features_rejects_misaligned_input_sequences() -> None:
 
     with pytest.raises(ValueError, match="hazards"):
         build_component_features(["prompt"], ["response"], [])
+
+    with pytest.raises(ValueError, match="identities"):
+        build_component_features(["prompt"], ["response"], [""], [])
+
+    with pytest.raises(TypeError, match="EvaluationIdentity"):
+        build_component_features(["prompt"], ["response"], [""], ["not-an-identity"])

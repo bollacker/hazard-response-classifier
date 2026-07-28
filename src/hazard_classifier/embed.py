@@ -27,10 +27,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from hazard_classifier.config import DEFAULT_EMBEDDING_MODEL_NAME
+
+if TYPE_CHECKING:
+    from hazard_classifier.pipeline import EvaluationIdentity
 
 DEFAULT_MODEL_NAME = DEFAULT_EMBEDDING_MODEL_NAME
 DEFAULT_MAX_SEQ_LENGTH = 512
@@ -146,6 +150,7 @@ def build_component_features(
     prompt_texts: Sequence[str],
     response_texts: Sequence[str],
     hazards: Sequence[str] | None = None,
+    identities: Sequence[EvaluationIdentity | None] | None = None,
     *,
     model_name: str = DEFAULT_MODEL_NAME,
     revision: str | None = None,
@@ -155,7 +160,8 @@ def build_component_features(
     (`preprocess/*`) -> one batched `embed_sentences` call across every row's
     segments together -> pool per component (`enablement_keep_mask`/
     `pool_response_vector` above). Row-aligned with `prompt_texts`,
-    `response_texts`, and optional supplied `hazards`; every
+    `response_texts`, and optional supplied `hazards`/datastore identities;
+    every
     `hazard_classifier.model` entry point that needs real embeddings (`fit`,
     `evaluate_rows`, `predict_rows`, `score`) takes this function's output
     shape, so this is the **one** implementation of that pipeline, not a copy
@@ -183,6 +189,10 @@ def build_component_features(
         hazards = [""] * n
     elif len(hazards) != n:
         raise ValueError("hazards must have the same length as prompt_texts.")
+    if identities is None:
+        identities = [None] * n
+    elif len(identities) != n:
+        raise ValueError("identities must have the same length as prompt_texts.")
 
     all_segment_texts: list[str] = []
     row_segment_ranges: list[tuple[int, int]] = []
@@ -190,13 +200,20 @@ def build_component_features(
     row_has_later: list[list[bool]] = []
     disclaimer_sentence_count = np.zeros(n, dtype=np.int64)
 
-    for i, (prompt_text, response_text, hazard) in enumerate(
-        zip(prompt_texts, response_texts, hazards)
+    for i, (prompt_text, response_text, hazard, identity) in enumerate(
+        zip(prompt_texts, response_texts, hazards, identities)
     ):
+        if identity is not None and not isinstance(
+            identity, pipeline_module.EvaluationIdentity
+        ):
+            raise TypeError(
+                "identities must contain EvaluationIdentity instances or None."
+            )
         prepared = pipeline_module.prepare_response(
             prompt_text,
             response_text,
             intended_hazard=hazard,
+            identity=identity,
         )
         start = len(all_segment_texts)
         is_repeat: list[bool] = []

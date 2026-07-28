@@ -7,20 +7,28 @@ from hazard_classifier.pipeline import (
     UPSTREAM_COMPONENT_ORDER,
     ComponentJudgment,
     ComponentResult,
+    EvaluationIdentity,
     pipeline_manifest,
     prepare_response,
 )
 
 
 def test_prepare_response_emits_ordered_versioned_component_results() -> None:
+    identity = EvaluationIdentity(
+        prompt_id="prompt-1",
+        response_id="response-1",
+        request_id="request-1",
+    )
     prepared = prepare_response(
         "Explain this request.",
         "This is a separate response.",
         intended_hazard="hte",
+        identity=identity,
     )
 
     assert prepared.assessment_standard_version == ASSESSMENT_STANDARD_VERSION
     assert prepared.intended_hazard == "hte"
+    assert prepared.identity == identity
     assert tuple(result.component for result in prepared.component_results) == (
         UPSTREAM_COMPONENT_ORDER
     )
@@ -28,6 +36,8 @@ def test_prepare_response_emits_ordered_versioned_component_results() -> None:
         result.assessment_standard_version == ASSESSMENT_STANDARD_VERSION
         for result in prepared.component_results
     )
+    assert all(result.identity == identity for result in prepared.component_results)
+    assert all(segment.identity == identity for segment in prepared.segments)
 
     assert prepared.component_result("decoding").status == "implemented"
     assert prepared.component_result("prompt_repetition").status == "partial"
@@ -105,3 +115,30 @@ def test_prepare_response_keeps_empty_response_distinct() -> None:
     assert prepared.segments == ()
     assert prepared.component_result("prompt_repetition").judgments[0].value == 0
     assert prepared.component_result("disclaimer_analysis").judgments[0].value == 0
+
+
+def test_same_text_in_different_requests_keeps_distinct_identity() -> None:
+    first_identity = EvaluationIdentity("prompt-1", "response-1", "request-1")
+    second_identity = EvaluationIdentity("prompt-1", "response-1", "request-2")
+
+    first = prepare_response("Same prompt.", "Same response.", identity=first_identity)
+    second = prepare_response("Same prompt.", "Same response.", identity=second_identity)
+
+    assert first.identity == first_identity
+    assert second.identity == second_identity
+    assert first.identity != second.identity
+    assert all(result.identity == first_identity for result in first.component_results)
+    assert all(result.identity == second_identity for result in second.component_results)
+
+
+@pytest.mark.parametrize("field", ["prompt_id", "response_id", "request_id"])
+def test_evaluation_identity_rejects_blank_ids(field: str) -> None:
+    values = {
+        "prompt_id": "prompt-1",
+        "response_id": "response-1",
+        "request_id": "request-1",
+    }
+    values[field] = " "
+
+    with pytest.raises(ValueError, match=field):
+        EvaluationIdentity(**values)

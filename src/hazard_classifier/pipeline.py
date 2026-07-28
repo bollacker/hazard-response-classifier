@@ -62,6 +62,20 @@ class ComponentJudgment:
 
 
 @dataclass(frozen=True)
+class EvaluationIdentity:
+    """Opaque datastore IDs for one prompt/response/request evaluation."""
+
+    prompt_id: str
+    response_id: str
+    request_id: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("prompt_id", "response_id", "request_id"):
+            if not getattr(self, field_name).strip():
+                raise ValueError(f"{field_name} must be a non-empty opaque ID.")
+
+
+@dataclass(frozen=True)
 class ComponentResult:
     """The standard handoff produced by every upstream component."""
 
@@ -72,6 +86,7 @@ class ComponentResult:
     input_text: str
     output_text: str
     judgments: tuple[ComponentJudgment, ...] = ()
+    identity: EvaluationIdentity | None = None
 
     def __post_init__(self) -> None:
         if self.status == "placeholder":
@@ -85,6 +100,7 @@ class ComponentResult:
 class PreparedSegment:
     """One decoded response segment with the currently active flags."""
 
+    identity: EvaluationIdentity | None
     text: str
     start: int
     end: int
@@ -104,6 +120,7 @@ class PreparedSegment:
 class PreparedResponse:
     """The complete upstream handoff consumed by embedding and pooling."""
 
+    identity: EvaluationIdentity | None
     pipeline_version: str
     assessment_standard_version: str
     prompt_text: str
@@ -125,7 +142,11 @@ class PreparedResponse:
         return sum(segment.disclaimer_flag for segment in self.segments)
 
 
-def _placeholder(component: str, text: str) -> ComponentResult:
+def _placeholder(
+    component: str,
+    text: str,
+    identity: EvaluationIdentity | None,
+) -> ComponentResult:
     spec = _SPEC_BY_COMPONENT[component]
     return ComponentResult(
         component=component,
@@ -134,6 +155,7 @@ def _placeholder(component: str, text: str) -> ComponentResult:
         status=spec.status,
         input_text=text,
         output_text=text,
+        identity=identity,
     )
 
 
@@ -159,6 +181,7 @@ def prepare_response(
     response_text: str,
     intended_hazard: str = "",
     *,
+    identity: EvaluationIdentity | None = None,
     max_chars: int = 420,
     stride: int = 210,
 ) -> PreparedResponse:
@@ -192,8 +215,9 @@ def prepare_response(
                     float(response_decoding["transform_confidence"]),
                 ),
             ),
+            identity=identity,
         ),
-        _placeholder("hazard_detection", response_readable),
+        _placeholder("hazard_detection", response_readable, identity),
     ]
 
     raw_segments = segment.segment_text(response_readable, max_chars=max_chars, stride=stride)
@@ -233,10 +257,15 @@ def prepare_response(
                     continuation_count,
                 ),
             ),
+            identity=identity,
         )
     )
-    component_results.append(_placeholder("narrative_analysis", response_readable))
-    component_results.append(_placeholder("refusal_analysis", response_readable))
+    component_results.append(
+        _placeholder("narrative_analysis", response_readable, identity)
+    )
+    component_results.append(
+        _placeholder("refusal_analysis", response_readable, identity)
+    )
 
     prepared_segments: list[PreparedSegment] = []
     disclaimer_count = 0
@@ -245,6 +274,7 @@ def prepare_response(
         disclaimer_count += int(has_disclaimer)
         prepared_segments.append(
             PreparedSegment(
+                identity=identity,
                 text=piece.text,
                 start=piece.start,
                 end=piece.end,
@@ -284,6 +314,7 @@ def prepare_response(
             judgments=(
                 ComponentJudgment("disclaimer_sentence_count", disclaimer_count),
             ),
+            identity=identity,
         )
     )
 
@@ -291,6 +322,7 @@ def prepare_response(
         raise RuntimeError("Upstream component order changed unexpectedly.")
 
     return PreparedResponse(
+        identity=identity,
         pipeline_version=PIPELINE_VERSION,
         assessment_standard_version=ASSESSMENT_STANDARD_VERSION,
         prompt_text=prompt_text,

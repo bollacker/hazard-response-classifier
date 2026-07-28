@@ -6,9 +6,9 @@
 schema.py         Input CSV validation (mode-scoped required columns, hazard
                    normalization, label range checks). No knowledge of
                    hazard families — that requires a loaded artifact.
-pipeline.py       Versioned component handoffs and the ordered upstream
-                   response-preparation workflow. Incomplete components are
-                   explicit pass-through placeholders.
+pipeline.py       Versioned component handoffs, datastore identity, and the
+                   ordered upstream response-preparation workflow. Incomplete
+                   components are explicit pass-through placeholders.
 preprocess/
   decode.py        Pure decoding helper used by pipeline.py.
   segment.py       Pure sentence/bullet/code segmentation helper.
@@ -54,7 +54,8 @@ per-CLI copy of the preprocess→embed→pool pipeline.
 ```mermaid
 flowchart TD
     subgraph Shared pipeline
-    A[prompt_text, response_text, intended hazard] --> B[pipeline.prepare_response]
+    A[prompt ID, response ID, request ID] --> B[pipeline.prepare_response]
+    A1[prompt_text, response_text, intended hazard] --> B
     B --> B1[ordered, versioned component results]
     B --> C[embed.embed_sentences - BGE, batched]
     C --> D[pool per component: enablement / legitimization]
@@ -73,12 +74,29 @@ flowchart TD
 `pipeline.prepare_response` is the single upstream component workflow used by
 the shared feature builder. Each component result records the component and
 Assessment Standard versions, implementation status, input text, output text,
-and judgments. The prepared response also retains the supplied intended hazard
-as context for the future hazard-detection component. A `placeholder` is
-enforced as a no-op: it must pass text
+judgments, and the supplied datastore identity. The prepared response also
+retains the supplied intended hazard as context for the future
+hazard-detection component. A `placeholder` is enforced as a no-op: it must pass text
 through unchanged and cannot emit judgments. The current hazard-detection,
 narrative-analysis, and refusal-analysis entries are placeholders; their
 presence does not change a score.
+
+## Identity and provenance
+
+The production identity is the combination of three opaque datastore IDs:
+`prompt_id`, `response_id`, and `request_id`. The same prompt and response
+text may appear in more than one request, so text and row order are not
+identities. `pipeline.EvaluationIdentity` carries all three IDs unchanged on
+the prepared response, every prepared segment, and every component result.
+Text-only helpers such as `preprocess.decode.best_readable_view` do not know
+about IDs; `pipeline.prepare_response` owns the identity envelope around them.
+
+The in-process `HazardResponseClassifier.score` API requires these three IDs
+on every `PredictRow` and returns them on every `RowResult`, including failed
+rows. Its existing `prompt_uid` field remains as a legacy caller row key for
+compatibility; it is not the datastore identity. The CSV CLIs still accept
+that legacy schema and do not yet supply the three datastore IDs. They are a
+temporary adapter, not the production datastore contract.
 
 `model.score_row` is the shared per-row scoring function underneath
 `evaluate_rows`/`predict_rows`/`score` — all three differ only in what they
