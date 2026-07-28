@@ -173,6 +173,7 @@ class HazardResponseClassifier:
             embed_module.build_component_features(
                 [row.prompt_text for row in rows],
                 [row.response_text for row in rows],
+                [row.hazard for row in rows],
                 model_name=self.embedding_model_name,
                 revision=self.embedding_model_revision,
                 allow_download=allow_download,
@@ -433,6 +434,11 @@ def save(
     with it (D-23), never a hardcoded default a caller could forget to
     override.
 
+    The installed upstream component contract is also written to
+    `manifest.json`. This records the Assessment Standard, pipeline, component
+    versions, and implementation statuses used by preprocessing without
+    changing the classifier's scoring behavior.
+
     **`manifest.json`'s remaining §3 step 5 fields (`DECISIONS.md` D-35):**
     `code_version`/`hyperparameters`/`training_timestamp`/
     `training_file_hash`/`training_row_count`/`training_hazard_counts` are
@@ -441,7 +447,8 @@ def save(
     `HazardResponseClassifier`, so it cannot compute any of these itself;
     `cli/train.py` is the only caller expected to supply them. Every
     existing caller that doesn't (every test in this project besides the
-    CLI's own) gets the exact manifest shape `save` has always written.
+    CLI's own) still omits those optional fields. The required `pipeline`
+    field described above is written for every newly saved artifact.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -478,11 +485,14 @@ def save(
     with (output_dir / _RULES_FILENAME).open("w", encoding="utf-8") as handle:
         json.dump(rules, handle, indent=2, sort_keys=True)
 
+    from hazard_classifier.pipeline import pipeline_manifest
+
     manifest = {
         "holdout_seed_prompt_ids": classifier.holdout_seed_prompt_ids,
         "skipped_components": classifier.skipped_components,
         "embedding_model_name": classifier.embedding_model_name,
         "embedding_model_revision": classifier.embedding_model_revision,
+        "pipeline": pipeline_manifest(),
     }
     optional_manifest_fields = {
         "code_version": code_version,

@@ -7,9 +7,12 @@ wrapper itself (`embed_sentences`) is exercised separately in
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
+from hazard_classifier import embed as embed_module
 from hazard_classifier.embed import (
     EMBEDDING_DIM,
+    build_component_features,
     embed_sentences,
     enablement_keep_mask,
     pool_response_vector,
@@ -51,3 +54,66 @@ def test_pool_response_vector_genuinely_empty_response_is_not_effective() -> Non
     vector, effective = pool_response_vector(embeddings, keep_mask)
     assert effective is False
     assert vector.shape == (EMBEDDING_DIM,)
+
+
+def test_build_component_features_uses_one_preparation_and_embedding_path(
+    monkeypatch,
+) -> None:
+    prepared_rows = []
+    embedded_batches = []
+
+    from hazard_classifier import pipeline as pipeline_module
+
+    original_prepare = pipeline_module.prepare_response
+
+    def recording_prepare(
+        prompt_text: str,
+        response_text: str,
+        intended_hazard: str = "",
+    ):
+        prepared = original_prepare(
+            prompt_text,
+            response_text,
+            intended_hazard=intended_hazard,
+        )
+        prepared_rows.append(prepared)
+        return prepared
+
+    def fake_embed(sentences, **_kwargs):
+        embedded_batches.append(list(sentences))
+        return np.arange(len(sentences) * 2, dtype=np.float32).reshape(-1, 2)
+
+    monkeypatch.setattr(pipeline_module, "prepare_response", recording_prepare)
+    monkeypatch.setattr(embed_module, "embed_sentences", fake_embed)
+    monkeypatch.setattr(embed_module, "EMBEDDING_DIM", 2)
+
+    features, effective, disclaimer_counts = build_component_features(
+        ["First prompt.", "Second prompt."],
+        ["A separate answer.", "Consult a qualified professional."],
+        ["hte", "spc_hlt"],
+    )
+
+    assert len(prepared_rows) == 2
+    assert [prepared.intended_hazard for prepared in prepared_rows] == [
+        "hte",
+        "spc_hlt",
+    ]
+    assert len(embedded_batches) == 1
+    assert embedded_batches[0] == [
+        segment.text
+        for prepared in prepared_rows
+        for segment in prepared.segments
+    ]
+    assert features["enablement"].shape == (2, 2)
+    assert features["legitimization"].shape == (2, 2)
+    assert effective["enablement"].all()
+    assert effective["legitimization"].all()
+    assert list(disclaimer_counts) == [0, 1]
+
+
+def test_build_component_features_rejects_misaligned_input_sequences() -> None:
+    with pytest.raises(ValueError, match="response_texts"):
+        build_component_features(["prompt"], [])
+
+    with pytest.raises(ValueError, match="hazards"):
+        build_component_features(["prompt"], ["response"], [])

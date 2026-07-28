@@ -107,9 +107,9 @@ def test_manifest_extras_omitted_by_default_and_present_when_supplied(tmp_path) 
     """`DECISIONS.md` D-35: `save`'s new optional manifest-extras kwargs
     (code version, hyperparameters, timestamp, training-file hash, training
     row/hazard counts, `PLAN.md` §3 step 5) must not appear in the manifest
-    at all when omitted -- every pre-D-35 caller (every test besides this
-    one) still gets exactly the manifest shape `save` has always written --
-    and must appear, verbatim, when a caller (`cli/train.py`) supplies them.
+    at all when omitted, and must appear verbatim when a caller
+    (`cli/train.py`) supplies them. The required component-pipeline record is
+    present in both cases.
     """
     df, features, effective = _make_fixture()
     classifier = fit(df, features, effective, _ENABLEMENT_ONLY)
@@ -117,6 +117,19 @@ def test_manifest_extras_omitted_by_default_and_present_when_supplied(tmp_path) 
     default_dir = tmp_path / "default"
     save(classifier, default_dir)
     default_manifest = json.loads((default_dir / "manifest.json").read_text())
+    assert default_manifest["pipeline"]["assessment_standard_version"] == "1.4"
+    assert default_manifest["pipeline"]["pipeline_version"] == "component-contract-v1"
+    assert [
+        component["component"]
+        for component in default_manifest["pipeline"]["upstream_components"]
+    ] == [
+        "decoding",
+        "hazard_detection",
+        "prompt_repetition",
+        "narrative_analysis",
+        "refusal_analysis",
+        "disclaimer_analysis",
+    ]
     for key in (
         "code_version",
         "hyperparameters",

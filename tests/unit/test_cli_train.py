@@ -49,6 +49,8 @@ def test_hrc_train_writes_a_loadable_artifact(tmp_path, monkeypatch) -> None:
     assert manifest["training_timestamp"]
     assert manifest["hyperparameters"]["other_hazard_weight"] == 0.25
     assert manifest["holdout_seed_prompt_ids"] == []
+    assert manifest["pipeline"]["assessment_standard_version"] == "1.4"
+    assert manifest["pipeline"]["pipeline_version"] == "component-contract-v1"
 
     # Round-trips through model.load() cleanly -- proves the artifact isn't
     # just present on disk, but actually loadable by the rest of the system.

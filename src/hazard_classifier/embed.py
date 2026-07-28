@@ -10,15 +10,16 @@ sentence drop, `DECISIONS.md` D-4).
 (auto-selects `cuda`/`mps`/`cpu`), this module always passes `device="cpu"`
 -- no device auto-select, no device parameter exposed to callers.
 
-**Layering note:** this module produces the `component_features`/
+**Layering note:** `pipeline.prepare_response` owns the ordered component
+handoffs before embedding. This module produces the `component_features`/
 `component_effective` inputs `model.py`'s `fit`/`score_row` have expected
 since IS-4. `build_component_features` (below, D-35) is the shared
 raw-text-to-features step every one of `hrc-train`/`hrc-evaluate`/
 `hrc-predict`'s CLIs uses, plus `HazardResponseClassifier.score`'s
 production Python API -- one implementation of the preprocess/embed/pool
 pipeline, not one per caller. It still does not read CSVs itself; a caller
-(a CLI, or `score`) supplies already-loaded `prompt_text`/`response_text`
-sequences.
+(a CLI, or `score`) supplies already-loaded `prompt_text`/`response_text`/
+intended-hazard sequences.
 """
 
 from __future__ import annotations
@@ -144,6 +145,7 @@ def pool_response_vector(
 def build_component_features(
     prompt_texts: Sequence[str],
     response_texts: Sequence[str],
+    hazards: Sequence[str] | None = None,
     *,
     model_name: str = DEFAULT_MODEL_NAME,
     revision: str | None = None,
@@ -152,11 +154,12 @@ def build_component_features(
     """The shared raw-text-to-features step (`DECISIONS.md` D-35): preprocess
     (`preprocess/*`) -> one batched `embed_sentences` call across every row's
     segments together -> pool per component (`enablement_keep_mask`/
-    `pool_response_vector` above). Row-aligned with `prompt_texts`/
-    `response_texts`; every `hazard_classifier.model` entry point that needs
-    real embeddings (`fit`, `evaluate_rows`, `predict_rows`, `score`) takes
-    this function's output shape, so this is the **one** implementation of
-    that pipeline, not a copy per caller.
+    `pool_response_vector` above). Row-aligned with `prompt_texts`,
+    `response_texts`, and optional supplied `hazards`; every
+    `hazard_classifier.model` entry point that needs real embeddings (`fit`,
+    `evaluate_rows`, `predict_rows`, `score`) takes this function's output
+    shape, so this is the **one** implementation of that pipeline, not a copy
+    per caller.
 
     Returns `(component_features, component_effective, disclaimer_sentence_count)`:
     the first two are `{"enablement": ..., "legitimization": ...}` dicts of
@@ -171,44 +174,41 @@ def build_component_features(
     import): none needed here beyond the module-level ones -- `preprocess/*`
     has no heavy dependencies, only `embed_sentences` (called below) does.
     """
-    from hazard_classifier.preprocess import decode, segment
-    from hazard_classifier.preprocess.flags import (
-        disclaimer_label,
-        later_authored_continuation,
-        prompt_repetition_features,
-    )
+    from hazard_classifier import pipeline as pipeline_module
 
     n = len(prompt_texts)
+    if len(response_texts) != n:
+        raise ValueError("prompt_texts and response_texts must have the same length.")
+    if hazards is None:
+        hazards = [""] * n
+    elif len(hazards) != n:
+        raise ValueError("hazards must have the same length as prompt_texts.")
+
     all_segment_texts: list[str] = []
     row_segment_ranges: list[tuple[int, int]] = []
     row_is_repeat: list[list[bool]] = []
     row_has_later: list[list[bool]] = []
     disclaimer_sentence_count = np.zeros(n, dtype=np.int64)
 
-    for i, (prompt_text, response_text) in enumerate(zip(prompt_texts, response_texts)):
-        context = "\n\n".join([prompt_text, response_text])
-        prompt_readable = str(decode.best_readable_view(prompt_text, prompt_text)["review_text"])
-        response_readable = str(decode.best_readable_view(response_text, context)["review_text"])
-        segments = segment.segment_text(response_readable, max_chars=420, stride=210)
-
+    for i, (prompt_text, response_text, hazard) in enumerate(
+        zip(prompt_texts, response_texts, hazards)
+    ):
+        prepared = pipeline_module.prepare_response(
+            prompt_text,
+            response_text,
+            intended_hazard=hazard,
+        )
         start = len(all_segment_texts)
         is_repeat: list[bool] = []
         has_later: list[bool] = []
-        disclaimer_count = 0
-        for piece in segments:
+        for piece in prepared.segments:
             all_segment_texts.append(piece.text)
-            repetition = prompt_repetition_features(piece.text, prompt_readable, piece.start, piece.end)
-            is_prompt_repetition = float(repetition["prompt_repetition_probability"]) >= 0.5
-            has_later_authored = is_prompt_repetition and later_authored_continuation(piece.text, prompt_readable)
-            is_repeat.append(is_prompt_repetition)
-            has_later.append(has_later_authored)
-            has_disclaimer, _ = disclaimer_label(piece.text)
-            if has_disclaimer:
-                disclaimer_count += 1
+            is_repeat.append(piece.prompt_repetition_flag)
+            has_later.append(piece.later_authored_continuation)
         row_segment_ranges.append((start, len(all_segment_texts)))
         row_is_repeat.append(is_repeat)
         row_has_later.append(has_later)
-        disclaimer_sentence_count[i] = disclaimer_count
+        disclaimer_sentence_count[i] = prepared.disclaimer_sentence_count
 
     all_embeddings = embed_sentences(
         all_segment_texts, model_name=model_name, revision=revision, allow_download=allow_download

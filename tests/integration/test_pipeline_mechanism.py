@@ -59,7 +59,10 @@ def test_real_bge_embeddings_flow_through_fit_save_load_and_score_row(tmp_path) 
     )
 
     component_features, component_effective, disclaimer_sentence_count = build_component_features(
-        df["prompt_text"].tolist(), df["response_text"].tolist(), allow_download=True
+        df["prompt_text"].tolist(),
+        df["response_text"].tolist(),
+        df["hazard"].tolist(),
+        allow_download=True,
     )
     assert component_features["enablement"].shape == (len(df), 768)
     assert component_features["legitimization"].shape == (len(df), 768)

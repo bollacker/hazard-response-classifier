@@ -60,6 +60,7 @@ def main(argv: list[str] | None = None) -> None:
     component_features, component_effective, disclaimer_sentence_count = build_component_features(
         df["prompt_text"].tolist(),
         df["response_text"].tolist(),
+        df["hazard"].tolist(),
         model_name=classifier.embedding_model_name,
         revision=classifier.embedding_model_revision,
         allow_download=args.allow_download,

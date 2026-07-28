@@ -6,10 +6,13 @@
 schema.py         Input CSV validation (mode-scoped required columns, hazard
                    normalization, label range checks). No knowledge of
                    hazard families — that requires a loaded artifact.
+pipeline.py       Versioned component handoffs and the ordered upstream
+                   response-preparation workflow. Incomplete components are
+                   explicit pass-through placeholders.
 preprocess/
-  decode.py        Deobfuscation: pick the most English-readable view of text.
-  segment.py       Sentence/bullet/code-aware segmentation.
-  flags.py         Per-segment prompt-repetition / disclaimer flags.
+  decode.py        Pure decoding helper used by pipeline.py.
+  segment.py       Pure sentence/bullet/code segmentation helper.
+  flags.py         Pure prompt-repetition / disclaimer flag helpers.
 embed.py           BGE sentence embedding (CPU-only) + mean pooling.
                    build_component_features() is the ONE shared raw-text→
                    features pipeline every entry point uses (see below).
@@ -51,7 +54,8 @@ per-CLI copy of the preprocess→embed→pool pipeline.
 ```mermaid
 flowchart TD
     subgraph Shared pipeline
-    A[prompt_text, response_text] --> B[preprocess: decode + segment + flags]
+    A[prompt_text, response_text, intended hazard] --> B[pipeline.prepare_response]
+    B --> B1[ordered, versioned component results]
     B --> C[embed.embed_sentences - BGE, batched]
     C --> D[pool per component: enablement / legitimization]
     end
@@ -65,6 +69,16 @@ flowchart TD
     F --> E3
     F --> E4
 ```
+
+`pipeline.prepare_response` is the single upstream component workflow used by
+the shared feature builder. Each component result records the component and
+Assessment Standard versions, implementation status, input text, output text,
+and judgments. The prepared response also retains the supplied intended hazard
+as context for the future hazard-detection component. A `placeholder` is
+enforced as a no-op: it must pass text
+through unchanged and cannot emit judgments. The current hazard-detection,
+narrative-analysis, and refusal-analysis entries are placeholders; their
+presence does not change a score.
 
 `model.score_row` is the shared per-row scoring function underneath
 `evaluate_rows`/`predict_rows`/`score` — all three differ only in what they
@@ -82,7 +96,7 @@ everything downstream:
 | `heads.npz` | Every fitted `BinaryHead`'s `mean`/`scale`/`coef`/`intercept`/`constant_probability`/`center_mean`/`status` arrays, keyed deterministically as `{component}__{hazard}__{nonzero,high}__{field}` |
 | `thresholds.json` | Per-cell `status` (`"fit"`/`"skipped"`), `nonzero_threshold`, `high_threshold`, and the threshold search's own training-time metrics |
 | `rules.json` | `trained_hazards`, `hazard_family` per hazard, and the artifact's own frozen `enablement_only_hazards`/`specialized_advice_hazards` sets |
-| `manifest.json` | `holdout_seed_prompt_ids`, `skipped_components`, `embedding_model_name`/`revision`, plus optional provenance fields `hrc-train` fills in (`code_version`, `hyperparameters`, `training_timestamp`, `training_file_hash`, `training_row_count`, `training_hazard_counts`) |
+| `manifest.json` | `holdout_seed_prompt_ids`, `skipped_components`, `embedding_model_name`/`revision`, the Assessment Standard/pipeline/component versions and statuses, plus optional provenance fields `hrc-train` fills in (`code_version`, `hyperparameters`, `training_timestamp`, `training_file_hash`, `training_row_count`, `training_hazard_counts`) |
 
 Two deliberate architectural choices worth knowing about:
 

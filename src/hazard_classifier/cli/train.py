@@ -66,6 +66,7 @@ def main(argv: list[str] | None = None) -> None:
     component_features, component_effective, _ = build_component_features(
         df["prompt_text"].tolist(),
         df["response_text"].tolist(),
+        df["hazard"].tolist(),
         model_name=args.model_name,
         allow_download=args.allow_download,
     )
