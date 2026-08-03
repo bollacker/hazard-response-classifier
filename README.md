@@ -91,6 +91,6 @@ the research prototype because D-2 and D-8 remain locked:
 
 Real-data validation confirms that the pipeline runs end to end, but the
 prototype's published reference numbers were never reproduced exactly because
-its source data were unavailable. `STATUS.md` records an Awaiting User proposal
-to require a standalone limitations document at the staging or release-version
-gate; that proposal requires agreement from Riki and Kurt.
+its source data were unavailable. `STATUS.md` item 1.9 proposes moving a
+standalone limitations document to the staging or release-version gate; that
+proposal requires agreement from Riki and Kurt.
