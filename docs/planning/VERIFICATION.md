@@ -1,7 +1,7 @@
 # Verification Plan — confirming every locked decision
 
-**Purpose.** A durable collection of the checks that together confirm all 28
-locked decisions in `DECISIONS.md` actually compose and are correctly built.
+**Purpose.** A durable collection of the checks that confirm the locked
+decisions in `DECISIONS.md` compose and identify which are correctly built.
 This is the master backlog; `STATUS.md`'s thin queue pulls a few items from here
 at a time (META_PLAN §5), one per session. See `META_PLAN.md` for the process.
 
@@ -26,6 +26,11 @@ entry below) **and the D-35 CLI skin** (`hrc-train`/`hrc-evaluate`/
 notes below). **This closes the entire backlog: every locked decision
 (D-1 through D-35) now has a landed implementation. Nothing remains
 queued.**
+
+D-36 and D-37 document the completed baseline without adding behavior.
+Canonical Release 1.1 requirements live in `../SCIENCE.md`; they are not
+decision-ledger entries. The 2026-08-03 note at the top of `DECISIONS.md`
+identifies which verified baseline clauses do not constrain Release 1.1.
 
 - **Built + green (125 tests, `pytest` passing — all but 3 need no network,
   3 integration tests need it on first run only, model cached after):**

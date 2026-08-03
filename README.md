@@ -15,7 +15,8 @@ This package is the current working baseline, not the Release 1.1 target. See
 [`docs/SCIENCE.md`](docs/SCIENCE.md) for the proposed 1.1 scientific standard.
 [`PLAN.md`](docs/planning/PLAN.md) and
 [`DECISIONS.md`](docs/planning/DECISIONS.md) describe the baseline implemented
-today and remain binding until explicitly amended.
+today. They remain the contract for that pre-staging baseline; they do not
+override the Release 1.1 target in `SCIENCE.md`.
 
 ## Status
 
@@ -28,7 +29,7 @@ Release 1.1 design.
 The active work is a science-to-decision review before any 1.1 architecture
 or implementation change. [`STATUS.md`](docs/planning/STATUS.md) is the live
 queue. [`DECISIONS.md`](docs/planning/DECISIONS.md) records the current locked
-baseline decisions (D-1 through D-37) until that review amends them.
+baseline design and implementation decisions (D-1 through D-37).
 
 ## Quick start
 
@@ -67,7 +68,7 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | `docs/` | This documentation set |
 | `docs/planning/` | The process apparatus this project runs on: |
 | `docs/planning/PLAN.md` | The implemented baseline specification, binding until amended |
-| `docs/planning/DECISIONS.md` | The locked decision ledger (D-1…D-37): every design choice, its rationale, and what was rejected |
+| `docs/planning/DECISIONS.md` | The locked baseline decision ledger (D-1…D-37): design and implementation choices, their rationale, and what was rejected |
 | `docs/planning/STATUS.md` | Session-to-session queue and progress log |
 | `docs/planning/VERIFICATION.md` | Decision → implementation/test coverage matrix |
 | `docs/planning/META_PLAN.md` | The process contract governing how the four files above get updated |
