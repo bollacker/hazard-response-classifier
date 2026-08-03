@@ -436,3 +436,92 @@ severity bands alone.
 - **Gates PR 4/PR 5:** C-3 (list both changes as scoring changes; reconcile
   the empty-response L N/A discrepancy before it reaches the ledger), C-4,
   C-5.
+
+## User Responses
+
+### C-1 — proposed science-contract resolution; joint approval required
+
+Riki directed the branch proposal to use a simple split:
+
+- The L model judges whether the response rejects, neutrally describes, or
+  accepts the hazard.
+- The E model judges whether the response supplies no help, general
+  information, or actionable help.
+- The final step does not make those judgments again. It applies only fixed
+  exceptions, the L/E result tables, the multi-hazard rollup, and failure
+  handling.
+
+`SCIENCE.md` now states that proposed split and moves the detailed L/E meaning
+rules to the human-label and model guidance. If Riki and Kurt approve it, this
+removes the requirement that the final integrator reconstruct semantic facts
+that no earlier component supplied. Until then, C-1 is not closed.
+
+**Tabled for the architecture step:** the exact field names and formats, how
+the steps pass information, which version of the response each model reads,
+and how the code is divided. No choice among those designs is made here.
+
+### C-2 — tabled for architecture
+
+Riki directed that the science contract say what evidence each model needs,
+while architecture decides whether the models receive the same edited
+response or different views. That is the complete disposition for this PR:
+C-2 does not block science review and does not need another answer now. The
+architecture work must make and document the choice before architecture is
+frozen.
+
+### C-6 — required disclosure restored; broader policy still open
+
+The user agreed that the stale documentation created by replacing
+`SCIENCE.md` belongs in this PR and does not want a standalone limitations
+inventory for the current binary-head baseline because it has not reached
+staging and is expected to be replaced. The user then clarified that design
+decisions require agreement from both Riki and Kurt. This preference is
+therefore a proposal, not an accepted decision.
+
+The resolution prepared in this PR:
+
+- updates `README.md` to identify the current implementation as a pre-staging
+  baseline and `SCIENCE.md` as the proposed Release 1.1 target;
+- removes the false README references to deleted `SCIENCE.md` content;
+- keeps a concise README disclosure of the two baseline risks that D-2 and
+  D-8 currently require;
+- updates the real-data walkthrough so it no longer calls the baseline a
+  production path or points to the deleted D-2 discussion; and
+- proposes requiring a standalone, version-specific limitations document
+  before staging or assignment of a release point version, while exempting
+  pre-staging prototypes.
+
+The proposal would not erase known issues: anything affecting a decision,
+validation result, or interpretation of evidence would remain in the ledger,
+status, or evidence record. But it is not approved. Until Riki and Kurt agree,
+D-2 and D-8 still require baseline risk disclosure, so the README retains it.
+Whether C-6 requires a broader catalogue remains part of the open joint
+decision.
+
+### Q-2 — accepted and addressed
+
+The README status now says the baseline completed its original phases 0–5 but
+has not reached staging, is expected to be replaced by Release 1.1, and is in
+a science-to-decision review before any 1.1 architecture or implementation
+change. `STATUS.md` is identified as the live queue. The stale claim that only
+Phase 6 remained was removed.
+
+### Findings without a user disposition
+
+No user response has yet accepted, rejected, or deferred C-3 through C-5,
+Q-1, Q-3 through Q-7, N-1, or N-2. They remain open.
+
+## Tabled for Architecture
+
+- C-2: architecture will decide whether L and E receive the same edited
+  response or different views. This does not block the current science PR.
+
+## Open Questions
+
+- C-1's proposed model/integrator split requires agreement from Riki and Kurt.
+- C-6's limitations-document disposition requires agreement from Riki and
+  Kurt. The README already satisfies the existing D-2 and D-8 disclosure
+  requirements; whether C-6 requires anything broader remains open.
+- C-3 through C-5 remain open for scoped fix-proposal passes.
+- Q-1 and Q-3 through Q-7 remain open for scoped disposition or repair.
+- N-1 and N-2 remain open; neither blocks the documentation corrections above.

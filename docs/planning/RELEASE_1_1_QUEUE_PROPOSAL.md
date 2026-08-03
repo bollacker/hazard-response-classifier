@@ -150,8 +150,8 @@ evaluate every hazard actually supplied or detected.
 
 ### Goal
 
-Isolate special response material while keeping every logical consequence in
-final integration.
+Detect special response material and preserve the evidence the L/E models
+need, without assigning a final result in these components.
 
 ### Work
 
@@ -174,8 +174,9 @@ final integration.
   human-labeled evaluation set before locking the model input.
 - Preserve the current disclaimer implementation as partial until that
   decision is approved.
-- Apply all narrative, refusal, and disclaimer consequences only in final
-  integration.
+- Pass the detected facts and preserved response evidence forward. The L/E
+  models judge the response; the final step applies only its fixed disclaimer
+  and result rules.
 
 ### Exit criteria
 
@@ -184,8 +185,8 @@ final integration.
 - Operational narrative and CSE remain available for scoring.
 - Refusal removal preserves any following assistance.
 - A disclaimer never reduces Enablement.
-- Combined narrative, refusal, disclaimer, and assistance cases follow the
-  single ordered integration procedure in `SCIENCE.md`.
+- Combined narrative, refusal, disclaimer, and assistance cases show that the
+  L/E models make the judgments and the final step applies only fixed rules.
 
 ## PR 5 — L/E training, scoring, and evaluation
 
@@ -216,7 +217,10 @@ sets and per-outcome success criteria.
   over L0, L1, and L2 when Legitimization applies.
 - Return a provisional E judgment and a three-class multinomial distribution
   over E0, E1, and E2 for every evaluated hazard.
-- Do not apply modifier or final-result logic inside either model.
+- The L model decides whether the response rejects, neutrally describes, or
+  accepts the hazard. The E model decides whether it supplies no help, general
+  information, or actionable help.
+- Do not apply fixed exceptions or final-result tables inside either model.
 - Evaluate each outcome separately and with equal importance.
 - Use the same rows and metrics for comparable implementations.
 - Report a component as not evaluated when fixed human ground truth or
@@ -236,15 +240,17 @@ sets and per-outcome success criteria.
 
 ### Goal
 
-Implement the complete versioned decision procedure in one auditable module
-and prove that the assembled evaluator works.
+Apply the fixed final rules in one auditable module and prove that the
+assembled evaluator works.
 
 ### Work
 
 - Receive the complete carried record for every evaluated hazard.
-- Apply the ordered response-evidence, Legitimization, Enablement, modifier,
-  completeness, failure, and applicability rules in `SCIENCE.md`.
-- Produce final per-hazard L/E judgments.
+- Use the L/E judgments supplied by the models; do not judge the response's
+  meaning again.
+- Apply the fixed empty-response, prompt-only, applicability, disclaimer,
+  completeness, and failure rules in `SCIENCE.md`.
+- Produce final per-hazard L/E values.
 - Apply the correct L/E-to-result table for each hazard family.
 - Produce a per-hazard violating or non-violating result, or a failure.
 - Produce one overall violating result if any evaluated hazard is violating;
@@ -270,10 +276,15 @@ and prove that the assembled evaluator works.
 - The overall result follows the approved rollup.
 - The same carried record, model versions, and rule version always produce the
   same output.
-- Tests cover every L/E table cell and every ordered integration rule.
+- Tests cover every L/E table cell and every fixed finalization rule.
 - Tests cover multiple hazards, placeholders, component replacement, artifact
   round trips, interfaces, concurrency, and continuous integration.
 - Every working implementation is tested.
 - Every placeholder is visible and creates no judgment.
 - Component-quality results are published only where fixed human ground truth
   and approved success criteria exist.
+- **Proposed; requires agreement from Riki and Kurt:** before a model is
+  promoted to staging or assigned a release point version, publish its
+  standalone, version-specific limitations document. Pre-staging prototypes
+  would be exempt, but could not make unsupported production,
+  scientific-success, or quality claims.

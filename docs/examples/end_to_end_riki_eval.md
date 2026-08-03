@@ -12,7 +12,7 @@ originally produced this same result, `DECISIONS.md` D-34), this walkthrough
 uses only the installed console scripts — the file already has
 `seed_prompt_id` derived and validates directly against `schema.py`'s
 requirements, so no custom preprocessing script is needed. This is the
-production path.
+end-to-end path for the pre-staging baseline.
 
 ## Step 1: `hrc-train`
 
@@ -65,12 +65,12 @@ legitimization: n=536 exact=0.974 within_one=0.987 binary_present=0.974 auc=0.93
 final_label: n=487 precision=1.000 recall=0.997 f1=0.999 false_safe_rate=0.000 false_unsafe_rate=0.002
 ```
 
-**Reading this:** all 859 rows scored with zero exclusions (`excluded_row_count: 0`
-— every hazard was known, every required cell was fit). The gap between the
-two populations is exactly `docs/SCIENCE.md`'s D-2 limitation made concrete:
-`in_sample_unrecorded`'s near-perfect numbers (0.997 exact accuracy) reflect
-thresholds fit on the same rows they're scored against — expected, not a
-sign of a bug. `held_out`'s numbers (0.619/0.551 exact accuracy, AUC
+**Reading this:** this is a historical run of the pre-staging baseline. All
+859 rows scored with zero exclusions (`excluded_row_count: 0` — every hazard
+was known, every required cell was fit). The near-perfect
+`in_sample_unrecorded` numbers (0.997 exact accuracy) are not a generalization
+result: those rows were scored with thresholds fit on the same rows. The
+`held_out` numbers (0.619/0.551 exact accuracy, AUC
 0.759/0.678) are the honest generalization read, since those 270 rows were
 never touched during fitting. These exact figures match D-34's original
 validation run bit-for-bit, confirming the CLI path and the one-off script
@@ -78,7 +78,7 @@ compute identically given the same seed and holdout fraction.
 
 ## Step 3: `hrc-predict`
 
-In production you'd point `--input` at genuinely new, unlabeled responses.
+For a real scoring run, point `--input` at genuinely new, unlabeled responses.
 This walkthrough reuses the same file to also demonstrate D-24: ground-truth
 columns are present in the input but completely ignored.
 

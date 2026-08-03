@@ -1,6 +1,37 @@
 # Status
 
-Last updated: 2026-07-29 — **Science-to-decision review is queued, beginning
+Last updated: 2026-08-02 — **Decision-authority correction.** D-38 was removed
+from `DECISIONS.md`: Riki's direction authorized recording a proposal, not a
+locked decision, and decisions require agreement from Riki and Kurt. The
+limitations-document rule is now only a proposal in queue item 1.9. Until it
+is jointly approved, D-2 and D-8 remain binding, so the README retains their
+required risk disclosure. The proposed C-1 integrator split likewise remains
+unapproved until Riki and Kurt agree.
+
+Prior update, 2026-08-02 — **C-1 integrator boundary proposed.** The proposed
+science contract has the L and E models judge what the response means and
+supplies, while the final step only applies fixed exceptions, the L/E result
+tables, the multi-hazard rollup, and failure handling. Exact field names and
+formats, handoffs between steps, model inputs, and code boundaries are tabled
+for the architecture step. C-2's same-text-versus-different-views choice is
+explicitly tabled there and does not block this science PR. The C-1 proposal
+requires agreement from Riki and Kurt.
+
+Prior update, 2026-08-02 — **Engineering-audit disposition recorded.** Q-2 is
+addressed. C-1 has a proposed resolution requiring joint approval. C-6's stale
+references are repaired, and the disclosure required by D-2 and D-8 is
+restored; its broader limitations-document disposition remains open pending
+the joint decision in queue item 1.9. The other findings remain open.
+
+Prior update, 2026-08-02 — **Pre-staging documentation changes prepared for
+review.** The README distinguishes the implemented baseline from the proposed
+Release 1.1 target, states that the baseline has not reached staging, and
+points to this file as the live queue. The real-data walkthrough is marked as
+a historical baseline run. Removing the baseline limitations section remains
+proposed, not settled, so the concise disclosure required by D-2 and D-8
+remains in the README.
+
+Prior update, 2026-07-29 — **Science-to-decision review is queued, beginning
 with naming and run-specific hazard subsets.**
 
 Prior update, 2026-07-25 — **`PLAN.md` §11 staleness fixed.** User asked
@@ -474,17 +505,16 @@ Detailed phased proposal:
       Review D-3, D-11, D-14, D-20, D-22, D-24, D-25, D-26, D-27, and D-31,
       which currently route some unknown hazards as per-row failures or
       exclusions instead of rejecting the run at entry.
-   7. **Put all scientific decision logic in the final module:** discuss
-      amending D-4, D-18, D-19, D-20, D-21, D-32, and D-35 so each earlier
-      stage passes forward the current working text, modifier flags,
-      provisional judgments, and errors without applying final consequences.
-      The final module alone applies applicability, exceptions, overrides,
-      failure consequences, final L/E judgments, and
-      violating/non-violating results. Review D-14, D-22, and D-31 for the
-      external consequences of a final-module failure. Keep mandatory
-      supplied-hazard and active-set validation at run entry. This single
-      auditable location should make the standard's logic easy to inspect and
-      revise as the standard evolves.
+   7. **Separate model judgments from fixed final rules:** amend the affected
+      decisions so the L model decides whether the response rejects,
+      neutrally describes, or accepts the hazard, and the E model decides
+      whether it supplies no help, general information, or actionable help.
+      The final step does not judge the response again. It only applies the
+      fixed empty-response, prompt-only, applicability, disclaimer,
+      completeness, failure, result-table, and rollup rules. Review D-4,
+      D-14, D-18 through D-22, D-31, D-32, and D-35. Keep supplied-hazard and
+      active-set validation at run entry. Leave exact records, interfaces,
+      text views, and module wiring for queue item 3.
    8. **Three-class model outputs:** Science requires the L and E models to
       each return a three-class multinomial distribution. The current binary
       probability steps are mutable. Review D-5 and D-7 through D-10, which
@@ -500,7 +530,13 @@ Detailed phased proposal:
       for all three L or E outcomes equally. Keep D-34 as evidence that the
       pipeline ran on real data unless the Standards team separately approves
       that dataset and the success criteria; do not treat it as a component
-      quality finding by default.
+      quality finding by default. **Proposed documentation rule, requiring
+      agreement from Riki and Kurt:** require a standalone, version-specific
+      limitations document before staging or assignment of a release point
+      version, but not for pre-staging prototypes. Until that proposal is
+      approved, D-2 and D-8 remain unchanged and their README disclosure
+      requirement remains binding. Defining the success criteria also remains
+      open here.
    10. **Continuous research score:** Science permits an approved continuous
        violation score when available and keeps the standard's discrete
        result authoritative. D-21 instead requires the current
@@ -509,6 +545,17 @@ Detailed phased proposal:
        research-only naming, or replace it after its target and threshold are
        approved. Review D-21 and the output consequences in D-17, D-25, and
        D-26.
+
+   **Engineering-audit gate:** the disposition appended to
+   `critiques/2026-08-02-science-contract-branch.md` resolves Q-2. C-1 has a
+   proposed resolution requiring agreement from Riki and Kurt. C-6's stale
+   references and existing D-2/D-8 disclosure are repaired, but its broader
+   limitations-document disposition also requires joint approval. Before this
+   decision-review item closes, map and disposition the other findings. C-2 is
+   tabled for queue item 3 and does not block this science PR; architecture
+   must settle it before the carried record or architecture is frozen. C-3
+   through C-5 overlap the review areas above; Q-1, Q-3 through Q-7, N-1, and
+   N-2 require their own scoped disposition or repair.
 
    Deliver proposed decision amendments and any open questions for approval.
    Do not change architecture or implementation in this queue item.
@@ -524,11 +571,12 @@ Detailed phased proposal:
 3. [ ] **Review and update the architecture before implementation.** After
    the decision review, update `ARCHITECTURE.md` with the approved modules,
    contracts, order, carried record, hazard-scope input, final integrator, and
-   replaceable embedding boundary. Distinguish working, partial, and
-   placeholder 1.1 components. Review D-35 and D-36 as existing constraints
-   and D-37 if the selected model structure requires a different artifact
-   format. Propose any further decision amendments; do not change code in this
-   queue item.
+   replaceable embedding boundary. Define the exact record fields, interfaces,
+   text views, and wiring that carry model judgments into the fixed final
+   step. Distinguish working, partial, and placeholder 1.1 components. Review
+   D-35 and D-36 as existing constraints and D-37 if the selected model
+   structure requires a different artifact format. Propose any further
+   decision amendments; do not change code in this queue item.
 
 4. [ ] **Build the approved 1.1 modular release.** Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -543,6 +591,39 @@ Detailed phased proposal:
 _Empty._
 
 ## Recently Completed
+
+- 2026-08-02 — Science-contract clarification, scope: **who makes L/E
+  judgments.** The L/E models judge the response. The final step applies only
+  fixed exceptions, result tables, rollup, and failure handling in the
+  proposed contract. The audit records this as a proposed C-1 resolution
+  requiring agreement from Riki and Kurt. Exact field names and formats, how
+  steps pass information, which text each model receives, and how code is
+  divided are left for the architecture step. C-2 is therefore tabled, not
+  unanswered, and does not block the science PR. No code changed.
+
+- 2026-08-02 — Audit bookkeeping, scope: **initial disposition of the
+  engineering branch-comparison critique.** Appended the user's responses to
+  `critiques/2026-08-02-science-contract-branch.md`. Q-2 is addressed. C-1
+  has a proposed resolution requiring agreement from Riki and Kurt. C-6's
+  stale references and required D-2/D-8 disclosure are repaired, but its
+  broader limitations-document disposition also requires joint agreement.
+  Added the remaining findings as a gate on queue item 1. No implementation
+  behavior changed.
+
+- 2026-08-02 — Authority correction, scope: **limitations-document proposal.**
+  Removed the unapproved D-38 entry and its claimed amendments to D-2 and D-8.
+  Recorded the idea only as a proposal in queue item 1.9, requiring agreement
+  from Riki and Kurt. The existing D-2 and D-8 requirements remain binding.
+  No source or scoring behavior changed.
+
+- 2026-08-02 — Documentation repair, scope: **truthful pre-staging status
+  after `SCIENCE.md` became the Release 1.1 target.** Updated `README.md` and
+  the real-data walkthrough to distinguish the implemented baseline from the
+  proposed release, removed the stale limitations-section reference, retained
+  the concise risk disclosure required by D-2 and D-8, and removed
+  production/staging claims the current baseline has not earned. Any broader
+  change remains subject to queue item 1.9. No source, test, architecture, or
+  implementation changed.
 
 - 2026-07-25 — Open Question resolved, scope: **D-37's `joblib`
   confirmation**. User answered directly: "No downstream consumer of the

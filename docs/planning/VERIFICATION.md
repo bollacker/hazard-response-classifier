@@ -227,7 +227,7 @@ queued.**
 | D-5 whole-component skipped trigger | model.py ✓ (**IS-4 landed** — falls out of `heads.py`'s per-cell degeneracy check automatically since every hazard's fit shares the same row-level labels; forcing fn: single-class labels → every cell skipped) | **green (unit)** |
 | D-6 CPU-only; determinism | model.py ✓ (**IS-5 landed**, bit-identical save→load round-trip); IS-1 (no --device, already true — no `--device` flag exists) | **green (unit, round-trip)** |
 | D-7 standardization stats net of D-1/D-4; Legit ex-enablement-only | IS-3 ✓ (mean/scale identical across hazard weightings; row-set determines mean/scale, forcing fn); model.py ✓ (**IS-4 landed** — Legit's actual enablement-only row-set exclusion now wired via `is_required_component`, forcing fn confirms identical mean/scale across hazards through the full `fit()` call) | **green (unit)** |
-| D-8 class_weight wart documented | IS-9 (closed via adjacent data, D-34 — parity comparison superseded) + README note | not built |
+| D-8 class_weight wart documented | `PLAN.md` §3 and README §Current baseline risks record the wart; `STATUS.md` item 1.9 proposes changing when a separate limitations document becomes mandatory | **green (paper requirement met; proposed change unresolved)** |
 | D-9 / D-10 monotonicity gate | test_threshold_optimizer ✓✓ | **green** |
 | D-11 predict precedence split | test_predict_resolution ✓ (forcing fn) | **green** |
 | D-12 no `--cv` | `cli/evaluate.py` ✓ (**D-35 landed** — no `--cv` flag exists) | **green (paper decision, confirmed by absence)** |
