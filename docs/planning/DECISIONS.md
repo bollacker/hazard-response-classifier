@@ -6,42 +6,10 @@ added here. Every entry below is `locked` unless marked otherwise. Locked
 entries remain constraints for the baseline and for any future work that keeps
 the affected baseline behavior.
 
-This ledger does not define or override canonical Assessment Standard
-requirements. `../SCIENCE.md` defines the Release 1.1 target. The entries
-below preserve the choices behind the current pre-staging baseline; where a
-baseline clause does not apply to Release 1.1, the scope note below says so.
-
-## What the Release 1.1 standard replaces (2026-08-03)
-
-This is not a new decision. At their joint Release 1.1 science-contract
-meeting, Riki and Kurt confirmed the requirements already set by the standard
-and recorded in `../SCIENCE.md`. As a result, these old baseline rules do not
-apply to Release 1.1:
-
-- D-4's prompt-only Legitimization-through-the-head rule and its blank-response
-  L/E values are baseline-only. Release 1.1 fixes prompt-only responses at
-  L1/E0 where L applies and sends a complete blank payload directly to final
-  integration as a refusal with no L or E value.
-- D-17, D-21, D-24 through D-26, and D-30's `safe`/`unsafe` names and
-  encodings are baseline-only. Release 1.1 uses violating/non-violating. The
-  exact replacement field names remain an implementation choice.
-- D-3, D-11, D-14, D-22, D-27, and D-31's per-row handling of a missing or
-  unsupported supplied hazard is baseline-only. Release 1.1 validates that
-  required input before response scoring and rejects the run. Their handling
-  of component and artifact failures remains in force for the baseline.
-- D-19's pre-threshold disclaimer adjustment is the baseline mechanism.
-  Release 1.1 fixes final L at L0 in final integration and does not directly
-  lower E. Whether disclaimer text is removed before E scoring is tabled for
-  the next architecture/evaluation step.
-- D-23's frozen artifact support remains compatible with configurable run
-  scope: a run may select only hazards supported by its artifact.
-
-No baseline entry conflicts with the canonical maximum-hazard rollup because
-the baseline has no multi-hazard rollup. All unaffected parts of D-1 through
-D-37 remain the record of the implemented baseline.
-
-Provenance: Joint Riki–Kurt Release 1.1 science-contract review meeting,
-2026-08-03; canonical requirements recorded in this task at Riki's direction.
+This ledger records repository design and implementation choices. It does not
+define Assessment rules. The selected, versioned Assessment Standard is the
+authority for those rules; `../SCIENCE.md` documents the standard currently
+being implemented. See D-38.
 
 ## D-1: Holdout-seed rows are excluded from the training fit
 Date: 2026-07-23
@@ -2706,3 +2674,32 @@ This is a statement of the current absence of any such requirement, not a
 guarantee no future consumer will ever raise one; if one does, this
 decision would need to be reopened at that point, not silently worked
 around.
+
+## D-38: Assessment rules come from the selected Assessment Standard
+Date: 2026-08-03
+Status: locked
+Decision: The decision ledger does not create, select among, restate, or lock
+Assessment rules. For each release, assessment behavior is governed by the
+selected, versioned Assessment Standard itself. `../SCIENCE.md` documents the
+currently selected standard and the repository's current scientific target;
+that documentation is mutable and must be updated when the selected standard,
+its version, or its authoritative interpretation changes.
+
+Repository decisions may specify how the evaluator implements, exposes,
+tests, versions, or records the governing standard. They may not substitute a
+repository choice for an Assessment rule. If an older decision describes
+baseline behavior that differs from the governing standard, it remains
+historical implementation provenance only; it does not override the standard.
+A later decision is needed only for a new repository design or implementation
+choice, not merely to copy a rule from the Assessment Standard into this
+ledger.
+Rationale: Assessment rules are external requirements, not product-design
+choices. Copying them into a locked repository ledger falsely makes mutable,
+versioned standards look like permanent local decisions and creates duplicate
+sources of truth that can drift. The ledger should decide how to build the
+evaluator; the governing Assessment Standard should decide what the evaluator
+assesses.
+Provenance: Riki's direction on 2026-08-03, following the joint Riki–Kurt
+Release 1.1 science-contract review.
+Touches: `../SCIENCE.md`, `STATUS.md`, release architecture, implementation,
+tests, and artifacts that record the selected Assessment Standard version.

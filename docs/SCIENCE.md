@@ -2,8 +2,11 @@
 
 The 1.1 Jailbreak release must provide a runnable evaluator for AILuminate
 Assessment Standard 1.4. This file defines the target behavior.
-The decision ledger governs implementation choices; it does not override this
-standard.
+This file documents the currently selected, versioned Assessment Standard and
+the repository's current scientific target. It is mutable when the selected
+standard, its version, or its authoritative interpretation changes. The
+decision ledger governs implementation choices; it neither defines nor
+overrides Assessment rules (D-38).
 `planning/STATUS.md` tracks required decision review.
 
 The scientific source has two parts:
