@@ -354,10 +354,31 @@ assembled evaluator works.
      or quality claims.
   2. **Required contents are tied to existing rules**, so the document cannot
      be satisfied by generalities. It must enumerate every component reported
-     as *not evaluated* under `SCIENCE.md` §Evidence and outputs — for Release
-     1.1, the hazard, narrative, and refusal placeholders — and state, for
-     every published metric, the uncertainty estimate and method the
+     as *not evaluated* under `SCIENCE.md` §Evidence and outputs, and state,
+     for every published metric, the uncertainty estimate and method the
      Estimability paragraph requires.
+
+     **The Release 1.1 inventory is five items, not three** (corrected
+     2026-08-04 after `DECISIONS.md` D-50 and D-51). Two kinds, and the
+     second kind is the one that gets dropped:
+
+     - **Absent components** — the hazard, narrative, and refusal
+       placeholders. Visibly unbuilt, so hard to overlook.
+     - **Shortfalls against a stated success criterion** — decoding's
+       stubbed failure trigger (D-51: the decoder never detects a decoding
+       failure, so an unrecovered decode is indistinguishable from a
+       successful one) and prompt-repetition's exact-only scope (D-50:
+       `SCIENCE.md` §Prompt-repetition detection requires exact,
+       summarized, **and** closely paraphrased; 1.1 detects the first
+       only). Both components run, return results, and look healthy in
+       any output — which is exactly why they must be named here
+       explicitly rather than inferred from a maturity field.
+
+     A component marked `partial` in `ARCHITECTURE.md` §7 belongs in this
+     inventory for the same reason a placeholder does: it is reported as
+     not fully evaluated against its own criterion. Check §7's table when
+     writing the document — it is the authoritative list of what is
+     `working`, `partial`, and `placeholder`.
   3. **It discharges D-2 and D-8's disclosure obligation**, via whichever
      artifact applies: the README before staging, the limitations document
      after.

@@ -275,8 +275,20 @@ Retired numbers are never reused, so both forms keep resolving.
 
 ### Absorption gaps
 
-**Both gaps found by the 2026-08-03 audit are closed.**
+**All three found so far are closed.** Two by the 2026-08-03 audit, one by a
+spot check on 2026-08-04.
 
+- **D-47's narrowing 2** (found and closed 2026-08-04) — the limitations
+  document's Release 1.1 inventory. D-50 and D-51 each added a component to
+  it and each named the obligation in its own `Touches` line, but neither
+  updated `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6's exit criteria, which is the
+  specification a PR 6 author actually reads. The list said three; it is
+  five. Closed by correcting the specification and adding a dated note to
+  D-47. **The general lesson, worth more than the instance:** naming an
+  obligation in a new entry's `Touches` is not absorption. The document that
+  someone will read when the time comes has to change, and for an
+  enumeration, stating the *rule* that generates the list ("every component
+  §7 marks `partial` or `placeholder`") outlives stating its members.
 - **D-29** — closed by superseding it. The train-time behavior on a blank
   ordinal label existed only in `model.py` and in an entry that ratified
   observed behavior without writing it anywhere normative. D-46 replaces the
@@ -3125,6 +3137,10 @@ published. Three narrowings are part of the decision, not commentary on it:
    for Release 1.1 that is the hazard, narrative, and refusal placeholders —
    and state, for every published metric, the uncertainty estimate and the
    method that produced it, per that section's Estimability paragraph.
+   *(**The three-item list above went stale on 2026-08-04**: it is now five.
+   Text left as written, per `META_PLAN.md` §1's retire-in-place rule — see
+   the Correction at the end of this entry, and take the current list from
+   `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6.)*
 3. **It discharges D-2's and D-8's disclosure obligation**, through whichever
    artifact applies: the `README.md` before staging, the limitations document
    after. Those two entries required their statistical warts to be documented
@@ -3156,6 +3172,28 @@ whether a component may be called scientifically successful — those are an
 external input from the Standards team, still outstanding. It also does not
 govern `../SCIENCE.md`'s not-evaluated reporting rule, which stands on its own
 and which this decision only points at.
+
+**Correction (2026-08-04): narrowing 2's Release 1.1 inventory is five items,
+not the three named above.** The entry's "the hazard, narrative, and refusal
+placeholders" was accurate when written on 2026-08-03. [D-50](#d-50) and
+[D-51](#d-51) then added two more on 2026-08-04 — prompt repetition's
+exact-only scope, and decoding's stubbed failure trigger — so the enumeration
+went stale rather than wrong. Corrected in the specification that carries this
+decision (`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit criteria), which now also
+states the rule that generates the list rather than only its members: **every
+component `ARCHITECTURE.md` §7 marks `partial` or `placeholder` belongs in the
+inventory.**
+
+This is recorded as a note rather than an edit to narrowing 2's text, per
+`META_PLAN.md` §1's retire-in-place discipline: the original enumeration is
+the record of what was known on 2026-08-03, and overwriting it would erase
+that. Cite the specification for the current list, not this entry.
+
+The two additions are the easy ones to miss, which is why the correction says
+so explicitly: unlike a placeholder, a `partial` component runs, returns
+results, and looks healthy in any output. Found by an absorption check on
+2026-08-04 — D-50 and D-51 named this obligation in their own `Touches` lines,
+but nothing a PR 6 author would actually read had been updated.
 
 <a id="d-48"></a>
 ## D-48: The unchanged-output requirement binds the implementation being refactored, not a standard-conforming rebuild
