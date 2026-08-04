@@ -1,15 +1,32 @@
 # Decision Ledger
 
-Single source of truth for accepted design/implementation decisions on this
-project. See `META_PLAN.md` for the process that governs how entries get
-added here. Every entry below is `locked` unless marked otherwise. Locked
-entries remain constraints for the baseline and for any future work that keeps
-the affected baseline behavior.
+**This ledger is provenance, not authority.** Once a decision's effect has been
+written into a specification, that specification is what governs — this file
+records *why* it says what it says, and what was rejected on the way. Read it
+when you need the reasoning behind a constraint, not to discover the
+constraint.
 
-This ledger does not define or override canonical Assessment Standard
-requirements. `../SCIENCE.md` defines the Release 1.1 target. The entries
-below preserve the choices behind the current pre-staging baseline; where a
-baseline clause does not apply to Release 1.1, the scope note below says so.
+Where to look instead:
+
+| For | Read |
+|---|---|
+| Release 1.1 assessment behavior | [`../SCIENCE.md`](../SCIENCE.md) |
+| Baseline module layout, artifact format, CLI structure | [`../ARCHITECTURE.md`](../ARCHITECTURE.md) |
+| The implemented pre-staging baseline specification | [`PLAN.md`](PLAN.md) |
+| What is being worked on and what is still open | [`STATUS.md`](STATUS.md) |
+| The process governing entries here | [`META_PLAN.md`](META_PLAN.md) |
+
+Every entry is `locked` unless marked otherwise. A locked entry that has been
+absorbed into a specification is history: it constrains nothing on its own,
+because the specification carries the constraint. Reusing a baseline choice for
+Release 1.1 requires a new joint decision, not a citation of the old entry.
+
+Entries are retired by superseding them in place, never by deletion. The index
+below is the map; every D-number that has ever existed appears in it.
+
+Numbering: new decisions start at **D-45**. D-38 through D-44 were drafted
+during the 2026-08-02/03 science-contract work and withdrawn before approval;
+those numbers are not reused.
 
 ## What the Release 1.1 standard replaces (2026-08-03)
 
@@ -43,6 +60,74 @@ D-37 remain the record of the implemented baseline.
 Provenance: Joint Riki–Kurt Release 1.1 science-contract review meeting,
 2026-08-03; canonical requirements recorded in this task at Riki's direction.
 
+## Index
+
+**Absorbed into** names the specification that now carries the decision's
+effect. Where a row says *gap*, the effect exists in code and in this ledger
+but in no specification — those are listed under "Absorption gaps" below.
+
+**Release 1.1** says whether the decision reaches past the baseline.
+*carried* — still applies. *baseline-only* — the 1.1 standard replaces it (see
+the scope note above). *under review* — binding today, queued for amendment at
+the `STATUS.md` item shown. *open* — needs a call.
+
+| # | Decision | Absorbed into | Release 1.1 |
+|---|---|---|---|
+| [D-1](#d-1) | Holdout-seed rows excluded from the fit | `PLAN.md` §3 step 4; `ARCHITECTURE.md` Artifact format | carried |
+| [D-2](#d-2) | In-sample threshold/centering bias preserved | `PLAN.md` §3 step 4, §8.2; `README.md` | under review (1.8, 1.9) |
+| [D-3](#d-3) | Fail closed on unknown/unfit cells | `PLAN.md` §6, §11.1 | baseline-only; module-capability half open (1.6) |
+| [D-4](#d-4) | Empty/echo-only rows excluded from the fit | `PLAN.md` §3 step 4, §6 step 2 | baseline-only → `SCIENCE.md` §Final integration |
+| [D-5](#d-5) | Zero-row cells keep the constant-probability substitute | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | reversal proposed as D-45 |
+| [D-6](#d-6) | CPU-only; determinism | `PLAN.md` §3 step 3, §8.1; `ARCHITECTURE.md` Module map | carried |
+| [D-7](#d-7) | Standardization stats unweighted per component | `PLAN.md` §2.3, §3 step 4 | under review (1.8) |
+| [D-8](#d-8) | `class_weight` / sample-weight wart documented | `PLAN.md` §3 step 4; `README.md` | under review (1.8, 1.9) |
+| [D-9](#d-9) | Ordinal monotonicity enforced | `PLAN.md` §3 step 4 | under review (1.8) |
+| [D-10](#d-10) | Monotonicity gate mechanism | `PLAN.md` §1.1, §2.3, §3 step 4 | under review (1.8) |
+| [D-11](#d-11) | Predict-time check precedence | `PLAN.md` §6 | baseline-only |
+| [D-12](#d-12) | No `--cv` | `PLAN.md` §1.1, §5, §9, §10 | carried |
+| [D-13](#d-13) | Auto-partition by the recorded holdout split | `PLAN.md` §3 step 5, §4, §5 | under review (1.9) |
+| [D-14](#d-14) | Hard-fail rows excluded from measurement | `PLAN.md` §5, §6 | baseline-only |
+| [D-15](#d-15) | Legitimization metrics exclude enablement-only rows | `PLAN.md` §5 | under review (1.9) |
+| [D-16](#d-16) | Retained head probabilities; high-head AUC | `PLAN.md` §5 | under review (1.8, 1.9) |
+| [D-17](#d-17) | Final-label positive class + output schema | `PLAN.md` §4, §5 | baseline-only → `SCIENCE.md` §Evidence and outputs |
+| [D-18](#d-18) | Legitimization not required for enablement-only hazards | `PLAN.md` §3 step 4, §4 | carried (`SCIENCE.md` §Final integration rule 3) |
+| [D-19](#d-19) | Business-rule stage between centering and thresholding | `PLAN.md` §5, §6 | baseline-only |
+| [D-20](#d-20) | Absent/invalid required cell fails closed | `PLAN.md` §6 step 3 | under review (1.7) |
+| [D-21](#d-21) | `v14_overall_unsafe_score` retained as a side-output | `PLAN.md` §1.1, §6 | open (1.10) |
+| [D-22](#d-22) | `hrc-predict` splits scored and hard-fail outputs | `PLAN.md` §6 | baseline-only |
+| [D-23](#d-23) | Family lookups read the frozen `rules.json` | `PLAN.md` §4, §6; `ARCHITECTURE.md` Artifact format | carried (compatible with configurable run scope) |
+| [D-24](#d-24) | `seed_prompt_id` required; ground-truth columns ignored | `PLAN.md` §2.1, §6 | baseline-only |
+| [D-25](#d-25) | `hrc-predict` CLI contract | `PLAN.md` §6, §10; `ARCHITECTURE.md` CLI layer | baseline-only |
+| [D-26](#d-26) | `hrc-evaluate` CLI contract | `PLAN.md` §2.1, §5, §8.1; `ARCHITECTURE.md` CLI layer | baseline-only |
+| [D-27](#d-27) | Hazard normalization at load; one `rules.json` lookup | `PLAN.md` §2.1 | normalization carried; unseen-hazard check baseline-only |
+| [D-28](#d-28) | Wholly-skipped component surfaced at train/load time | `PLAN.md` §3 step 5, §4; `ARCHITECTURE.md` Artifact format | carried |
+| [D-29](#d-29) | Natural error on an unconvertible blank ordinal label | **gap** | open |
+| [D-30](#d-30) | `is_safe_ground_truth` encodes exactly `"safe"`/`"unsafe"` | `PLAN.md` §2.1 (**partial** — presence only) | baseline-only |
+| [D-31](#d-31) | `score(rows)` never raises; per-row result entries | `PLAN.md` §11 item 5 | baseline-only |
+| [D-32](#d-32) | `rule_reasons` covers D-4's forced zero only | `PLAN.md` §6 | under review (1.7) |
+| [D-33](#d-33) | `qwk` reports `null` when undefined | `PLAN.md` §5 | under review (1.9) |
+| [D-34](#d-34) | IS-9 closed via a different real dataset | `VERIFICATION.md` (evidence record) | evidence only, not a quality claim (1.9) |
+| [D-35](#d-35) | One shared feature-building function | `ARCHITECTURE.md` Shared pipeline, CLI layer | under review (1.7, item 3) |
+| [D-36](#d-36) | Pooling is mean-only | `PLAN.md` §11 item 2; `ARCHITECTURE.md` Module map | under review (item 2) |
+| [D-37](#d-37) | `.npz` + JSON artifacts; no `joblib` | `PLAN.md` §11 item 4; `ARCHITECTURE.md` Artifact format | under review (item 3) |
+| D-38 – D-44 | *withdrawn 2026-08-03, never approved; numbers not reused* | — | — |
+
+### Absorption gaps
+
+Two decisions have no specification carrying their effect. Both need a
+disposition before queue item 1 closes:
+
+- **D-29** — the train-time behavior on a blank ground-truth label it cannot
+  convert to an ordinal int exists only in `model.py` and in this entry, which
+  ratifies observed behavior without writing it anywhere normative. `PLAN.md`
+  §2.1 covers blank *evaluate*-path labels, not this.
+- **D-30** — `PLAN.md` §2.1 states `is_safe_ground_truth` is checked for column
+  presence only, and §2.1's schema table describes it as "ground-truth final
+  safe/unsafe." Neither states D-30's actual decision: that the encoding is the
+  exact strings `"safe"`/`"unsafe"`. Superseded for 1.1 by
+  violating/non-violating naming, but the baseline contract is unwritten.
+
+<a id="d-1"></a>
 ## D-1: Holdout-seed rows are excluded from the training fit
 Date: 2026-07-23
 Status: locked
@@ -115,6 +200,7 @@ importantly — that corrupting held-out rows' labels *and* features before
 refitting produces a bit-identical fit, proving exclusion rather than merely
 recording membership.
 
+<a id="d-2"></a>
 ## D-2: Preserve the toy's in-sample threshold/centering bias; document the risk
 Date: 2026-07-23
 Status: locked
@@ -217,6 +303,7 @@ until real labeled data becomes available. This decision's core claim
 ("preserve the toy's in-sample bias") remains unverified against real
 numbers, not because of any code gap but a data gap.
 
+<a id="d-3"></a>
 ## D-3: Fail closed on unknown/unfit `(component, hazard)` cells at predict time
 Date: 2026-07-23
 Status: locked
@@ -267,6 +354,7 @@ the skipped-cell half of the trigger to include an absent/invalid required
 cell. The `HazardResponseClassifier.score(rows)` single-row API's error
 contract (raise vs. per-row error entry) is still open (`PLAN.md` §11 item 5).
 
+<a id="d-4"></a>
 ## D-4: Empty and echo-only responses are excluded from the training fit
 Date: 2026-07-23
 Status: locked
@@ -347,6 +435,7 @@ holdout exclusion and D-18's required-component filtering. **Predict-time
 scoring (0 for empty/echo without consulting cell status) is still not
 built** — that is IS-7's job, over the predict/evaluate pipeline.
 
+<a id="d-5"></a>
 ## D-5: Zero-row cells keep the constant-probability substitution but are marked skipped
 Date: 2026-07-23
 Status: locked
@@ -473,6 +562,7 @@ to a single constant across both hazards in the fixture marks **every**
 enablement cell `status="skipped"` and adds `"enablement"` to
 `skipped_components`, while `legitimization` (still varied) is unaffected.
 
+<a id="d-6"></a>
 ## D-6: Pin training/embedding to CPU; drop device auto-select
 Date: 2026-07-23
 Status: locked
@@ -513,6 +603,7 @@ assumption the user accepted — recorded as an open caveat in
 `preprocess/data/WORDLIST_PROVENANCE.md`, revisit if that assumption turns
 out wrong for this file specifically.
 
+<a id="d-7"></a>
 ## D-7: Standardization statistics are unweighted over all training rows per component
 Date: 2026-07-23
 Status: locked
@@ -586,6 +677,7 @@ D-18's mechanism producing it) is entirely enforced by the caller filtering
 rows before calling in; `heads.py` itself has no way to apply or bypass it.
 That caller-side filtering is not yet built (`model.py`'s `fit`, IS-4).
 
+<a id="d-8"></a>
 ## D-8: `class_weight="balanced"` / sample-weight interaction is documented, not fixed
 Date: 2026-07-23
 Status: locked
@@ -598,6 +690,7 @@ Rationale: User confirmed: mention the problem in documentation, preserve
 parity.
 Touches: `PLAN.md` §3 step 4 documentation; README.
 
+<a id="d-9"></a>
 ## D-9: Ordinal monotonicity between the two heads is enforced
 Date: 2026-07-23
 Status: locked
@@ -611,6 +704,7 @@ Touches: `PLAN.md` §3 step 4 / predict-time `ordinal_prediction` logic.
 Note: this decision locked the *requirement* only. D-10 now locks the
 specific enforcement mechanism.
 
+<a id="d-10"></a>
 ## D-10: Monotonicity enforcement mechanism — gate the high decision on the
 low decision, including inside the threshold search itself
 Date: 2026-07-23
@@ -668,6 +762,7 @@ asymmetry is part of the toy behavior D-2 preserves (the toy likewise applies
 `apply_component_business_rules` only to scored/test rows, never inside
 `optimize_thresholds`), and is left unchanged. See D-19 for the full note.
 
+<a id="d-11"></a>
 ## D-11: Predict-time precedence — D-3's fail-closed cell check runs before D-4's empty-response short-circuit
 Date: 2026-07-23
 Status: locked
@@ -751,6 +846,7 @@ cell after D-4) is unchanged: it determines *whether* a row fails closed, not
 *what happens* when it does. Both the successes and failures rows still honor
 this ordering.
 
+<a id="d-12"></a>
 ## D-12: `--cv` / grouped k-fold cross-validation is dropped from `hrc-evaluate`'s scope
 Date: 2026-07-23
 Status: locked
@@ -785,6 +881,7 @@ by the §8.2 parity harness for its own fixture, per D-2's matching
 amendment) to actually exist. This is not a contradiction of this decision's
 claim, just a clarification of what "preserved" requires in practice.
 
+<a id="d-13"></a>
 ## D-13: `hrc-evaluate` auto-partitions eval rows by the artifact's recorded holdout split, and warns when none exists
 Date: 2026-07-23
 Status: locked
@@ -856,6 +953,7 @@ wiring (`hrc-evaluate` itself, the `.json`/`.csv`/`.txt` file writers) is
 still not built — deferred until `embed.py` exists to actually run the CLI
 against real data, same reasoning as prior slices' `embed.py` deferrals.
 
+<a id="d-14"></a>
 ## D-14: `hrc-evaluate` excludes hard-fail rows from measurement instead of aborting, and reports the excluded count
 Date: 2026-07-23
 Status: locked
@@ -935,6 +1033,7 @@ inspection). Forcing-function test: a batch with one unseen-hazard row
 excluded count incremented and that row absent from every population's
 `n_rows`, with no exception raised.
 
+<a id="d-15"></a>
 ## D-15: Legitimization component metrics exclude enablement-only hazard rows; the final-label denominator is unaffected
 Date: 2026-07-23
 Status: locked
@@ -990,6 +1089,7 @@ hazard batch produces `components.legitimization.n == 0` while
 `components.enablement` is fully populated — the exclusion actually removes
 rows, not just filters something already empty.
 
+<a id="d-16"></a>
 ## D-16: `hrc-evaluate` retains head probabilities for scoring; component AUC is the high head's AUC only
 Date: 2026-07-23
 Status: locked
@@ -1160,6 +1260,7 @@ artifact. Confirmed via the IS-7 disclaimer-rule test that a zeroed
 Legitimization component's adjusted-high is `0.0`, not just its discrete
 prediction.
 
+<a id="d-17"></a>
 ## D-17: `hrc-evaluate` final-label positive-class convention + output schema (best-effort)
 Date: 2026-07-23
 Status: locked
@@ -1333,6 +1434,7 @@ Confirmed by a shape test asserting the exact key sets at every level.
 free-form rendering, and the actual file-writing/CLI layer — deferred until
 `embed.py` exists to run any of this against real data, same reasoning as
 prior slices' `embed.py` deferrals.
+<a id="d-18"></a>
 ## D-18: Legitimization is not a required component for enablement-only hazards — its cell is never enumerated or consulted
 Date: 2026-07-23
 Status: locked
@@ -1422,6 +1524,7 @@ rather than two independently-written rules that could drift apart.
 Forcing-function test confirms no `("legitimization", "prv")` cell is ever
 created while `("enablement", "prv")` is.
 
+<a id="d-19"></a>
 ## D-19: The predict/evaluate path has an explicit business-rule stage between centering and thresholding; the gate consumes rule-adjusted probabilities
 Date: 2026-07-23
 Status: locked
@@ -1519,6 +1622,7 @@ sentence, confirming the rule changes a real outcome (the no-disclaimer case
 predicts something other than the disclaimer-forced `0`), not just a value
 that would have been `0` anyway.
 
+<a id="d-20"></a>
 ## D-20: An absent or otherwise-invalid *required* cell fails closed exactly like a skipped cell — the row is a hard-fail item
 Date: 2026-07-23
 Status: locked
@@ -1575,6 +1679,7 @@ type widened from `Literal["fit", "skipped"] | None` to `str | None` to reflect
 that any non-`"fit"` value is now a valid, meaningful input rather than an
 implicitly-disallowed one.
 
+<a id="d-21"></a>
 ## D-21: `v14_overall_unsafe_score` is a retained side-output for research, defined from adjusted continuous scores, independent of `predicted_label`
 Date: 2026-07-23
 Status: locked
@@ -1635,6 +1740,7 @@ prediction of `1` (not `2`) on a "default"-family hazard, so
 demonstration of the independence this decision requires, not just two
 functions that happen not to call each other.
 
+<a id="d-22"></a>
 ## D-22: `hrc-predict` splits scored rows and hard-fail rows into separate outputs instead of aborting the batch
 Date: 2026-07-23
 Status: locked
@@ -1684,6 +1790,7 @@ confirms `len(predictions) + len(failures) == len(input rows)` for a mixed
 batch (scoreable / unseen-hazard / skipped-cell rows together), not just
 that each case works in isolation.
 
+<a id="d-23"></a>
 ## D-23: Required-components and rule-family lookups read the artifact's frozen `rules.json`, not installed config
 Date: 2026-07-23
 Status: locked
@@ -1842,6 +1949,7 @@ added (moved out of `embed.py`, which now imports it) specifically so
 embeddings (every other `model.py` test in this project fits/scores against
 synthetic feature arrays). Confirmed by a save→load round-trip test.
 
+<a id="d-24"></a>
 ## D-24: `seed_prompt_id` stays required for `hrc-predict` input; present ground-truth columns are ignored, not rejected
 Date: 2026-07-23
 Status: locked
@@ -1878,6 +1986,7 @@ label-free traffic) is the basis for dropping it from `hrc-predict`'s
 input** column, as this decision locks; only its appearance in a predict *output*
 is removed.
 
+<a id="d-25"></a>
 ## D-25: `hrc-predict` CLI contract
 Date: 2026-07-23
 Status: locked
@@ -1980,6 +2089,7 @@ header, not just an empty file. **Not yet built:** the actual `--model-dir`/
 `--input`/`--output-dir` argparse entry point — `predict_rows` is the
 logic layer a thin CLI wrapper would call.
 
+<a id="d-26"></a>
 ## D-26: `hrc-evaluate` CLI contract
 Date: 2026-07-23
 Status: locked
@@ -2089,6 +2199,7 @@ Touches: `PLAN.md` §2.1 (correct the range-check scope); `DECISIONS.md` (this
 note); `src/hazard_classifier/schema.py` (implements the corrected scope,
 this pass).
 
+<a id="d-27"></a>
 ## D-27: Hazard-code normalization at schema load; the unseen-hazard check and family lookup are one lookup against `rules.json`
 Date: 2026-07-23
 Status: locked
@@ -2188,6 +2299,7 @@ after a save/load round-trip. The unified Step-0 lookup this decision
 describes (`hrc-predict`'s single `rules.json` lookup for hazard-known +
 family) is still not built — that is IS-7's job, over the predict pipeline.
 
+<a id="d-28"></a>
 ## D-28: A wholly-skipped component is surfaced at train and load time, not one serve-row at a time
 Date: 2026-07-23
 Status: locked
@@ -2272,6 +2384,7 @@ file (`test_model_train_gate.py`) now covers the Enablement-hard-fails /
 Legitimization-warns-and-writes distinction directly. Full suite green: 99
 tests (was 96), zero regressions.
 
+<a id="d-29"></a>
 ## D-29: `hrc-train` raises the natural, unpolished error on a blank ground-truth label it cannot convert to an ordinal int
 Date: 2026-07-25
 Status: locked
@@ -2306,6 +2419,7 @@ Awaiting User finding in `STATUS.md`. No conflict with D-26 (a different code
 path, `hrc-evaluate`, whose own error contract is unchanged) or any other
 locked entry.
 
+<a id="d-30"></a>
 ## D-30: `is_safe_ground_truth`'s literal encoding is the exact strings `"safe"`/`"unsafe"`
 Date: 2026-07-25
 Status: locked
@@ -2331,6 +2445,7 @@ truth`, `schema.py`) is IS-8's concern, invoked once per surviving row before
 building `metrics.py`'s `final_label_metrics` inputs; no other locked entry
 references this column's format, so no conflict.
 
+<a id="d-31"></a>
 ## D-31: `HazardResponseClassifier.score(rows)` never raises on a hard-fail row; every row gets a per-row result entry
 Date: 2026-07-25
 Status: locked
@@ -2368,6 +2483,7 @@ Touches: `model.py` (`HazardResponseClassifier.score`, `RowResult`
 dataclass); `PLAN.md` §11 item 5 (resolved, one open sub-question —
 concurrency — remains and is documented as such, not answered).
 
+<a id="d-32"></a>
 ## D-32: `rule_reasons` gains a reason string for D-4's forced-zero short-circuit only, not D-18's not-required short-circuit
 Date: 2026-07-25
 Status: locked
@@ -2409,6 +2525,7 @@ test (`test_score_zero_emits_reason_string`, using `"hte"` specifically so
 D-19's disclaimer rule can't also be contributing) isolating D-4's string
 alone and confirming a normally-scored row's `rule_reasons` stays empty.
 
+<a id="d-33"></a>
 ## D-33: `component_metrics`'s `qwk` reports `null` (not a raw float) when Cohen's kappa is undefined, matching `auc`'s existing convention
 Date: 2026-07-25
 Status: locked
@@ -2444,6 +2561,7 @@ regressions): reuses the exact fixture from the existing
 `test_component_metrics_auc_is_none_for_single_class` test, confirmed
 directly (not assumed) to also make `cohen_kappa_score` return `NaN`.
 
+<a id="d-34"></a>
 ## D-34: IS-9 closed via a different real dataset; the toy's literal reference-number match is superseded, not achieved
 Date: 2026-07-25
 Status: locked
@@ -2495,6 +2613,7 @@ Touches: `VERIFICATION.md` (IS-9's entry marked closed; D-2/D-16 coverage-matrix
 rows annotated as superseded, not resolved); `scripts/run_real_data_is9.py`,
 `scripts/is9_real_data_metrics.json` (new, kept as the evidence record).
 
+<a id="d-35"></a>
 ## D-35: CLI-skin architecture — one shared feature-building function; `save()`'s signature grows to hold the manifest extras
 Date: 2026-07-25
 Status: locked
@@ -2660,6 +2779,7 @@ header and zero data rows.
 **This closes D-35 entirely and the whole `VERIFICATION.md` backlog** — the
 CLI skin was the last unbuilt piece of the plan; nothing else is queued.
 
+<a id="d-36"></a>
 ## D-36: Pooling mode is mean-only; `max`/`mean_max` are not implemented
 Date: 2026-07-25
 Status: locked
@@ -2679,6 +2799,7 @@ Touches: `PLAN.md` §11 item 2 (mark resolved, cross-reference this entry);
 `src/hazard_classifier/embed.py` `pool_response_vector` (already landed, no
 code change from this entry).
 
+<a id="d-37"></a>
 ## D-37: Artifact serialization is `.npz` + JSON only; no `joblib` dependency
 Date: 2026-07-25
 Status: locked
