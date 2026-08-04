@@ -721,6 +721,58 @@ further concurrence — Riki directed it.
 
 ## Recently Completed
 
+- 2026-08-04 — **PR 1 slice 1B landed: pipeline, placeholders, detection
+  wrappers.** `evaluator/pipeline.py` — `STAGE_ORDER` (the ten stages from
+  `SCIENCE.md` §Modular pipeline) and the §3.1 exhaustion short-circuit,
+  with no scientific decision logic: it only decides which stage runs next
+  and what happens when working text goes empty. New
+  `evaluator/components/`:
+
+  - `empty.py` (working), `decoding.py` (working, wraps
+    `preprocess/decode.py`'s `best_readable_view`) — stages 1-2.
+  - `hazard.py`, `narrative.py`, `refusal.py` (placeholders) — stages 3, 5,
+    6: pass content through, `outcome="not_evaluated"`, flags untouched at
+    `Flags()`'s `"not_evaluated"` default.
+  - `repetition.py` (partial) — stage 4: the two **exact** normalized-
+    substring cases from `preprocess/flags.py`'s `prompt_repetition_
+    features` (not `partial_contiguous`, per `ARCHITECTURE.md` §7.1),
+    applied to the whole `working` text as one unit. Actually **removes**
+    the matched span (the baseline only ever flags for pooling) while
+    preserving authored continuations — genuinely new logic, not a thin
+    wrapper, needing its own normalized-offset-to-raw-offset tracking
+    (`_normalize_with_offsets`) since nothing existing needed to convert a
+    normalized match back into raw removal boundaries.
+  - `disclaimer.py` (partial) — stage 7: wraps the baseline's disclaimer
+    patterns but, per `ARCHITECTURE.md` §5's resolution of C-4, publishes
+    the stripped variant as `named["disclaimer_stripped"]` rather than
+    removing it from `working` — which view E actually consumes is an open
+    empirical question, not architecture's to decide.
+
+  **One real precision bug found and fixed while building `repetition.py`,
+  not left in:** the initial offset-mapping only advanced the raw removal
+  boundary to the last matched alphanumeric character, so trailing
+  punctuation immediately after a matched span (e.g. the period ending a
+  copied prompt sentence) survived into the "authored" remainder untouched
+  — caught by manually exercising the prompt-plus-continuation case before
+  writing tests, not by a test that happened to catch it. Fixed by
+  extending the raw boundary past any trailing non-alphanumeric run before
+  removing.
+
+  All five of the slice's named tests built and passing (stage order;
+  exhaustion at each of stages 1, 4, 5, 6, 7 — the latter two proved
+  generically via stub components at the still-placeholder narrative/
+  refusal/disclaimer stages, since none of those can naturally trigger it
+  yet; the `not_evaluated`-not-`not_detected` placeholder forcing function;
+  prompt-only full removal; repetition-plus-authored-content preservation),
+  plus focused unit coverage on the new offset-tracking logic and the
+  `text_out`/`history` changed-vs-unchanged contract. 20 new tests
+  (`tests/unit/test_evaluator_{pipeline,components}.py`), 204 total, zero
+  regressions.
+
+  **Next:** slice 1C (embedding, scoring, integration, views, parity) per
+  `PR1_EXECUTION_PLAN.md` — the slice that reintroduces the slice-0 parity
+  test against the real pipeline. Not started.
+
 - 2026-08-04 — **PR 1 slice 1A landed: record, contract, registry.** Pure
   structure per `PR1_EXECUTION_PLAN.md` — no behavior, no wiring, no
   pipeline yet. New `src/hazard_classifier/evaluator/` package
