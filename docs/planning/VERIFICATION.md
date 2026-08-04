@@ -1,9 +1,18 @@
-# Verification Plan — confirming every locked decision
+# Baseline Verification Record — how the pre-staging baseline was confirmed
+
+**Scope.** This document covers the **pre-staging baseline** (D-1 through
+D-37) and nothing else. It is the record of how those decisions were confirmed
+to compose and to be correctly built — a closed backlog, not a live one.
+Release 1.1 verification requirements live in
+[`../SCIENCE.md`](../SCIENCE.md) §Evidence and outputs; they are not tracked
+here, and a D-number in the matrix below does not imply a 1.1 constraint. See
+`DECISIONS.md`'s index for what each decision means for 1.1.
 
 **Purpose.** A durable collection of the checks that confirm the locked
-decisions in `DECISIONS.md` compose and identify which are correctly built.
-This is the master backlog; `STATUS.md`'s thin queue pulls a few items from here
-at a time (META_PLAN §5), one per session. See `META_PLAN.md` for the process.
+baseline decisions in `DECISIONS.md` compose and identify which are correctly
+built. This was the master backlog; `STATUS.md`'s thin queue pulled a few items
+from here at a time (META_PLAN §5), one per session. See `META_PLAN.md` for the
+process.
 
 **Two item types (META_PLAN §2 / §4):**
 - **IC-n — Integration check** (paper, cross-decision): confirms decisions
@@ -29,10 +38,16 @@ queued.**
 
 D-36 and D-37 document the completed baseline without adding behavior.
 Canonical Release 1.1 requirements live in `../SCIENCE.md`; they are not
-decision-ledger entries. The 2026-08-03 note at the top of `DECISIONS.md`
-identifies which verified baseline clauses do not constrain Release 1.1.
+decision-ledger entries. The "What the Release 1.1 standard replaces"
+note at the top of `DECISIONS.md` identifies, clause by clause, which verified
+baseline behavior does not constrain Release 1.1.
 
-- **Built + green (125 tests, `pytest` passing — all but 3 need no network,
+**Two later decisions are not covered by this record.** D-45 (proposed) would
+reverse D-5's constant-probability substitute, and D-46 supersedes D-29 with a
+purpose-built blank-label error that `model.py` does not yet raise (`STATUS.md`
+item 5). The D-5 and D-29 rows below verify the superseded behavior.
+
+- **Built + green (142 tests, `pytest` passing — all but 3 need no network,
   3 integration tests need it on first run only, model cached after):**
   - `schema.py` — **new, IS-1 landed.** `normalize_hazard` (D-27, ported
     verbatim from the toy) and `load_csv` (mode-scoped required columns —

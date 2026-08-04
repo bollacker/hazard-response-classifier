@@ -1,19 +1,36 @@
 # Status
 
-Last updated: 2026-08-03 — **Corrected what belongs in the decision ledger.**
+Last updated: 2026-08-03 — **The decision ledger is provenance, not
+authority.** Once a decision's effect is written into a specification, that
+specification governs and the entry becomes the record of the reasoning.
+`DECISIONS.md` now opens with an index mapping all 37 baseline decisions to
+the specification that absorbed each one, and to what it means for Release
+1.1. The full ledger, deleted in an earlier commit on this branch, is
+restored: entries are retired by superseding them in place, never by deletion
+(`META_PLAN.md` §1). Document authority moved to `META_PLAN.md` §1.1.
+
+An absorption audit found two decisions whose effect reached no specification;
+both are closed. D-46 supersedes D-29 with a purpose-built blank-label error
+(needs a code change — item 5). D-30's literal `"safe"`/`"unsafe"` encoding is
+now stated in `PLAN.md` §2.1, which had claimed it was unpinned. D-45 proposes
+reversing D-5's constant-probability substitute and awaits joint approval.
+
+Prior update, 2026-08-03 — **Corrected what belongs in the decision ledger.**
 The seven Assessment Standard requirements confirmed at the joint Riki–Kurt
 meeting are recorded in `SCIENCE.md` with meeting provenance; they are not new
-design decisions. D-38 through D-44 were therefore removed. `DECISIONS.md`
-now says plainly which old baseline rules the Release 1.1 standard replaces.
-Whether disclaimer text is stripped before E scoring is tabled for the next
-architecture/evaluation step.
+design decisions. D-38 through D-44 were therefore withdrawn; those numbers are
+not reused and new decisions start at D-45. `DECISIONS.md` says plainly which
+old baseline rules the Release 1.1 standard replaces. Whether disclaimer text
+is stripped before E scoring is tabled for the next architecture/evaluation
+step.
 
 Prior update, 2026-08-02 — **Decision-authority correction.** The unapproved
 limitations-document draft was removed before it became a ledger decision;
 decisions require agreement from Riki and Kurt. That rule remains only a
 proposal in queue item 1.9. Until it is jointly approved, D-2 and D-8 remain
 binding, so the README retains their required risk disclosure. The D-38 number
-remains unused.
+remains unused. *(Superseded 2026-08-03: D-38 through D-44 were drafted and
+withdrawn; those numbers are retired and new decisions start at D-45.)*
 
 Prior update, 2026-08-02 — **C-1 integrator boundary proposed.** The proposed
 science contract has the L and E models judge what the response means and
@@ -473,6 +490,22 @@ Detailed phased proposal:
 ## Queue
 
 1. [ ] **Review the locked decisions that conflict with `SCIENCE.md`.**
+
+   **What "review" produces.** The ledger is provenance, not authority
+   (`META_PLAN.md` §1), so the output of each sub-review below is *not* an
+   amended decision entry. It is two things: (a) confirm `SCIENCE.md` actually
+   states the Release 1.1 requirement — write it there if it does not — and
+   (b) mark the named baseline entries `baseline-only` in `DECISIONS.md`'s
+   index, leaving their text and rationale intact. A baseline choice does not
+   carry into 1.1 by default; reusing one requires a new joint decision
+   (`META_PLAN.md` §1.1). Sub-item numbers are referenced by the ledger index —
+   do not renumber them.
+
+   The 2026-08-03 absorption audit found only two decisions whose effect
+   reached no specification (D-29, D-30) and both are closed, so every
+   D-number named below resolves to a written specification section; the
+   sub-reviews are about *scope*, not about missing content.
+
    Review in this order:
 
    1. **Naming:** the standard requires violating/non-violating. The old
@@ -646,6 +679,21 @@ Detailed phased proposal:
 _Empty._
 
 ## Recently Completed
+
+- 2026-08-03 — Ledger repair and demotion, scope: **decision authority.**
+  Restored the full D-1…D-37 ledger after an earlier commit on this branch
+  deleted 33 entries, leaving ~60 references dangling across `src/`, `tests/`,
+  and the docs. Demoted the ledger to provenance and added an index mapping
+  every decision to the specification that absorbed it and to its Release 1.1
+  disposition. Ran an absorption audit: 35 of 37 decisions already had a
+  specification carrying their effect, recorded in their own `Touches:` fields;
+  the two gaps are closed. Added D-45 (proposed, supersedes D-5) and D-46
+  (supersedes D-29, needs the code change in item 5). Moved document authority
+  into `META_PLAN.md` §1.1 and added the retire-by-superseding rule. Parked two
+  architecture proposals from the deleted rewrite in queue item 3. Retitled
+  `VERIFICATION.md` as the baseline verification record and corrected its test
+  count to the collected 142. No source, scoring, or assessment behavior
+  changed.
 
 - 2026-08-03 — Corrected what belongs in the decision ledger after the joint
   Riki–Kurt meeting. Recorded the seven confirmed Assessment Standard

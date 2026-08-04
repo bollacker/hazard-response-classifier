@@ -24,18 +24,47 @@ alternatives. Every time a recommendation is curated and accepted, it becomes
 a numbered, dated entry:
 
 ```
+<a id="d-<n>"></a>
 ## D-<n>: <short title>
 Date: YYYY-MM-DD
-Status: locked | open | superseded-by D-<m>
+Status: locked | proposed | open | superseded-by D-<m>
+Approved by: <who agreed, and when — omit only for `proposed`>
+Supersedes: D-<k>          (only when replacing an earlier entry)
 Decision: <what was decided>
 Rationale: <why, including what alternative was rejected and why>
-Touches: <files/subsystems affected>
+Touches: <files/subsystems affected; mark the one that absorbed it>
+Boundary: <what this entry does not govern, and which entry does>
 ```
+
+Field notes:
+
+- **`Status`.** `locked` — agreed and in force. `proposed` — written down but
+  not yet agreed; must name what approval it waits on, and the entry it would
+  supersede stays in force meanwhile. `open` — a question, not a decision.
+  `superseded-by D-<m>` — retired in place, text left intact.
+- **`Approved by`.** Who agreed. A rewrite attributed to someone in a commit
+  message is not an approval; if the agreement is not on record, the entry is
+  `proposed`.
+- **`Touches`** doubles as the absorption record. When a decision's effect is
+  written into a specification, mark that entry — `PLAN.md` §3 step 1
+  (**absorbed**) — so the index can point a reader from the entry to the
+  document that now governs. An entry whose effect reaches no specification is
+  an absorption gap and needs one before it can be treated as settled.
+- **`Boundary`** is optional but worth writing whenever an adjacent entry
+  governs a case a reader would plausibly expect this one to cover. It is what
+  keeps two entries from silently overlapping.
+- **Anchors.** Every entry carries an `<a id="d-<n>">` immediately above its
+  heading, so `DECISIONS.md#d-16` keeps resolving when a title is edited.
+  The index table at the top of the ledger must gain a row for every new
+  entry.
 
 Rules for Claude:
 - Treat every `locked` entry as a hard constraint. Do not propose changes that
   contradict one unless you flag it explicitly under Open Questions (see §3)
   with a reasoned argument for reopening it — never silently override it.
+- A `locked` entry that has been absorbed into a specification constrains
+  nothing on its own: cite the specification, not the entry. Read the entry
+  for the reasoning and the rejected alternatives.
 - When a session accepts a new fix or decision, append it to `DECISIONS.md`
   yourself as part of that session's output, so the ledger stays current.
 - If two locked decisions conflict with each other (this is exactly the kind
