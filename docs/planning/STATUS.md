@@ -546,10 +546,21 @@ Detailed phased proposal:
    cannot reconstruct.
 
 4. [ ] **Build the approved 1.1 modular release.**
-   Execution plan for its first phase:
-   [`PR1_EXECUTION_PLAN.md`](PR1_EXECUTION_PLAN.md) — written 2026-08-04 to be
-   runnable from a clean session, with slice 0 (golden baseline capture) as its
-   mandatory first step.
+
+   **PR 1 is complete** (2026-08-04): slices 0, 1A, 1B, 1C plus D-48/D-49,
+   pushed as `9bfa845`. Its plan,
+   [`PR1_EXECUTION_PLAN.md`](PR1_EXECUTION_PLAN.md), is now a record of what
+   was built rather than live work.
+
+   **PR 2 is next**, and its plan is
+   [`PR2_EXECUTION_PLAN.md`](PR2_EXECUTION_PLAN.md) — written 2026-08-04 to be
+   runnable from a clean session. **Entry condition:** its §2 raises three
+   specification questions (the summarized/paraphrased repetition conflict, the
+   decoding-failure trigger and consequence, and whether ambiguity recording is
+   in 1.1 scope). Slice A is ungated and can start immediately; slices B, C,
+   and D each need an answer first, and a session must not resolve one on its
+   own (`META_PLAN.md` §3).
+
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
    prompt-repetition and disclaimer detection; visible placeholders for
@@ -725,6 +736,38 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 2 execution plan written.** `PR2_EXECUTION_PLAN.md`,
+  same shape as PR 1's: read-first list, preconditions, slices, an
+  exit-criterion-to-test map, and an explicit out-of-scope list. No code.
+
+  **Writing it surfaced three things that block or reshape PR 2's work
+  items**, all now §2 entry-gate questions rather than decisions a session
+  makes on its own:
+
+  - **A three-way conflict on repetition scope.** PR 2's work list says
+    "detect exact, summarized, and closely paraphrased"; `ARCHITECTURE.md`
+    §7.1 says exact-only is sufficient for 1.1 and records the shortfall as
+    a deliberate, disclosed gap; and `PR1_EXECUTION_PLAN.md` §4 says both at
+    once ("PR 2's work" *and* "1.1 ships exact-only"), which cannot hold
+    since PR 2 is a 1.1 PR. Recommended: keep exact-only, amend the work
+    item, and fix the contradictory line.
+  - **The decoding-failure path is unspecified at both ends.** Nothing
+    defines when decoding has failed (`best_readable_view` always returns a
+    best candidate, and the wrapper hardcodes `not_detected`), and nothing
+    defines the consequence — `SCIENCE.md` assigns it to the integrator,
+    which never reads the flag. The candidate consequences differ
+    materially (per-hazard failure vs. score-and-record).
+  - **"Record when the prompt resolves an ambiguous reference" has no
+    specification and no producer.** It appears only in PR 2's work list;
+    `SCIENCE.md` permits using the prompt this way but requires no record,
+    `ARCHITECTURE.md` §4's `Flags` has no field, and no 1.1 component
+    currently does it. Recommended: defer, on D-49's footing.
+
+  Also recorded as a standing constraint: `preprocess/decode.py`,
+  `segment.py`, and `flags.py` are **shared with the baseline**, so editing
+  them changes baseline scores and breaks the D-48 parity guarantee. PR 2's
+  new behavior belongs in `evaluator/`.
 
 - 2026-08-04 — **D-48 locked: the unchanged-output requirement binds the
   implementation being refactored, not a standard-conforming rebuild.**
