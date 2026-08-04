@@ -1,0 +1,8 @@
+holdout_recorded: False
+excluded_row_count: 0 (unseen_hazard=0, skipped_cell=0)
+WARNING: this artifact has no recorded held-out split (DECISIONS.md D-13) -- no number below is a verified generalization number.
+
+=== in_sample_unrecorded (n_rows=12) ===
+enablement: n=12 exact=1.000 within_one=1.000 binary_present=1.000 auc=1.000 qwk=1.000 mae=0.000
+legitimization: n=6 exact=1.000 within_one=1.000 binary_present=1.000 auc=1.000 qwk=1.000 mae=0.000
+final_label: n=12 precision=1.000 recall=0.800 f1=0.889 false_safe_rate=0.000 false_unsafe_rate=0.167

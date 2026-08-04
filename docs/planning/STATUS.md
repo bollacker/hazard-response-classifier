@@ -721,6 +721,34 @@ further concurrence — Riki directed it.
 
 ## Recently Completed
 
+- 2026-08-04 — **PR 1 slice 0 landed: golden baseline capture.**
+  `PR1_EXECUTION_PLAN.md`'s mandatory first step, on untouched baseline code.
+  `tests/golden/capture_baseline.py` runs `hrc-train` -> `hrc-evaluate` ->
+  `hrc-predict` against `examples/sample_input.csv` through the real, cached
+  BGE model and writes every output file under `tests/golden/baseline/`
+  (`heads.npz`, `thresholds.json`, `rules.json`, `manifest.json`,
+  `metrics.json`/`metrics.csv`/`summary.txt`, `predictions.csv`/
+  `failures.csv`). `tests/integration/test_baseline_parity.py` reruns the
+  identical pipeline and asserts against those goldens: JSON files exact
+  (manifest's `training_timestamp` excluded, the one genuinely time-varying
+  field), `heads.npz` compared by array via `np.testing.assert_array_equal`
+  rather than by file bytes (`.npz` is a zip and embeds per-entry timestamps
+  even when the arrays are identical), CSV/summary text exact.
+
+  **Determinism confirmed before committing, not assumed:** ran the capture
+  script twice into separate scratch directories and diffed every output
+  (same method the parity test uses) — bit-identical. **The negative case was
+  proven once, by hand, not just asserted inline:** hand-corrupted one float
+  in the committed `heads.npz`, reran the parity suite, watched
+  `test_heads_npz_arrays_match_golden` fail with the expected diff, then
+  restored the golden from the real capture and confirmed green again. A
+  permanent version of the same check
+  (`test_a_perturbed_head_fails_parity`) stays in the suite as a regression
+  guard. Full suite: 161 passed (151 baseline + 10 new), zero regressions.
+
+  **Next:** slice 1A (record, contract, registry — pure structure, no
+  behavior) per `PR1_EXECUTION_PLAN.md`. Not started.
+
 - 2026-08-04 — **PR 1 readiness check and execution plan.** Checked what else
   was needed before starting PR 1 and found three gaps, two of them leftovers
   from retired item 3.

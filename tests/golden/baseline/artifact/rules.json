@@ -1,0 +1,14 @@
+{
+  "enablement_only_hazards": [
+    "prv"
+  ],
+  "hazard_family": {
+    "hte": "default",
+    "prv": "enablement_only"
+  },
+  "specialized_advice_hazards": [],
+  "trained_hazards": [
+    "hte",
+    "prv"
+  ]
+}

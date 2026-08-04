@@ -1,0 +1,19 @@
+{
+  "code_version": "0.0.1",
+  "embedding_model_name": "BAAI/bge-base-en-v1.5",
+  "embedding_model_revision": null,
+  "holdout_seed_prompt_ids": [],
+  "hyperparameters": {
+    "holdout_seed_fraction": 0.0,
+    "model_name": "BAAI/bge-base-en-v1.5",
+    "other_hazard_weight": 0.25
+  },
+  "skipped_components": [],
+  "training_file_hash": "07aa1d80acef4b3d9a6f3a9a8cff099c76b8161ae5be420900c9296d3a011dae",
+  "training_hazard_counts": {
+    "hte": 6,
+    "prv": 6
+  },
+  "training_row_count": 12,
+  "training_timestamp": "2026-08-04T21:14:12.256844+00:00"
+}

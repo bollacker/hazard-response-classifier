@@ -1,0 +1,77 @@
+{
+  "excluded_row_count": 0,
+  "excluded_skipped_cell_count": 0,
+  "excluded_unseen_hazard_count": 0,
+  "holdout_recorded": false,
+  "in_sample_unrecorded": {
+    "components": {
+      "enablement": {
+        "auc": 1.0,
+        "binary_present_accuracy": 1.0,
+        "confusion_counts": {
+          "actual_0": {
+            "predicted_0": 4,
+            "predicted_1": 0,
+            "predicted_2": 0
+          },
+          "actual_1": {
+            "predicted_0": 0,
+            "predicted_1": 4,
+            "predicted_2": 0
+          },
+          "actual_2": {
+            "predicted_0": 0,
+            "predicted_1": 0,
+            "predicted_2": 4
+          }
+        },
+        "exact_accuracy": 1.0,
+        "mae": 0.0,
+        "n": 12,
+        "qwk": 1.0,
+        "within_one_accuracy": 1.0
+      },
+      "legitimization": {
+        "auc": 1.0,
+        "binary_present_accuracy": 1.0,
+        "confusion_counts": {
+          "actual_0": {
+            "predicted_0": 2,
+            "predicted_1": 0,
+            "predicted_2": 0
+          },
+          "actual_1": {
+            "predicted_0": 0,
+            "predicted_1": 2,
+            "predicted_2": 0
+          },
+          "actual_2": {
+            "predicted_0": 0,
+            "predicted_1": 0,
+            "predicted_2": 2
+          }
+        },
+        "exact_accuracy": 1.0,
+        "mae": 0.0,
+        "n": 6,
+        "qwk": 1.0,
+        "within_one_accuracy": 1.0
+      }
+    },
+    "final_label": {
+      "confusion_counts": {
+        "predicted_safe_actual_safe": 8,
+        "predicted_safe_actual_unsafe": 0,
+        "predicted_unsafe_actual_safe": 2,
+        "predicted_unsafe_actual_unsafe": 2
+      },
+      "f1": 0.8888888888888888,
+      "false_safe_rate": 0.0,
+      "false_unsafe_rate": 0.16666666666666666,
+      "n": 12,
+      "precision": 1.0,
+      "recall": 0.8
+    },
+    "n_rows": 12
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "enablement": {
+    "hte": {
+      "high_threshold": 0.49999999999999994,
+      "nonzero_threshold": 0.49999999999999994,
+      "status": "fit",
+      "threshold_metrics": {
+        "threshold_train_exact_accuracy": 1.0,
+        "threshold_train_mean_absolute_error": 0.0,
+        "threshold_train_predicted_nonzero_rate": 0.6666666666666666,
+        "threshold_train_qwk": 1.0,
+        "threshold_train_within_one_accuracy": 1.0
+      }
+    },
+    "prv": {
+      "high_threshold": 0.49999999999999994,
+      "nonzero_threshold": 0.49999999999999994,
+      "status": "fit",
+      "threshold_metrics": {
+        "threshold_train_exact_accuracy": 1.0,
+        "threshold_train_mean_absolute_error": 0.0,
+        "threshold_train_predicted_nonzero_rate": 0.6666666666666666,
+        "threshold_train_qwk": 1.0,
+        "threshold_train_within_one_accuracy": 1.0
+      }
+    }
+  },
+  "legitimization": {
+    "hte": {
+      "high_threshold": 0.49999999999999994,
+      "nonzero_threshold": 0.49999999999999994,
+      "status": "fit",
+      "threshold_metrics": {
+        "threshold_train_exact_accuracy": 1.0,
+        "threshold_train_mean_absolute_error": 0.0,
+        "threshold_train_predicted_nonzero_rate": 0.6666666666666666,
+        "threshold_train_qwk": 1.0,
+        "threshold_train_within_one_accuracy": 1.0
+      }
+    }
+  }
+}
