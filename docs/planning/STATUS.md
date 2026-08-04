@@ -600,16 +600,64 @@ across schemes:
 
 ## Awaiting User
 
-Updated 2026-08-04. **Nothing here blocks anything.** Queue items 1 and 3 are
-complete and retired, and both architecture-pass findings (A-1, A-2) are
-resolved and applied to `SCIENCE.md`. The three calls that were awaiting Riki's
-concurrence are in force under an assumed concurrence, and the Standards-team
-request remains explicitly non-blocking.
+Updated 2026-08-04. **Nothing here blocks slice work**, but the first item
+below decides whether PR 1 can be called complete, so it needs an answer
+before PR 1 closes rather than before the next slice starts. Queue items 1
+and 3 are complete and retired, and both architecture-pass findings (A-1,
+A-2) are resolved and applied to `SCIENCE.md`. The three calls that were
+awaiting Riki's concurrence are in force under an assumed concurrence, and
+the Standards-team request remains explicitly non-blocking.
 
 **Riki's review now has six items, not three.** The phase B fold and the
 withdrawal of cross-hazard completeness are science changes made on Kurt's call
 alone, and the second one removes a safeguard; the `META_PLAN.md` §5 amendment
 is process bookkeeping. See the assumed-concurrence table.
+
+### PR 1's "unchanged scores" criterion — which path does it govern?
+
+Raised 2026-08-04 building slice 1C, per `META_PLAN.md` §3: this is a
+specification conflict, not a confidence gap, so it is surfaced rather than
+resolved.
+
+**The question.** PR 1's goal is "convert the current evaluator into
+independently replaceable components **without changing current scores**,"
+its exit criterion is "the same inputs produce unchanged current text,
+features, scores, probabilities, labels, and failures," and `SCIENCE.md`
+§Evidence and outputs says "architecture-only work must also prove
+unchanged text, features, scores, probabilities, labels, and failures on
+the same inputs." Two readings:
+
+1. **The baseline path must not change.** The three baseline CLIs keep
+   producing byte-identical output. This is what slice 0's goldens capture,
+   what `PR1_EXECUTION_PLAN.md` §3's verification table points at ("Slice 0
+   goldens + slice 1C parity"), and what `ARCHITECTURE.md` §3.2 sets up by
+   making 1.1 a new package alongside an untouched baseline. **This reading
+   is met** — the parity test passes with the full pipeline in the repo.
+2. **The new 1.1 pipeline must reproduce the baseline's numbers.** **This
+   reading cannot be met, and not because of an implementation shortfall.**
+   Three already-approved 1.1 requirements deliberately change the numbers:
+   - `SCIENCE.md` §Prompt-repetition detection requires repeated spans
+     removed from the working text — the baseline never removed them for
+     Legitimization at all, so Legitimization now scores different text;
+   - phase B1 fixes a prompt-only response at L1/E0, where the baseline ran
+     Legitimization through the head (`DECISIONS.md` records D-4's
+     prompt-only rule as baseline-only for exactly this reason);
+   - phase C fixes final L at L0 for a qualifying Specialized Advice
+     disclaimer, replacing D-19's pre-threshold adjustment — a different
+     mechanism at a different point in the pipeline, recorded as
+     baseline-only.
+
+**Why it matters.** Under reading 2, PR 1 cannot be called complete by any
+implementation, and the criterion would need rewording against the
+requirements that supersede it. Under reading 1 it is already satisfied.
+Slice 1C was built to reading 1, since that is what the execution plan's own
+verification table specifies — but the ledger's baseline-only dispositions
+are what make reading 2 impossible, and that consequence appears not to have
+been drawn explicitly when the criterion was written.
+
+**Nothing is blocked.** The work stands either way; what changes is how
+PR 1's completion is judged and whether the criterion's wording needs
+amending.
 
 ### Item 4 entry gate — cleared; one sequencing call remains
 
@@ -720,6 +768,73 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 1 slice 1C landed: embedding, scoring, integration,
+  views.** The pipeline now runs end to end. New:
+
+  - `components/embedding.py` — §8's `EmbeddingProvider` and
+    `PoolingStrategy` as **separate** replaceable protocols (representation
+    and pooling are both queue item 2 comparison axes, so neither is
+    hard-coded), with `BgeEmbeddingProvider`/`MeanPooling` as the first
+    implementations. Exactly one `provider.embed(...)` call per response,
+    shared by every evaluated hazard.
+  - `components/scoring.py` — wraps the baseline two-head model. Maturity
+    **`partial`**, `distribution` always `None`, nothing synthesized. It
+    judges and stops: it deliberately does **not** apply D-19's
+    pre-threshold disclaimer adjustment, because Release 1.1 fixes final L
+    at L0 in final integration (phase C) instead — applying it in both
+    places would double-count it and would put a fixed rule inside a model
+    component.
+  - `components/integration.py` — the fixed phases A → B → C → D, the three
+    family tables, and the rollup. Reads `label`, never `distribution`;
+    never touches a text view (asserted structurally, with text objects
+    that raise on access).
+  - `views.py` — `result_view` (lossless `results.jsonl`, pooled vector
+    omitted) and `prediction_rows` (per-hazard tabular, carries no text).
+    `metrics.json` and `failures.csv` are **not** built: the first needs
+    PR 5's three-class model and the Standards team's approved criteria for
+    `SCIENCE.md`'s required uncertainty estimates, the second needs a
+    batch-level runner that does not exist. Named as unbuilt rather than
+    stubbed.
+
+  `HazardJudgment` gained defaults for `decided_by`/`result`, resolving the
+  provisional-vs-final representation question slice 1A explicitly deferred:
+  stage 9 writes the provisional judgments, stage 10 writes the final ones.
+
+  **A 1.1 behavior difference from the baseline, by design, recorded so it
+  is not mistaken for a defect:** the baseline pools *two* vectors per
+  response (Enablement drops prompt-repetition sentences via D-4's
+  keep-mask, Legitimization keeps everything). In 1.1, stage 4 has already
+  *removed* repeated spans from the working text, so there is nothing left
+  for a component-specific keep-mask to drop and both models read the same
+  `working` view — §5's stated default. One pooled vector is the correct
+  1.1 shape, not a simplification.
+
+  **The slice-0 parity test still passes** with the whole pipeline in the
+  repo — the baseline path is untouched. 65 new tests
+  (`tests/unit/test_evaluator_{integration,scoring_pipeline}.py`), 269
+  total, zero regressions. Rule coverage is exhaustive where `SCIENCE.md`
+  §Evidence and outputs requires it: every cell of all three L/E tables,
+  B1's bullet order both ways, phase C against phase D, and the rollup's
+  precedence.
+
+  **Two exit criteria are not fully met; neither is silently claimed** —
+  see the new Awaiting User item below for the third and most consequential
+  one:
+  - *"Artifact save and load preserve component and rule versions."* The
+    1.1 artifact format (`ARCHITECTURE.md` §10's manifest carrying
+    component implementations, versions, and rule version) has **no writer
+    yet**, and none was in this slice's deliverables. What is verified
+    instead is that the run context's selections and versions survive the
+    pipeline into `result_view`. The artifact half is genuinely unbuilt.
+  - *"Embeddings are created once per scoring batch."* Verified as once per
+    **response**, shared across every evaluated hazard — which is the part
+    §8 states testably. A batch spanning *several responses* is not
+    expressible in `ARCHITECTURE.md` §3's per-record pipeline at all, so
+    "per batch" across responses is neither implemented nor tested.
+
+  **Next:** PR 1's remaining exit-criteria gaps above, then PR 2. Not
+  started.
 
 - 2026-08-04 — **PR 1 slice 1B landed: pipeline, placeholders, detection
   wrappers.** `evaluator/pipeline.py` — `STAGE_ORDER` (the ten stages from

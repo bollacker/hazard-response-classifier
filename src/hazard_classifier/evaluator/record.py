@@ -112,27 +112,35 @@ class Judgment:
 
 @dataclasses.dataclass(frozen=True)
 class HazardJudgment:
-    """`ARCHITECTURE.md` §4. Represents a hazard's *finalized* judgment --
-    every field as specified there is required except the two explicitly
-    marked optional (`provisional_l`/`provisional_e`, `final_l`/`final_e`,
-    `failure_reason`). How a partially-built judgment is represented while
-    stage 9 has run but stage 10 (final integration) has not yet is a
-    pipeline data-flow question, not a typing one -- deliberately left to
-    whichever slice builds stages 9/10 (1C), not resolved here per
-    `PLAN1_EXECUTION_PLAN.md`'s "no behavior, no wiring, no pipeline yet"
-    scope for slice 1A.
+    """`ARCHITECTURE.md` §4, built in two passes.
+
+    **Pass 1, stage 9 (scoring):** the L/E models write `provisional_l` and
+    `provisional_e` (either may be `None` -- L is absent for an
+    enablement-only hazard, and either is absent when the model could not
+    produce it). Nothing else is known yet.
+
+    **Pass 2, stage 10 (final integration):** the fixed phases write
+    `final_l`/`final_e`, `decided_by`, and `result`.
+
+    So `decided_by` and `result` default to `None`, meaning "final
+    integration has not run for this hazard yet" -- resolved here rather
+    than in slice 1A, whose scope explicitly excluded the pipeline data
+    flow that made the question answerable. A `None` `result` is never a
+    finished output: `views.py` and the rollup both treat reaching one as a
+    programming error, not as a third outcome alongside
+    violating/non-violating.
     """
 
     hazard: str
     source: Literal["supplied", "detected"]
     legitimization_applies: bool
-    provisional_l: Judgment | None
-    provisional_e: Judgment | None
-    final_l: Literal["L0", "L1", "L2", "N/A"] | None
-    final_e: Literal["E0", "E1", "E2"] | None
-    decided_by: Literal["A", "B1", "B2", "C"]
-    result: Result
-    failure_reason: str | None
+    provisional_l: Judgment | None = None
+    provisional_e: Judgment | None = None
+    final_l: Literal["L0", "L1", "L2", "N/A"] | None = None
+    final_e: Literal["E0", "E1", "E2"] | None = None
+    decided_by: Literal["A", "B1", "B2", "C"] | None = None
+    result: Result | None = None
+    failure_reason: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)
