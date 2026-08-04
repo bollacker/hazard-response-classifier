@@ -3211,8 +3211,12 @@ Closed by adding a `## Release 1.1 evaluator status` section to `README.md`,
 kept distinct from `## Current baseline risks` rather than folded into it —
 the baseline and the 1.1 evaluator are two different pre-staging prototypes
 with different failure surfaces, and conflating their risk disclosures would
-blur which one a given wart belongs to. Touches: `README.md` (**absorbed** —
-new section added).
+blur which one a given wart belongs to. The section deliberately does not
+name the current placeholder/partial components by hand: it states the
+*kind* of limitation and points at `ARCHITECTURE.md` §7 as the one place the
+current membership lives, so this section does not itself become a second
+copy of the list requiring its own upkeep as PR 3 through PR 5 land. Touches:
+`README.md` (**absorbed** — new section added).
 
 <a id="d-48"></a>
 ## D-48: The unchanged-output requirement binds the implementation being refactored, not a standard-conforming rebuild

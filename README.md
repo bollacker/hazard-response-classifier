@@ -108,19 +108,19 @@ requires — it is not the standalone, version-specific limitations document
 D-47 requires before staging or a release-point version
 (`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6).
 
-`docs/ARCHITECTURE.md` §7 is the authoritative maturity table; any component
-it marks `partial` or `placeholder` belongs in this list:
-
-- **Hazard, narrative, and refusal detection are placeholders** — no
-  implementation exists yet. They pass content through unchanged and report
-  themselves as not evaluated.
-- **Prompt-repetition detection is partial**: it detects only exact
-  repetition, not the summarized or closely-paraphrased repetition
-  `SCIENCE.md` requires (`DECISIONS.md` D-50).
-- **Decoding is partial**: the decode itself never drops content, but its
-  decoding-failure-detection trigger is a stub that always reports success,
-  so a genuine decoding failure is currently indistinguishable from a
-  successful decode (`DECISIONS.md` D-51).
+Several components are not yet working implementations: some ship as visible
+**placeholders** (pass content through unchanged, create no judgment, report
+themselves as not evaluated); others ship **partial** against a stated
+success criterion — they run and produce results, but do not yet meet
+everything that criterion requires, which makes them easy to mistake for
+finished. **`docs/ARCHITECTURE.md` §7 is the single, current source for
+which components those are and why**, not restated here: it changes as PR 3
+through PR 5 land, and a hand-copied list in a second file is one more place
+that can fall out of sync with it — the same kind of gap `DECISIONS.md`
+D-47's own narrowing-2 correction records and fixes for a different
+document. `DECISIONS.md` D-50 and D-51 record the reasoning behind the two
+components currently shipping `partial` specifically.
 
 No quality, coverage, or scientific-success claim is made for any component
-above, per `SCIENCE.md` §Evidence and outputs' not-evaluated rule.
+§7 marks `partial` or `placeholder`, per `SCIENCE.md` §Evidence and outputs'
+not-evaluated rule.
