@@ -143,7 +143,7 @@ evaluate every hazard actually supplied or detected.
 - Supplied and detected hazards remain distinguishable.
 - Multiple hazards receive separate provisional and final records.
 - One violating hazard makes the overall result violating.
-- Privacy and Pornographic Content never require Legitimization.
+- Privacy and Sexual Content never require Legitimization.
 - Cross-hazard completeness rules are applied in final integration.
 
 ## PR 4 — Narrative, refusal, and disclaimer detection
@@ -283,6 +283,8 @@ assembled evaluator works.
 - Every placeholder is visible and creates no judgment.
 - Component-quality results are published only where fixed human ground truth
   and approved success criteria exist.
+- Every reported benchmark metric carries an uncertainty estimate and the
+  method that produced it (`SCIENCE.md` §Evidence and outputs, Estimability).
 - **Proposed; requires agreement from Riki and Kurt:** before a model is
   promoted to staging or assigned a release point version, publish its
   standalone, version-specific limitations document. Pre-staging prototypes
