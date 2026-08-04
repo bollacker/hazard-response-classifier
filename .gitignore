@@ -7,3 +7,6 @@ dist/
 .venv/
 *.egg
 artifacts/
+
+# macOS
+.DS_Store
