@@ -556,9 +556,9 @@ Detailed phased proposal:
    [`PR2_EXECUTION_PLAN.md`](PR2_EXECUTION_PLAN.md) — written 2026-08-04 to be
    runnable from a clean session. **No entry condition remains:** the three
    specification questions it raised were answered the same day and locked as
-   D-50/D-51/D-52, and their effects are absorbed into the specifications. Two
-   slices remain — slice A (assert the exit criteria PR 1 already earns) and
-   slice B (verification sweep and close). Start with slice A.
+   D-50/D-51/D-52, and their effects are absorbed into the specifications.
+   **Slice A is complete** (2026-08-04): PR 2's five exit criteria are now
+   asserted, not assumed. **Slice B (verification sweep and close) is next.**
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -738,6 +738,33 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 2 slice A landed: exit criteria PR 1 already earns are
+  now asserted, not assumed.** New
+  `tests/unit/test_evaluator_pr2_text_flow.py` (5 tests), built the same way
+  `test_evaluator_scoring_pipeline.py` does — stub embedding provider, a
+  small real `fit()`-trained synthetic classifier over `hte` (default
+  family) and `prv` (enablement-only) — so it stays in `tests/unit/` with no
+  BGE download.
+
+  Covers all four exit criteria this slice owns: empty vs. prompt-only
+  responses asserted side by side so they can't collapse into each other
+  (different `exhausted_at`, different flags, L0/E0-with-refusal-set vs.
+  L1/E0-with-refusal-untouched); a prompt-plus-authored-continuation
+  response scored on the authored remainder only (`decided_by == "B2"`,
+  repeated prompt wording absent from `texts.working`); prompt-only
+  parameterized across a default-family and an enablement-only hazard,
+  confirming phase A forces `final_l` to `N/A` for the latter while both
+  still land `non_violating`; and decoding's *by-construction* half
+  (`texts.original` survives verbatim, `texts.decoded` is a distinct
+  recorded view) for both a base64-decoded and a plain response.
+  Deliberately **not** re-asserted: `flags.decoding_failed ==
+  "not_evaluated"`, already pinned by `tests/unit/
+  test_evaluator_decoding_stub.py` (D-51).
+
+  No new code, no new decisions — this slice only wrote tests against
+  already-landed PR 1 behavior. 285 tests total, zero regressions. Slice B
+  (verification sweep and PR 2 close) is next.
 
 - 2026-08-04 — **PR 2's three entry-gate questions answered and closed:
   D-50, D-51, D-52.** All three specifications updated the same day, so PR 2
