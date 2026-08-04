@@ -13,6 +13,7 @@ import pandas as pd
 import pytest
 
 from hazard_classifier import config
+from hazard_classifier.heads import UnavailableOperationError
 from hazard_classifier.model import fit, load, save
 from hazard_classifier.rules import is_required_component
 
@@ -217,3 +218,58 @@ def test_loaded_enablement_only_hazards_is_the_frozen_set_not_installed_config(t
     assert is_required_component("legitimization", "prv", config.ENABLEMENT_ONLY_HAZARDS) is False
     assert ("legitimization", "hte") not in reloaded.cells
     assert ("legitimization", "prv") in reloaded.cells
+
+
+def test_skipped_cell_artifact_carries_no_servable_values(tmp_path) -> None:
+    """`DECISIONS.md` D-45 (superseding D-5), `PLAN.md` §4: a skipped cell
+    round-trips as *unavailable* -- null thresholds, empty metrics, and no
+    head parameters anywhere in `heads.npz`.
+
+    This is the artifact-level half of the guarantee `tests/unit/test_heads.py`
+    checks per-head. D-5 wrote a constant-probability substitute and real
+    thresholds here, so a regression would be visible as values reappearing in
+    these two files, which is exactly what D-3/D-11 exist to stop being read.
+    """
+    df, features, effective = _make_fixture()
+    df = df.copy()
+    df["legitimization_value"] = df["legitimization_value"].where(df["hazard"] == "prv", "1")
+
+    with pytest.warns(UserWarning, match="Legitimization"):
+        classifier = fit(df, features, effective, _ENABLEMENT_ONLY, specialized_advice_hazards=_SPECIALIZED_ADVICE)
+    save(classifier, tmp_path)
+
+    thresholds = json.loads((tmp_path / "thresholds.json").read_text())
+    skipped_cells = thresholds["legitimization"]
+    assert skipped_cells, "fixture must produce at least one skipped legitimization cell"
+    for hazard, cell in skipped_cells.items():
+        assert cell["status"] == "skipped"
+        assert cell["nonzero_threshold"] is None, hazard
+        assert cell["high_threshold"] is None, hazard
+        assert cell["threshold_metrics"] == {}, hazard
+
+    stored = dict(np.load(tmp_path / "heads.npz"))
+    for hazard in skipped_cells:
+        for head_type in ("nonzero", "high"):
+            prefix = f"legitimization__{hazard}__{head_type}__"
+            present = {key[len(prefix):] for key in stored if key.startswith(prefix)}
+            assert present == {"mean", "scale", "status"}, (hazard, head_type, present)
+
+    # Enablement fit normally in this fixture, so its cells are the control:
+    # the same keys that must be absent above must be present here.
+    for hazard, cell in thresholds["enablement"].items():
+        assert cell["status"] == "fit"
+        assert cell["nonzero_threshold"] is not None
+        prefix = f"enablement__{hazard}__nonzero__"
+        present = {key[len(prefix):] for key in stored if key.startswith(prefix)}
+        assert present == {"mean", "scale", "coef", "intercept", "center_mean", "status"}
+
+    reloaded = load(tmp_path)
+    for (component, hazard), cell in reloaded.cells.items():
+        if cell.status != "skipped":
+            continue
+        assert cell.nonzero_threshold is None
+        assert cell.high_threshold is None
+        assert cell.nonzero_head.coef is None
+        assert cell.nonzero_head.center_mean is None
+        with pytest.raises(UnavailableOperationError):
+            cell.nonzero_head.predict_proba(np.zeros((1, features["legitimization"].shape[1])))

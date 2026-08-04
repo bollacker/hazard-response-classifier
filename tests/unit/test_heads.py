@@ -16,6 +16,7 @@ import pytest
 
 from hazard_classifier.heads import (
     BinaryHead,
+    UnavailableOperationError,
     centered_probability,
     fit_binary_head,
     logit,
@@ -116,12 +117,14 @@ def test_row_set_passed_in_determines_mean_scale_not_hazard_awareness() -> None:
     assert not np.array_equal(full_head.scale, excluded_head.scale)
 
 
-def test_degenerate_single_class_labels_produce_skipped_constant_head() -> None:
-    """D-5: a single-class label vector is never fit with logistic
-    regression -- it is a weighted-mean constant substitution, `status`
-    'skipped'. `predict_proba` returns that constant for any input, and
-    `predict_proba_centered` collapses to exactly 0.5 everywhere because the
-    center mean *is* the constant (logit(p) - logit(p) == 0).
+def test_degenerate_single_class_labels_produce_an_unavailable_head() -> None:
+    """D-45 (superseding D-5): a single-class label vector cannot be fit, so
+    the head is marked unavailable and carries **no** parameters. D-5's
+    weighted-mean constant substitution is gone -- serving one raises rather
+    than returning an invented probability.
+
+    `mean`/`scale` survive because standardization is computed before the
+    degeneracy check and describes the training features either way.
     """
     y_all_ones = np.ones(8, dtype=int)
     head = fit_binary_head(_X, y_all_ones, np.ones(8))
@@ -129,11 +132,15 @@ def test_degenerate_single_class_labels_produce_skipped_constant_head() -> None:
     assert head.status == "skipped"
     assert head.coef is None
     assert head.intercept is None
-    assert head.constant_probability == pytest.approx(1.0)
+    assert head.center_mean is None
+    assert not hasattr(head, "constant_probability")
+    assert head.mean.shape == (_X.shape[1],)
 
     probe = np.array([[1.0, 2.0], [-3.0, 9.0]])
-    assert np.array_equal(head.predict_proba(probe), np.array([1.0, 1.0]))
-    assert np.allclose(head.predict_proba_centered(probe), [0.5, 0.5])
+    with pytest.raises(UnavailableOperationError, match="never fit"):
+        head.predict_proba(probe)
+    with pytest.raises(UnavailableOperationError):
+        head.predict_proba_centered(probe)
 
 
 def test_save_load_round_trip_gives_bit_identical_predictions(tmp_path) -> None:
@@ -153,16 +160,25 @@ def test_save_load_round_trip_gives_bit_identical_predictions(tmp_path) -> None:
 
 
 def test_save_load_round_trip_for_skipped_head(tmp_path) -> None:
+    """D-45: the artifact stores nothing a skipped head could be served from.
+    The stored key set is asserted exactly -- a regression that reintroduced
+    a placeholder (`NaN` coef, a constant probability) would put a value back
+    into `heads.npz` that D-3/D-11 exist to stop anyone reading.
+    """
     head = fit_binary_head(_X, np.zeros(8, dtype=int), np.ones(8))
     assert head.status == "skipped"
 
+    assert set(head.to_arrays()) == {"mean", "scale", "status"}
+
     archive_path = tmp_path / "skipped_head.npz"
     np.savez(archive_path, **head.to_arrays())
-    reloaded = BinaryHead.from_arrays(dict(np.load(archive_path)))
+    stored = dict(np.load(archive_path))
+    assert set(stored) == {"mean", "scale", "status"}
 
+    reloaded = BinaryHead.from_arrays(stored)
     assert reloaded.status == "skipped"
     assert reloaded.coef is None
     assert reloaded.intercept is None
-    assert reloaded.constant_probability == pytest.approx(0.0)
-    probe = np.array([[1.0, 1.0]])
-    assert np.array_equal(reloaded.predict_proba(probe), head.predict_proba(probe))
+    assert reloaded.center_mean is None
+    with pytest.raises(UnavailableOperationError):
+        reloaded.predict_proba(np.array([[1.0, 1.0]]))

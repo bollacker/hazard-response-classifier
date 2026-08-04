@@ -429,8 +429,9 @@ Steps:
    from D-5's degeneracy-driven `"skipped"` status below — a not-required
    cell simply never exists; it is not present-and-rejected.
 
-   **Degenerate components are fit-but-marked-skipped, not omitted (locked,
-   `DECISIONS.md` D-5, amended per critique DI-C1):** each `BinaryHead` fit
+   **Degenerate components are marked unavailable, not substituted (locked,
+   `DECISIONS.md` D-45, superseding D-5; D-5's amendment per critique DI-C1
+   survives in the trigger below):** each `BinaryHead` fit
    (nonzero and high, per component) is checked for label degeneracy —
    whether its binary label (`y > 0` or `y == 2`) is constant across **every**
    training row surviving D-1's holdout exclusion and D-4's empty/echo-only
@@ -444,11 +445,36 @@ Steps:
    `(component, hazard)` cell for that component is recorded as **skipped**
    (not fit) together — never selectively — per §4's artifact schema, and
    `hrc-predict` must consult that marker and refuse to score against a
-   skipped cell (see §6's fail-closed note, D-3, D-11) rather than silently
-   using the degenerate parameters. In practice this requires an entire
-   component's training labels to be constant across the whole corpus (e.g.
-   every response scored Enablement 0) — expected to be rare, not the routine
-   per-hazard event a zero-own-row reading would suggest.
+   skipped cell (see §6's fail-closed note, D-3, D-11). In practice this
+   requires an entire component's training labels to be constant across the
+   whole corpus (e.g. every response scored Enablement 0) — expected to be
+   rare, not the routine per-hazard event a zero-own-row reading would
+   suggest.
+
+   **No substitute is created for a degenerate head (locked, `DECISIONS.md`
+   D-45, superseding D-5).** D-5 had the degenerate head fall back to a
+   constant-probability substitute (the weighted mean of its own constant
+   label), which was then fitted, serialized, and never served — the
+   `"skipped"` marker existed precisely to stop anyone reading it. D-45
+   reverses that: an unfittable head produces **no** coefficients, **no**
+   constant probability, and **no** centering mean. Three consequences follow
+   directly and are specified here rather than left to the implementation:
+
+   - **The threshold search does not run for a skipped cell.** D-5's DR-6
+     note called this "wasted, not incorrect, work"; with no probability to
+     search over it is no longer possible, so `nonzero_threshold`,
+     `high_threshold`, and `threshold_metrics` are recorded as null/empty for
+     a skipped cell (§4). Nothing reads them — D-3/D-11 reject the cell on
+     `status` first.
+   - **Serving an unavailable head raises rather than returning a number.**
+     `BinaryHead.predict_proba` on a `"skipped"` head is a programming error,
+     not a scoring path: D-3 and D-11 guarantee predict-time code checks
+     `status` before it gets there, so reaching it means that check was
+     bypassed. Failing loudly is what makes the guarantee testable.
+   - **The cell entry still exists, with `status: "skipped"`.** The marker is
+     unchanged and remains the thing D-3/D-11 consult. An unfittable-but-
+     required cell must stay distinguishable from a not-required cell, which
+     is absent entirely (D-18, below).
 
    **A wholly-skipped component is gated at train time, not left to serve
    time (locked, `DECISIONS.md` D-28):** because "skipped" is a whole-component
@@ -499,10 +525,12 @@ models/v1/
 ├── manifest.json      # versions, hyperparams, embedding model id+revision, hashes,
 │                      #   holdout_seed_prompt_ids (D-13, [] if no holdout reserved),
 │                      #   skipped_components (D-28, [] normally)
-├── heads.npz          # per (component,hazard): mean, scale, coef, intercept,
-│                      #   center_mean for nonzero & high heads
+├── heads.npz          # per (component,hazard): mean, scale, status for nonzero
+│                      #   & high heads, plus coef, intercept, center_mean when
+│                      #   status == "fit" (absent when "skipped" — D-45)
 ├── thresholds.json    # per (component,hazard): nonzero & high thresholds,
-│                      #   plus a "status": "fit" | "skipped" field
+│                      #   plus a "status": "fit" | "skipped" field; thresholds
+│                      #   are null and metrics {} when "skipped" (D-45)
 └── rules.json         # hazard→family map (trained hazards only) + rule constants
 ```
 
@@ -530,17 +558,26 @@ models/v1/
   numpy+JSON avoids pickle-security and sklearn-version-lock concerns.
 - The BGE model itself is **referenced by id + revision**, not vendored; the
   manifest pins the exact revision so scoring uses identical embeddings.
-- **Per-cell fit/skipped marker (locked, `DECISIONS.md` D-5, amended per
-  critique DI-C1):** every **enumerated** `(component, hazard)` entry in
-  `thresholds.json` carries a `status` field — `"fit"` or `"skipped"`.
-  `"skipped"` is set on **every** hazard cell of a component together, when
-  that component's nonzero or high label is constant across all surviving
-  training rows pooled across hazards (the toy's actual
-  constant-probability-substitution trigger; never a per-hazard zero-row
-  condition — see D-5's amendment). This is the only schema addition needed
-  to distinguish the two cases; `heads.npz` still stores parameters for
-  skipped cells (the substitution values), it is `thresholds.json`'s `status`
-  field that predict-time code must check before using them (§6, D-3).
+- **Per-cell fit/skipped marker (locked, `DECISIONS.md` D-45 superseding D-5;
+  D-5's DI-C1 amendment survives in the trigger):** every **enumerated**
+  `(component, hazard)` entry in `thresholds.json` carries a `status` field —
+  `"fit"` or `"skipped"`. `"skipped"` is set on **every** hazard cell of a
+  component together, when that component's nonzero or high label is constant
+  across all surviving training rows pooled across hazards (never a per-hazard
+  zero-row condition — see D-5's amendment). `thresholds.json`'s `status`
+  field is what predict-time code must check (§6, D-3), and it remains the
+  marker D-3/D-11's fail-closed guarantees rest on.
+
+  **A skipped cell carries no parameters (D-45).** `heads.npz` stores no
+  `coef`, no `intercept`, no `constant_probability`, and no `center_mean` for
+  a skipped cell's heads — only the `mean`/`scale` computed before the
+  degeneracy check, plus `status`. `thresholds.json` records
+  `nonzero_threshold` and `high_threshold` as `null` and `threshold_metrics`
+  as `{}`, because the threshold search cannot run without probabilities to
+  search over. Under D-5 these fields held substitute values that existed
+  only to be refused; the artifact no longer carries a value nobody may read.
+  The `constant_probability` field is **removed from the format**, not
+  retained-and-nulled.
   **Known limit, documented not fixed (locked, `DECISIONS.md` D-5's DI-N3
   note):** `status: "fit"` does not distinguish which of §3 step 4's two
   threshold regimes (D-2's `n_own >= 5` cliff — hazard-specific vs.

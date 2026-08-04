@@ -1,8 +1,14 @@
-# Release 1.1 proposed queue
+# Release 1.1 queue
 
-Status: proposed. This is the detailed phased backlog for Release 1.1.
-`STATUS.md` remains the live queue. Nothing here amends a locked decision or
-authorizes implementation.
+**Status: approved** (Kurt, 2026-08-04; Riki's concurrence assumed on Kurt's
+direction, not confirmed on record — see `STATUS.md`). This is the phased
+backlog for Release 1.1 and it **authorizes implementation** of the phases
+below, in the order given, subject to each PR's own entry conditions.
+
+`STATUS.md` remains the live queue; this document is the plan its item 4
+executes. Nothing here amends a decision on its own — an amendment still goes
+through `DECISIONS.md`, and `SCIENCE.md` still governs any behavioral
+question.
 
 ## Release outcome
 
@@ -28,8 +34,10 @@ Before implementation:
 2. approve and record every required amendment in `DECISIONS.md`; and
 3. update `ARCHITECTURE.md` with the approved design before changing code.
 
-`SCIENCE.md` defines required behavior. `DECISIONS.md` governs implementation
-until amended.
+`SCIENCE.md` defines required behavior. `ARCHITECTURE.md` and `PLAN.md` carry
+the implementation specifications; `DECISIONS.md` is provenance, not authority
+(`META_PLAN.md` §1.1), so cite the specification that absorbed a decision
+rather than the entry itself.
 
 ## Rules for every PR
 
@@ -64,8 +72,12 @@ without changing current scores.
 - Make the pipeline control order and data passing without containing
   scientific decision logic.
 - Record all selected implementations and versions in the evaluator artifact.
-- Wrap the current decoder, L model, E model, and integration rules as the
-  first working implementations.
+- Wrap the current decoder and integration rules as the first working
+  implementations.
+- Wrap the current L and E models as the first **partial** implementations:
+  two binary heads cannot produce a three-class multinomial, so they report
+  `distribution=None` rather than a synthesized one (`ARCHITECTURE.md` §4).
+  PR 5 replaces them with the first working implementation.
 - Preserve current prompt-repetition and disclaimer behavior as partial.
 - Add visible pass-through placeholders for hazard, narrative, and refusal
   detection.
@@ -76,6 +88,8 @@ without changing current scores.
 
 - Every component can be replaced without editing another component.
 - Placeholders pass through without creating judgments.
+- The wrapped L/E models report `partial` and `distribution=None`; nothing
+  synthesizes a distribution from the two binary heads.
 - IDs and the complete carried record survive the full pipeline.
 - The same inputs produce unchanged current text, features, scores,
   probabilities, labels, and failures.
@@ -144,7 +158,8 @@ evaluate every hazard actually supplied or detected.
 - Multiple hazards receive separate provisional and final records.
 - One violating hazard makes the overall result violating.
 - Privacy and Sexual Content never require Legitimization.
-- Cross-hazard completeness rules are applied in final integration.
+- Hazard detection's misses are reported as such: no downstream rule
+  compensates for a hazard it fails to return (`SCIENCE.md` §Hazard detection).
 
 ## PR 4 — Narrative, refusal, and disclaimer detection
 
@@ -249,7 +264,7 @@ assembled evaluator works.
 - Use the L/E judgments supplied by the models; do not judge the response's
   meaning again.
 - Apply the fixed empty-response, prompt-only, applicability, disclaimer,
-  completeness, and failure rules in `SCIENCE.md`.
+  and failure rules in `SCIENCE.md`.
 - Produce final per-hazard L/E values.
 - Apply the correct L/E-to-result table for each hazard family.
 - Produce a per-hazard violating or non-violating result, or a failure.
@@ -285,8 +300,27 @@ assembled evaluator works.
   and approved success criteria exist.
 - Every reported benchmark metric carries an uncertainty estimate and the
   method that produced it (`SCIENCE.md` §Evidence and outputs, Estimability).
-- **Proposed; requires agreement from Riki and Kurt:** before a model is
-  promoted to staging or assigned a release point version, publish its
-  standalone, version-specific limitations document. Pre-staging prototypes
-  would be exempt, but could not make unsupported production,
-  scientific-success, or quality claims.
+- **Locked as [D-47](DECISIONS.md#d-47)** (Kurt, 2026-08-03; Riki's
+  concurrence assumed on Kurt's direction, not confirmed on record). Before a
+  model is promoted to staging or assigned a release point version, publish its
+  standalone, version-specific limitations document. Three narrowings are part
+  of the decision:
+
+  1. **The pre-staging exemption has a floor.** A prototype is exempt from
+     maintaining a separate versioned document, not from disclosure: it must
+     still state known statistical and validity limitations inline in its
+     README, as D-2 and D-8 require of the current baseline. Pre-staging
+     prototypes still cannot make unsupported production, scientific-success,
+     or quality claims.
+  2. **Required contents are tied to existing rules**, so the document cannot
+     be satisfied by generalities. It must enumerate every component reported
+     as *not evaluated* under `SCIENCE.md` §Evidence and outputs — for Release
+     1.1, the hazard, narrative, and refusal placeholders — and state, for
+     every published metric, the uncertainty estimate and method the
+     Estimability paragraph requires.
+  3. **It discharges D-2 and D-8's disclosure obligation**, via whichever
+     artifact applies: the README before staging, the limitations document
+     after.
+
+  This exit criterion is the specification that carries D-47; the ledger entry
+  records the reasoning and the rejected alternative.

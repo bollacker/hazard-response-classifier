@@ -75,6 +75,42 @@ class WhollySkippedEnablementError(RuntimeError):
     caller could usefully serve.
     """
 
+
+class BlankOrdinalGroundTruthError(Exception):
+    """`DECISIONS.md` D-46 (superseding D-29), `PLAN.md` §3 step 1: a training
+    row that survives D-1/D-4/D-18's filtering should carry a real ordinal
+    label, so a blank `enablement_value`/`legitimization_value` there is a data
+    defect. `fit` raises this naming the offending rows, rather than letting
+    Python's `ValueError: invalid literal for int() with base 10: ''` surface
+    from the `int()` conversion in step 4.
+
+    Deliberately mirrors `BlankGroundTruthError`'s contract on the
+    `hrc-evaluate` side (D-26) -- same defect, same abort-the-run consequence,
+    a purpose-built error either way. It is a *separate* class because the two
+    fire on different row populations (D-1/D-4/D-18's fit filtering here,
+    D-14's hard-fail exclusion there), so a caller catching one should never
+    silently catch the other.
+    """
+
+
+def _is_blank(value: object) -> bool:
+    return str(value).strip() == ""
+
+
+_MAX_REPORTED_UIDS = 20
+
+
+def _format_uid_list(uids: np.ndarray) -> str:
+    """Render offending `prompt_uid`s for an error message, truncated so a
+    defect spanning a whole large CSV still produces a readable error rather
+    than a screenful of ids.
+    """
+    shown = [str(uid) for uid in uids[:_MAX_REPORTED_UIDS]]
+    listed = ", ".join(shown)
+    remaining = len(uids) - len(shown)
+    return f"{listed} (and {remaining} more)" if remaining > 0 else listed
+
+
 _COMPONENTS: tuple[Component, ...] = ("enablement", "legitimization")
 _GROUND_TRUTH_COLUMN: dict[Component, str] = {
     "enablement": "enablement_value",
@@ -85,18 +121,21 @@ _OWN_HAZARD_MIN_ROWS = 5
 
 @dataclass(frozen=True)
 class Cell:
-    """One fitted `(component, hazard)` cell (`PLAN.md` §4 `thresholds.json`
-    row + `heads.npz` entry). `status` is `"skipped"` whenever **either**
-    head is (D-5) -- both heads still hold a real (if degenerate-constant)
-    value, since `PLAN.md` §3 step 4 / `DECISIONS.md` D-5's DR-6 note says
-    the threshold search still runs on a skipped cell (wasted, not
-    incorrect, work) rather than being special-cased away.
+    """One `(component, hazard)` cell (`PLAN.md` §4 `thresholds.json` row +
+    `heads.npz` entry). `status` is `"skipped"` whenever **either** head is.
+
+    On a skipped cell neither head was fit, so there is nothing to threshold:
+    `nonzero_threshold`/`high_threshold` are `None` and `threshold_metrics`
+    is empty (`DECISIONS.md` D-45, superseding D-5 -- which kept a constant
+    substitute and ran the search against it anyway, "wasted, not incorrect,
+    work" in its own DR-6 note). Predict-time code never reads these: D-3 and
+    D-11 reject the cell on `status` first.
     """
 
     nonzero_head: BinaryHead
     high_head: BinaryHead
-    nonzero_threshold: float
-    high_threshold: float
+    nonzero_threshold: float | None
+    high_threshold: float | None
     status: CellStatus
     threshold_metrics: dict[str, float]
 
@@ -315,7 +354,24 @@ def fit(
 
         x_fit = np.asarray(component_features[component])[fit_row_mask]
         hazard_fit = hazard_values[fit_row_mask]
-        y_fit_raw = df[_GROUND_TRUTH_COLUMN[component]].to_numpy(dtype=object)[fit_row_mask]
+        ground_truth_column = _GROUND_TRUTH_COLUMN[component]
+        y_fit_raw = df[ground_truth_column].to_numpy(dtype=object)[fit_row_mask]
+
+        # DECISIONS.md D-46 / PLAN.md §3 step 1: these rows survived
+        # D-1/D-4/D-18's filtering, so every one of them should carry a real
+        # ordinal label. Name the offenders instead of letting int('') raise a
+        # bare ValueError that says nothing about which rows are at fault.
+        blank_mask = np.asarray([_is_blank(value) for value in y_fit_raw], dtype=bool)
+        if blank_mask.any():
+            offending_uids = df["prompt_uid"].astype(str).to_numpy()[fit_row_mask][blank_mask]
+            raise BlankOrdinalGroundTruthError(
+                f"{len(offending_uids)} training row(s) have a blank "
+                f"'{ground_truth_column}' but are required for the "
+                f"'{component}' component (DECISIONS.md D-46). A row surviving "
+                "the D-1/D-4/D-18 exclusions must carry a real 0/1/2 label. "
+                f"Offending prompt_uid(s): {_format_uid_list(offending_uids)}"
+            )
+
         y_fit = np.array([int(value) for value in y_fit_raw], dtype=np.int8)
 
         component_cells_skipped: list[bool] = []
@@ -329,15 +385,26 @@ def fit(
             )
             component_cells_skipped.append(status == "skipped")
 
-            nz_centered = nonzero_head.predict_proba_centered(x_fit)
-            hi_centered = high_head.predict_proba_centered(x_fit)
-            subset_mask = _own_hazard_or_pooled_mask(hazard_fit, y_fit, target_hazard)
+            if status == "skipped":
+                # DECISIONS.md D-45 / PLAN.md §3 step 4: with no fitted head
+                # there are no probabilities to search over, so the threshold
+                # search does not run. D-5 ran it anyway against the constant
+                # substitute -- "wasted, not incorrect, work" in its own DR-6
+                # note; removing the substitute removes the possibility too.
+                # Nothing reads these: D-3/D-11 reject the cell on `status`.
+                nonzero_threshold: float | None = None
+                high_threshold: float | None = None
+                threshold_metrics: dict[str, float] = {}
+            else:
+                nz_centered = nonzero_head.predict_proba_centered(x_fit)
+                hi_centered = high_head.predict_proba_centered(x_fit)
+                subset_mask = _own_hazard_or_pooled_mask(hazard_fit, y_fit, target_hazard)
 
-            nonzero_threshold, high_threshold, threshold_metrics = optimize_ordinal_thresholds(
-                y=y_fit[subset_mask],
-                centered_nonzero=nz_centered[subset_mask],
-                centered_high=hi_centered[subset_mask],
-            )
+                nonzero_threshold, high_threshold, threshold_metrics = optimize_ordinal_thresholds(
+                    y=y_fit[subset_mask],
+                    centered_nonzero=nz_centered[subset_mask],
+                    centered_high=hi_centered[subset_mask],
+                )
 
             cells[(component, target_hazard)] = Cell(
                 nonzero_head=nonzero_head,
@@ -359,7 +426,7 @@ def fit(
                 raise WhollySkippedEnablementError(
                     "Enablement's nonzero/high label is single-class across every "
                     "training row surviving the D-1/D-4 exclusions (DECISIONS.md "
-                    "D-5) -- every hazard's Enablement cell would be status="
+                    "D-45) -- every hazard's Enablement cell would be status="
                     "'skipped', and Enablement is required for every hazard "
                     "(D-18), so this training run produces no usable artifact."
                 )
@@ -371,7 +438,7 @@ def fit(
                 warnings.warn(
                     "Legitimization's nonzero/high label is single-class across "
                     "every training row surviving the D-1/D-4/D-18 exclusions "
-                    "(DECISIONS.md D-5) -- every hazard's Legitimization cell is "
+                    "(DECISIONS.md D-45) -- every hazard's Legitimization cell is "
                     "status='skipped'. This artifact is only usable for "
                     "enablement-only-hazard workloads (D-18); loading it will "
                     "warn again at hrc-predict/hrc-evaluate time.",
@@ -519,25 +586,24 @@ def load(model_dir: str | Path) -> HazardResponseClassifier:
         for hazard, cell_json in by_hazard.items():
             heads: dict[str, BinaryHead] = {}
             for head_type in _HEAD_TYPES:
-                fields = {
-                    "mean",
-                    "scale",
-                    "coef",
-                    "intercept",
-                    "constant_probability",
-                    "center_mean",
-                    "status",
-                }
+                # D-45 made the stored field set depend on `status`: a skipped
+                # head has no fitted parameters to write, so asking for them
+                # here would KeyError. `status` itself is always present, and
+                # `BinaryHead.array_fields` derives the rest from it.
+                status_key = _head_array_key(component, hazard, head_type, "status")
+                head_status = str(head_arrays[status_key][0])
                 arrays = {
                     field: head_arrays[_head_array_key(component, hazard, head_type, field)]
-                    for field in fields
+                    for field in BinaryHead.array_fields(head_status)
                 }
                 heads[head_type] = BinaryHead.from_arrays(arrays)
+            nonzero_threshold = cell_json["nonzero_threshold"]
+            high_threshold = cell_json["high_threshold"]
             cells[(component, hazard)] = Cell(
                 nonzero_head=heads["nonzero"],
                 high_head=heads["high"],
-                nonzero_threshold=float(cell_json["nonzero_threshold"]),
-                high_threshold=float(cell_json["high_threshold"]),
+                nonzero_threshold=None if nonzero_threshold is None else float(nonzero_threshold),
+                high_threshold=None if high_threshold is None else float(high_threshold),
                 status=cell_json["status"],
                 threshold_metrics=dict(cell_json["threshold_metrics"]),
             )
@@ -696,10 +762,6 @@ def score_row(
 
 
 # --- `hrc-evaluate` metric assembly (`PLAN.md` §5, `VERIFICATION.md` IS-8) ---
-
-
-def _is_blank(value: object) -> bool:
-    return str(value).strip() == ""
 
 
 class BlankGroundTruthError(Exception):

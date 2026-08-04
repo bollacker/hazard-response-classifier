@@ -60,6 +60,140 @@ D-37 remain the record of the implemented baseline.
 Provenance: Joint Riki–Kurt Release 1.1 science-contract review meeting,
 2026-08-03; canonical requirements recorded in this task at Riki's direction.
 
+## Further dispositions from the queue item 1 review (2026-08-03)
+
+Also not new decisions, and **not** part of the seven requirements the joint
+meeting confirmed. These follow from requirements already written in
+`../SCIENCE.md`; the review only recorded which baseline entries they displace.
+The sub-review numbers are `STATUS.md` queue item 1's.
+
+- **Three-class L/E outputs (1.8).** `../SCIENCE.md` §Legitimization Scoring
+  and §Enablement Scoring require each model to return a three-class
+  multinomial distribution over L0/L1/L2 and E0/E1/E2. The baseline's
+  two independently-fit binary heads plus a threshold search cannot produce
+  one, so the mechanism does not carry: **D-7, D-9, and D-10 are
+  baseline-only**, as is **D-16's retained-head-probability half**. D-2's and
+  D-8's statistical warts are properties of that same fitting mechanism and
+  are baseline-only with it. Their README disclosure obligation is now
+  discharged by [D-47](#d-47), which moves the gate to staging without
+  weakening the requirement, so both entries are fully retired. Which
+  three-class structure replaces the heads is queue item 2's work and is
+  blocked on approved ground truth; nothing here selects it.
+- **Full result record (1.5).** `../SCIENCE.md` §Evidence and outputs and
+  §Final integration require the result to carry texts, component facts and
+  errors, provisional and final judgments, hazards, and provenance. The
+  narrower baseline output schemas this displaces — D-17, D-22, D-25, and
+  D-31 — were already marked baseline-only, so no entry still in force
+  contradicts preserving the full record. D-32 is compatible: a fuller record
+  is a superset of its single `rule_reasons` string, and its own disposition
+  belongs to 1.7. D-21's side-output is a separate question (1.10). The
+  canonical-record *design* — one carried record with purpose-specific
+  external views — is an architecture proposal parked in `STATUS.md` queue
+  item 3, not a disposition here.
+
+- **Model judgments separated from fixed final rules (1.7).** With C-1
+  approved, `../SCIENCE.md` §Final integration is authoritative: the L and E
+  models judge what the response means and supplies, and the final step
+  applies only the fixed phases, tables, rollup, and failure handling. Three
+  baseline entries move:
+  - **D-20** — the *principle* carries. `../SCIENCE.md` phase D2 and
+    §Evidence and outputs both require that a missing required judgment
+    returns a failure rather than a non-violating result, which is D-20's
+    fail-closed rule stated at the 1.1 level. Its **mechanism is
+    baseline-only**: `(component, hazard)` cells and a `thresholds.json`
+    `status` field are two-head artifacts, and the 1.1 failure unit is a
+    hazard, not a cell.
+  - **D-32** — **baseline-only.** Its single `rule_reasons` string exists to
+    explain D-4's forced-zero short-circuit, and D-4 is already baseline-only.
+    Under the approved split the fixed phases generate their own reasons; what
+    shape those take in the record is item 3's.
+  - **D-35** — the *principle* carries. `../SCIENCE.md` §Modular pipeline
+    requires one shared embedding pass, which is what D-35 chose. Its concrete
+    `build_component_features` signature was left to architecture and is now
+    **baseline-only** (see the item 3 disposition below).
+- **Blank payload and prompt repetition (1.3); Specialized Advice disclaimers
+  (1.4).** `../SCIENCE.md` §Per-hazard finalization phases B1, B2, and C carry
+  these, and D-4 and D-19 were already marked baseline-only. Both sub-reviews
+  close with the amendment's approval; no further entry moves.
+
+- **Metric contract (1.9).** `../SCIENCE.md` §Legitimization Scoring and
+  §Enablement Scoring require each of L0/L1/L2 and E0/E1/E2 to be evaluated
+  separately and treated as equally important, and §Evidence and outputs
+  requires an uncertainty estimate with every reported metric. The baseline's
+  contract — exact-match, high-head AUC, and QWK over two binary heads —
+  cannot establish per-outcome success for three classes and reports bare
+  point estimates. **D-13, D-15, D-16's metric half, and D-33 are
+  baseline-only.** The approved criteria themselves are an external input from
+  the Standards team; they gate *claiming* a component scientifically
+  successful, not this displacement. D-34 remains evidence that the pipeline
+  ran on real data and is not a quality finding.
+- **Continuous score (1.10).** **D-21 is baseline-only.** Not a naming change:
+  `v14_overall_unsafe_score` is computed from the two binary heads' centered
+  probabilities, and 1.8 made that mechanism baseline-only, so Release 1.1
+  cannot compute the quantity at all. Reconstructing an equivalent from the
+  three-class distributions would be a new quantity under an old name, shipped
+  without the approved target and threshold `../SCIENCE.md` §Continuous score
+  requires — and under retired `unsafe` terminology. The score is deferred,
+  not deleted: §Continuous score already permits an approved continuous
+  violation score, which would return as a new joint decision derived from the
+  three-class distributions, not as a revival of D-21.
+
+- **Embedding boundary and artifact format (retired queue item 3).**
+  `ARCHITECTURE.md` §8 restates D-35's one-shared-pass principle for a pipeline
+  whose stage boundaries differ from the baseline's, so the principle carries
+  but `build_component_features`'s two-component signature does not — it is
+  **baseline-only**. **D-36** is baseline-only for the same reason: pooling
+  becomes a replaceable strategy behind that boundary because representation
+  and pooling are named comparison axes for queue item 2, so the architecture
+  must not hard-code mean-only. **D-37** splits: its no-pickle, no-`joblib`
+  constraint is a security choice independent of model structure and
+  **carries**, while whether `.npz` + JSON remains sufficient for the model
+  payload follows from the structure item 2 selects.
+
+Provenance: queue item 1 sub-reviews 1.3 through 1.10, executed 2026-08-03.
+These record displacement only. Reusing any baseline choice for Release 1.1
+still requires a new joint decision.
+
+Approval state: C-1's model/integrator split has agreement from both Riki
+(who directed it, recorded in `critiques/2026-08-02-science-contract-branch.md`)
+and Kurt (2026-08-03).
+
+Three further calls were approved by Kurt on 2026-08-03 and are **in force
+under an assumed concurrence**: Kurt directed on 2026-08-03 that Riki's
+agreement be assumed so dependent work could proceed. Riki's confirmation is
+not on record, so this is not the two-party agreement `META_PLAN.md` §1.1
+describes — it is Kurt's direction to proceed as though it were, recorded
+plainly so the distinction survives. The dispositions resting on each are
+listed so a later dissent has a clear reversal scope:
+
+| In force under assumed concurrence | Dispositions resting on it |
+|---|---|
+| `../SCIENCE.md`'s blank-payload and phase-C amendment | 1.3, 1.4, and 1.7's D-20/D-32/D-35 moves |
+| C-6's limitations-document rule, with the pre-staging disclosure floor — now **[D-47](#d-47)** | 1.9's release-claim half; D-2 and D-8's disclosure obligation |
+| D-21 dropped from Release 1.1 output | 1.10 |
+
+C-6's rule became **D-47** because it states a repository documentation
+obligation that no specification carries; its `Approved by` line records the
+assumption rather than claiming Riki's agreement. The other two record
+displacement by requirements `../SCIENCE.md` already states and need no entry
+of their own.
+
+**One item to close on Riki's next review:** confirm these three. If any is
+rejected, the reversal scope is the table above, and `../SCIENCE.md`'s phase B1
+plus the final-L/E line under §Evidence and outputs revert together.
+
+**Recorded assumption (Kurt, 2026-08-03): label sparsity is not a design
+driver.** Release 1.1 planning assumes the Standards team supplies enough
+human ground truth that per-class sparsity edge cases are unlikely. This is
+why 1.9 closed without waiting for a minimum per-class evaluation-set size.
+It is an assumption, not a measured fact: the baseline's sparsity machinery
+— D-2's five-own-row threshold cliff and D-33's undefined-QWK null — is
+baseline-only under this assumption rather than proven unnecessary, and
+defensive handling of a degenerate population should not be removed from any
+1.1 implementation on the strength of it. If the delivered ground truth turns
+out thin in some class, this assumption is the thing that failed, and 1.9's
+metric dispositions are where to look first.
+
 ## Index
 
 **Absorbed into** names the specification that now carries the decision's
@@ -68,32 +202,45 @@ but in no specification — those are listed under "Absorption gaps" below.
 
 **Release 1.1** says whether the decision reaches past the baseline.
 *carried* — still applies. *baseline-only* — the 1.1 standard replaces it (see
-the scope note above). *under review* — binding today, queued for amendment at
-the `STATUS.md` item shown. *open* — needs a call.
+the two scope notes above). *under review* — binding today, queued for
+amendment at the `STATUS.md` item shown. *open* — needs a call.
+
+A row may carry two clauses when only part of an entry is displaced — D-2,
+D-8, and D-16 each have a fitting-mechanism half that the three-class
+requirement replaces and a second half (a documentation obligation, a metric
+contract) that is still in force. Read both clauses; the entry is not retired
+until neither remains.
+
+**Resolving the numbers in this column.** A bare `(item N)` is a live
+`STATUS.md` queue item. A decimal `(1.N)` is a sub-review of the Release 1.1
+science-to-decision review, which closed 2026-08-03 and is retired from the
+queue — its record is in `STATUS.md`'s Recently Completed entries for that
+date and in "Further dispositions from the queue item 1 review" above.
+Retired numbers are never reused, so both forms keep resolving.
 
 | # | Decision | Absorbed into | Release 1.1 |
 |---|---|---|---|
 | [D-1](#d-1) | Holdout-seed rows excluded from the fit | `PLAN.md` §3 step 4; `ARCHITECTURE.md` Artifact format | carried |
-| [D-2](#d-2) | In-sample threshold/centering bias preserved | `PLAN.md` §3 step 4, §8.2; `README.md` | under review (1.8, 1.9) |
-| [D-3](#d-3) | Fail closed on unknown/unfit cells | `PLAN.md` §6, §11.1 | baseline-only; module-capability half open (1.6) |
+| [D-2](#d-2) | In-sample threshold/centering bias preserved | `PLAN.md` §3 step 4, §8.2; `README.md` | baseline-only (mechanism 1.8; disclosure discharged by [D-47](#d-47)) |
+| [D-3](#d-3) | Fail closed on unknown/unfit cells | `PLAN.md` §6, §11.1 | baseline-only; module-capability half moved to item 3 |
 | [D-4](#d-4) | Empty/echo-only rows excluded from the fit | `PLAN.md` §3 step 4, §6 step 2 | baseline-only → `SCIENCE.md` §Final integration |
 | [D-5](#d-5) | Zero-row cells keep the constant-probability substitute | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | **superseded by [D-45](#d-45)** |
 | [D-6](#d-6) | CPU-only; determinism | `PLAN.md` §3 step 3, §8.1; `ARCHITECTURE.md` Module map | carried |
-| [D-7](#d-7) | Standardization stats unweighted per component | `PLAN.md` §2.3, §3 step 4 | under review (1.8) |
-| [D-8](#d-8) | `class_weight` / sample-weight wart documented | `PLAN.md` §3 step 4; `README.md` | under review (1.8, 1.9) |
-| [D-9](#d-9) | Ordinal monotonicity enforced | `PLAN.md` §3 step 4 | under review (1.8) |
-| [D-10](#d-10) | Monotonicity gate mechanism | `PLAN.md` §1.1, §2.3, §3 step 4 | under review (1.8) |
+| [D-7](#d-7) | Standardization stats unweighted per component | `PLAN.md` §2.3, §3 step 4 | baseline-only (1.8) |
+| [D-8](#d-8) | `class_weight` / sample-weight wart documented | `PLAN.md` §3 step 4; `README.md` | baseline-only (mechanism 1.8; disclosure discharged by [D-47](#d-47)) |
+| [D-9](#d-9) | Ordinal monotonicity enforced | `PLAN.md` §3 step 4 | baseline-only (1.8) |
+| [D-10](#d-10) | Monotonicity gate mechanism | `PLAN.md` §1.1, §2.3, §3 step 4 | baseline-only (1.8) |
 | [D-11](#d-11) | Predict-time check precedence | `PLAN.md` §6 | baseline-only |
 | [D-12](#d-12) | No `--cv` | `PLAN.md` §1.1, §5, §9, §10 | carried |
-| [D-13](#d-13) | Auto-partition by the recorded holdout split | `PLAN.md` §3 step 5, §4, §5 | under review (1.9) |
+| [D-13](#d-13) | Auto-partition by the recorded holdout split | `PLAN.md` §3 step 5, §4, §5 | baseline-only (1.9) |
 | [D-14](#d-14) | Hard-fail rows excluded from measurement | `PLAN.md` §5, §6 | baseline-only |
-| [D-15](#d-15) | Legitimization metrics exclude enablement-only rows | `PLAN.md` §5 | under review (1.9) |
-| [D-16](#d-16) | Retained head probabilities; high-head AUC | `PLAN.md` §5 | under review (1.8, 1.9) |
+| [D-15](#d-15) | Legitimization metrics exclude enablement-only rows | `PLAN.md` §5 | baseline-only (1.9) |
+| [D-16](#d-16) | Retained head probabilities; high-head AUC | `PLAN.md` §5 | baseline-only (head probabilities 1.8; metric contract 1.9) |
 | [D-17](#d-17) | Final-label positive class + output schema | `PLAN.md` §4, §5 | baseline-only → `SCIENCE.md` §Evidence and outputs |
 | [D-18](#d-18) | Legitimization not required for enablement-only hazards | `PLAN.md` §3 step 4, §4 | carried (`SCIENCE.md` §Final integration rule 3) |
 | [D-19](#d-19) | Business-rule stage between centering and thresholding | `PLAN.md` §5, §6 | baseline-only |
-| [D-20](#d-20) | Absent/invalid required cell fails closed | `PLAN.md` §6 step 3 | under review (1.7) |
-| [D-21](#d-21) | `v14_overall_unsafe_score` retained as a side-output | `PLAN.md` §1.1, §6 | open (1.10) |
+| [D-20](#d-20) | Absent/invalid required cell fails closed | `PLAN.md` §6 step 3 | fail-closed principle carried (`SCIENCE.md` phase D2); cell mechanism baseline-only (1.7) |
+| [D-21](#d-21) | `v14_overall_unsafe_score` retained as a side-output | `PLAN.md` §1.1, §6 | baseline-only (1.10); score deferred to `SCIENCE.md` §Continuous score |
 | [D-22](#d-22) | `hrc-predict` splits scored and hard-fail outputs | `PLAN.md` §6 | baseline-only |
 | [D-23](#d-23) | Family lookups read the frozen `rules.json` | `PLAN.md` §4, §6; `ARCHITECTURE.md` Artifact format | carried (compatible with configurable run scope) |
 | [D-24](#d-24) | `seed_prompt_id` required; ground-truth columns ignored | `PLAN.md` §2.1, §6 | baseline-only |
@@ -104,15 +251,16 @@ the `STATUS.md` item shown. *open* — needs a call.
 | [D-29](#d-29) | Natural error on an unconvertible blank ordinal label | — | **superseded by [D-46](#d-46)** |
 | [D-30](#d-30) | `is_safe_ground_truth` encodes exactly `"safe"`/`"unsafe"` | `PLAN.md` §2.1 | baseline-only |
 | [D-31](#d-31) | `score(rows)` never raises; per-row result entries | `PLAN.md` §11 item 5 | baseline-only |
-| [D-32](#d-32) | `rule_reasons` covers D-4's forced zero only | `PLAN.md` §6 | under review (1.7) |
-| [D-33](#d-33) | `qwk` reports `null` when undefined | `PLAN.md` §5 | under review (1.9) |
+| [D-32](#d-32) | `rule_reasons` covers D-4's forced zero only | `PLAN.md` §6 | baseline-only (1.7); reason-record shape → item 3 |
+| [D-33](#d-33) | `qwk` reports `null` when undefined | `PLAN.md` §5 | baseline-only (1.9) |
 | [D-34](#d-34) | IS-9 closed via a different real dataset | `VERIFICATION.md` (evidence record) | evidence only, not a quality claim (1.9) |
-| [D-35](#d-35) | One shared feature-building function | `ARCHITECTURE.md` Shared pipeline, CLI layer | under review (1.7, item 3) |
-| [D-36](#d-36) | Pooling is mean-only | `PLAN.md` §11 item 2; `ARCHITECTURE.md` Module map | under review (item 2) |
-| [D-37](#d-37) | `.npz` + JSON artifacts; no `joblib` | `PLAN.md` §11 item 4; `ARCHITECTURE.md` Artifact format | under review (item 3) |
+| [D-35](#d-35) | One shared feature-building function | `ARCHITECTURE.md` §8 | shared-pass principle carried; `build_component_features` signature baseline-only (item 3) |
+| [D-36](#d-36) | Pooling is mean-only | `PLAN.md` §11 item 2; `ARCHITECTURE.md` §8 | baseline-only (item 3); 1.1 pooling is a replaceable strategy, selected at item 2 |
+| [D-37](#d-37) | `.npz` + JSON artifacts; no `joblib` | `PLAN.md` §11 item 4; `ARCHITECTURE.md` §10 | no-pickle constraint carried; payload format follows item 2's structure |
 | D-38 – D-44 | *withdrawn 2026-08-03, never approved; numbers not reused* | — | — |
-| [D-45](#d-45) | No constant-probability substitute; unfittable = unavailable | *pending — `PLAN.md` §3/§4 still describe D-5* | carried; supersedes D-5 |
+| [D-45](#d-45) | No constant-probability substitute; unfittable = unavailable | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | carried; supersedes D-5 |
 | [D-46](#d-46) | Purpose-built error on an unconvertible blank ordinal label | `PLAN.md` §3 step 1 | carried; supersedes D-29 |
+| [D-47](#d-47) | Limitations document gates staging / release-version assignment | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 | carried; discharges D-2/D-8 disclosure |
 
 ### Absorption gaps
 
@@ -441,7 +589,8 @@ built** — that is IS-7's job, over the predict/evaluate pipeline.
 Date: 2026-07-23
 Status: **superseded-by [D-45](#d-45)** (2026-08-03). The constant-probability
 substitute is no longer created; an unfittable operation is marked unavailable.
-The code still implements D-5 until `STATUS.md` item 6 lands.
+D-45's code landed 2026-08-03, so nothing below describes current behavior —
+read this entry for the reasoning and the rejected alternatives only.
 Decision: `(component, hazard)` cells with zero training rows keep the toy's
 existing behavior — a constant-probability substitution that yields a
 degenerate 0.5-centered threshold search — but each such cell is explicitly
@@ -2866,12 +3015,33 @@ Riki's own, and Kurt accepted it directly on 2026-08-03. The reversal is a
 scientific change to how training handles an unfittable operation, so it is
 carried as its own numbered entry rather than as an in-place edit to D-5.
 
-Touches: `PLAN.md` §3 step 4 (cell enumeration), §4 (`thresholds.json`
-`status` and `constant_probability` fields); `ARCHITECTURE.md` Artifact
-format; `heads.py`, `model.py` — **requires a code change**: the substitute is
-currently fitted and serialized. Not yet absorbed into a specification;
-`PLAN.md` and `ARCHITECTURE.md` still describe D-5's behavior. Queued in
-`STATUS.md`.
+Touches: `PLAN.md` §3 step 4 (cell enumeration) and §4 (artifact format) —
+both **absorbed** 2026-08-03; `ARCHITECTURE.md` Artifact format
+(**absorbed**); `heads.py`, `model.py`.
+
+**Implemented 2026-08-03** (`STATUS.md` Recently Completed; retired queue
+item 6). Specifications were
+updated first, then the code. What landed, beyond the literal removal of the
+`constant_probability` field: `BinaryHead.predict_proba` now **raises**
+`UnavailableOperationError` on a `"skipped"` head rather than returning
+anything, and `center_mean` joins `coef`/`intercept` as `None` there — with no
+probability to center, it had no meaning either. Two consequences were found
+while implementing and are now specified rather than left implicit:
+
+1. **The threshold search cannot run for a skipped cell.** D-5 ran it against
+   the substitute and its own DR-6 note called that "wasted, not incorrect,
+   work"; removing the substitute removes the input, so `nonzero_threshold`
+   and `high_threshold` are `null` and `threshold_metrics` is `{}`. This is a
+   visible `thresholds.json` shape change.
+2. **`heads.npz`'s field set is now status-dependent** — a skipped head stores
+   only `mean`/`scale`/`status`. `load` reads `status` first and derives the
+   rest via `BinaryHead.array_fields`, since asking for absent keys would
+   `KeyError`.
+
+The `"skipped"` marker itself is unchanged, so D-3 and D-11's fail-closed
+guarantees rest on exactly what they always did. Artifacts written before this
+change carry the removed field and will not load; the baseline is pre-staging
+with no external consumer, so no migration path was built.
 
 Boundary: D-45 governs what training does when a fit is impossible. D-3
 governs what scoring does when it meets an unavailable operation.
@@ -2901,10 +3071,77 @@ the fit as a fourth D-4-style exclusion, which would hide a data defect rather
 than report it.
 
 Touches: `PLAN.md` §3 step 1 (**absorbed** — the blank-ordinal-ground-truth
-paragraph); `src/hazard_classifier/model.py` `fit` — **requires a code
-change**, unlike D-29, which ratified existing behavior. `tests/` needs a case
-asserting the new error names the offending rows. Queued in `STATUS.md`.
+paragraph); `src/hazard_classifier/model.py` `fit`; `cli/train.py`.
+
+**Implemented 2026-08-03** (`STATUS.md` Recently Completed; retired queue
+item 5). `fit` raises
+`BlankOrdinalGroundTruthError` naming the offending `prompt_uid`s, truncated
+past 20 so a wholly-blank column still yields a readable message. `cli/train.py`
+routes it through `_common.fatal`, because an error whose purpose is
+readability should not arrive as a traceback. The class is deliberately
+separate from `BlankGroundTruthError` (D-26's `hrc-evaluate` error): the two
+fire on different row populations, so a caller catching one must not silently
+catch the other. Scope is the point and is covered by tests: the error must
+stay silent on an enablement-only hazard's blank Legitimization label (D-18),
+on a holdout row (D-1), and on a D-4-excluded row — all three confirmed as
+forcing functions by sabotaging the check and watching them fail.
 
 Boundary: D-46 governs `hrc-train`'s error on a blank ordinal label. D-26
 governs `hrc-evaluate`'s handling of the same defect and is unchanged. D-30
 governs the separate `is_safe_ground_truth` column's encoding.
+
+<a id="d-47"></a>
+## D-47: A standalone limitations document gates staging and release-version assignment
+Date: 2026-08-03
+Status: locked
+Approved by: Kurt, 2026-08-03. **Riki's concurrence assumed on Kurt's
+direction (2026-08-03), not confirmed on record** — see the approval-state
+note at the top of this file. Originated as critique finding C-6 in
+`critiques/2026-08-02-science-contract-branch.md`.
+
+Decision: Before a model is promoted to staging or assigned a release point
+version, its standalone, version-specific limitations document must be
+published. Three narrowings are part of the decision, not commentary on it:
+
+1. **The pre-staging exemption has a floor.** A pre-staging prototype is
+   exempt from maintaining a separate versioned document, not from disclosure:
+   it must still state known statistical and validity limitations inline in
+   its `README.md`. Pre-staging prototypes may not make production,
+   scientific-success, or quality claims their evidence does not support.
+2. **Required contents are tied to rules that already exist**, so the document
+   cannot be discharged by generalities. It must enumerate every component
+   reported as *not evaluated* under `../SCIENCE.md` §Evidence and outputs —
+   for Release 1.1 that is the hazard, narrative, and refusal placeholders —
+   and state, for every published metric, the uncertainty estimate and the
+   method that produced it, per that section's Estimability paragraph.
+3. **It discharges D-2's and D-8's disclosure obligation**, through whichever
+   artifact applies: the `README.md` before staging, the limitations document
+   after. Those two entries required their statistical warts to be documented
+   rather than silently shipped; this decision says where that documentation
+   lives at each stage, and does not weaken the requirement.
+
+Rationale: C-6 found the as-built limitations record deleted while `README.md`
+still asserted it existed. The underlying question was whether a pre-staging
+prototype owes a full limitations inventory. Kurt's position was that it does
+not — the current baseline has not reached staging and is expected to be
+replaced — but the first draft of that position removed the disclosure
+entirely, which would have discarded D-2's and D-8's requirement rather than
+relocating it. Narrowing 1 is what separates the two: the gate moves to
+staging, the obligation does not disappear before it. Narrowing 2 exists
+because a limitations document that omits the placeholders shipping in 1.1
+would mislead by omission while satisfying the letter of the rule. Rejected
+alternative: requiring the standalone document at every stage, which was the
+status quo ante and which Kurt judged disproportionate for a prototype with no
+consumer.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit criteria (**absorbed**);
+`README.md` §Current baseline risks (satisfies narrowing 1 today); D-2 and
+D-8 (their disclosure obligation is discharged here, so both are now fully
+baseline-only); `STATUS.md` retired queue item 1.9.
+
+Boundary: D-47 governs *when* a limitations document is required and what it
+must contain. It does not define the per-outcome success criteria that decide
+whether a component may be called scientifically successful — those are an
+external input from the Standards team, still outstanding. It also does not
+govern `../SCIENCE.md`'s not-evaluated reporting rule, which stands on its own
+and which this decision only points at.

@@ -172,6 +172,14 @@ it in the abstract.
 
 ## 5. State Tracking (`STATUS.md`)
 
+Amended 2026-08-04 (Kurt; Riki's confirmation not on record). Queue item
+numbers became stable identifiers once closed items started being retired in
+place, so this section no longer calls the queue an ordered list or tells a
+session to take its "top" item — with a blocked item at the top, that rule sent
+a session either to a stall or to redefining "top" on its own. The retirement
+rule was also missing entirely, having been worked out twice in `STATUS.md`
+before being written here.
+
 With four mechanisms and many small passes, it's easy to lose track of where
 things stand across sessions. `STATUS.md` is a thin queue file for that —
 not an autonomous orchestrator. It never decides anything or advances itself;
@@ -183,10 +191,15 @@ does **not** chain into the next item on its own — that would just move the
 Structure of `STATUS.md`:
 
 - **Current Phase** — the mechanism and scope currently in flight, if any.
-- **Queue** — ordered list of pending items (a critique pass to run, a fix
-  to propose, an integration check, an implementation slice), each tagged
-  with its mechanism type and where it came from (an Open Question, a prior
-  critique finding, etc.).
+- **Queue** — pending items (a critique pass to run, a fix to propose, an
+  integration check, an implementation slice), each tagged with its mechanism
+  type and where it came from (an Open Question, a prior critique finding,
+  etc.). **Item numbers are stable identifiers, not priorities.** Other
+  documents cite them, so a number always means the item it was first
+  assigned to. Work order comes from each item's own stated entry conditions,
+  not from its number.
+- **Retired item numbers** — closed items, one line each: number, title,
+  closing date, and where the full record lives.
 - **Awaiting User** — items a session stopped on because they need your
   judgment (per §3's uncertainty protocol) before anything else touching
   that area should proceed. This is the explicit "judge these critiques" /
@@ -198,10 +211,15 @@ Rules for Claude:
 - Always read `STATUS.md` before doing anything else.
 - If **Awaiting User** is non-empty, do not start new queue work in that
   scope — surface those items to the user and stop.
-- Otherwise, take only the top **Queue** item, do only that item's declared
-  mechanism and scope, then update `STATUS.md` (move the item to Awaiting
-  User or Recently Completed, and leave the rest of the queue untouched)
-  before ending the session.
+- Otherwise take one **startable** Queue item — one whose stated entry
+  conditions are met. If exactly one is startable, take it; if more than one
+  is, ask which, and never infer priority from the numbers. Do only that
+  item's declared mechanism and scope, then update `STATUS.md` before ending
+  the session.
+- When an item closes, remove it from the Queue and record it under
+  **Retired item numbers**. Never reuse a number and never renumber a live
+  item — both silently re-point every existing citation to the wrong item.
+  This is §1's retire-by-superseding rule applied to the queue.
 - Never pop more than one queue item per session, and never silently
   reorder or drop queue items — if the queue looks wrong, say so under Open
   Questions instead of fixing it yourself.

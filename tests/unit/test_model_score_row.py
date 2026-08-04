@@ -2,11 +2,11 @@
 
 Most tests fit a real (small, synthetic) classifier via `fit()`, matching the
 established `test_model_fit.py` pattern. One test (`test_v14_score_can_
-disagree_with_discrete_label`) instead hand-constructs a `Cell` with a
-degenerate `BinaryHead` whose centered probability is fully controlled
-(`center_mean=0.5` makes `predict_proba_centered` return `constant_probability`
-verbatim), since this property needs an exact, known "crossed nonzero but not
-high" value that a real logistic fit can't be guaranteed to land on.
+disagree_with_discrete_label`) instead hand-constructs a `Cell` whose centered
+probability is fully controlled (a zero `coef` plus `intercept=logit(value)`
+and `center_mean=0.5`), since this property needs an exact, known "crossed
+nonzero but not high" value that a real logistic fit can't be guaranteed to
+land on.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hazard_classifier.heads import BinaryHead
+from hazard_classifier.heads import BinaryHead, logit
 from hazard_classifier.model import (
     Cell,
     HardFailError,
@@ -253,18 +253,23 @@ def test_hard_fail_raises_for_skipped_cell() -> None:
 
 
 def _constant_centered_head(value: float) -> BinaryHead:
-    """A degenerate head whose `predict_proba_centered` returns exactly
-    `value` for any input: `status="skipped"` ignores features entirely,
-    and `center_mean=0.5` makes centering a no-op (`logit(0.5) == 0`).
+    """A genuinely **fitted** head whose `predict_proba_centered` returns
+    exactly `value` for any input: a zero `coef` makes the features
+    irrelevant, `intercept=logit(value)` makes `sigmoid` land on `value`, and
+    `center_mean=0.5` makes centering a no-op (`logit(0.5) == 0`).
+
+    Previously this used a `status="skipped"` head and D-5's
+    `constant_probability` as the injection point. D-45 removed the
+    substitute, and that construction was misleading anyway -- it put skipped
+    heads inside a `status="fit"` cell, a state `fit()` can never produce.
     """
     return BinaryHead(
         mean=np.zeros(1),
         scale=np.ones(1),
-        coef=None,
-        intercept=None,
-        constant_probability=value,
+        coef=np.zeros(1),
+        intercept=float(logit(value)),
         center_mean=0.5,
-        status="skipped",
+        status="fit",
     )
 
 

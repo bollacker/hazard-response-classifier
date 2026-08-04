@@ -15,7 +15,12 @@ from pathlib import Path
 
 from hazard_classifier import config
 from hazard_classifier.embed import build_component_features
-from hazard_classifier.model import WhollySkippedEnablementError, fit, save
+from hazard_classifier.model import (
+    BlankOrdinalGroundTruthError,
+    WhollySkippedEnablementError,
+    fit,
+    save,
+)
 from hazard_classifier.schema import SchemaError, load_csv
 
 from ._common import add_allow_download_flag, fatal, warn_if_skipped_components
@@ -81,7 +86,9 @@ def main(argv: list[str] | None = None) -> None:
             specialized_advice_hazards=frozenset(config.SPECIALIZED_ADVICE_HAZARDS),
             embedding_model_name=args.model_name,
         )
-    except WhollySkippedEnablementError as exc:
+    except (WhollySkippedEnablementError, BlankOrdinalGroundTruthError) as exc:
+        # D-46's error exists to be readable; a traceback would defeat that,
+        # so it exits through `fatal` like every other data-defect error here.
         fatal(f"hrc-train: {exc}")
 
     save(

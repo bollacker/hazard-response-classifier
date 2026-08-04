@@ -42,12 +42,17 @@ decision-ledger entries. The "What the Release 1.1 standard replaces"
 note at the top of `DECISIONS.md` identifies, clause by clause, which verified
 baseline behavior does not constrain Release 1.1.
 
-**Two later decisions are not covered by this record.** D-45 (proposed) would
-reverse D-5's constant-probability substitute, and D-46 supersedes D-29 with a
-purpose-built blank-label error that `model.py` does not yet raise (`STATUS.md`
-item 5). The D-5 and D-29 rows below verify the superseded behavior.
+**Two later decisions are implemented but not re-verified by this record.**
+D-45 reversed D-5's constant-probability substitute and D-46 superseded D-29
+with a purpose-built blank-label error; both landed 2026-08-03 (`STATUS.md`
+items 5 and 6, now closed). **The D-5 and D-29 rows below verify superseded
+behavior and no longer describe the code** — read them as the baseline's
+history. Current coverage for both lives in the test suite:
+`tests/unit/test_heads.py`'s unavailable-head cases,
+`tests/unit/test_model_artifact.py`'s skipped-cell round trip, and
+`tests/unit/test_model_fit.py`'s D-46 block.
 
-- **Built + green (142 tests, `pytest` passing — all but 3 need no network,
+- **Built + green (151 tests, `pytest` passing — all but 3 need no network,
   3 integration tests need it on first run only, model cached after):**
   - `schema.py` — **new, IS-1 landed.** `normalize_hazard` (D-27, ported
     verbatim from the toy) and `load_csv` (mode-scoped required columns —
@@ -503,7 +508,8 @@ confirmation is overwhelmingly implementation slices** (META_PLAN §4).
   (`run_bge_hazard_weighted_heads.py` L70-110) and `logit`/`sigmoid`/
   `centered_probability` (`scoring_common.py` L412-423) into a
   `BinaryHead` dataclass (`{mean, scale, coef, intercept, center_mean,
-  constant_probability, status}`) plus `predict_proba`/`predict_proba_centered`
+  status}` — as built it also carried `constant_probability`, removed by D-45
+  on 2026-08-03) plus `predict_proba`/`predict_proba_centered`
   methods and `to_arrays`/`from_arrays` for `.npz` round-tripping (§4
   `heads.npz`), per §2.3's refactor. `fit_binary_head(x, y, sample_weight)`
   has **no hazard parameter at all** — confirmed by an explicit

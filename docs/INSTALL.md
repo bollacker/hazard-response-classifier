@@ -56,6 +56,6 @@ pip install -e ".[dev]"
 pytest
 ```
 
-142 tests should pass. Tests in `tests/integration/` use the real BGE model
+151 tests should pass. Tests in `tests/integration/` use the real BGE model
 (cached after the first run, same as above); `tests/unit/` and
 `tests/science/` never touch the network or a real model.

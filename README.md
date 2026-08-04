@@ -20,7 +20,7 @@ does not override the Release 1.1 target in `SCIENCE.md`.
 ## Status
 
 The working baseline completed phases 0–5 of `PLAN.md`: all three CLIs are
-installed console scripts, backed by 142 tests (unit, integration, and
+installed console scripts, backed by 151 tests (unit, integration, and
 science), and verified against synthetic fixtures and real, non-mocked BGE
 model runs. It has not reached staging and is expected to be replaced by the
 Release 1.1 design.
@@ -61,7 +61,7 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | Path | What it is |
 |---|---|
 | `src/hazard_classifier/` | The package: `schema.py` (input validation), `preprocess/` (deobfuscation, segmentation, flags), `embed.py` (BGE embedding + pooling), `heads.py` (per-cell logistic heads), `rules.py` (business rules + ordinal combination), `metrics.py` (evaluation metrics), `model.py` (fit/save/load/score orchestration), `cli/` (the three command-line tools) |
-| `tests/` | 142 tests: `unit/`, `integration/` (needs the real BGE model, cached after first run), `science/` (statistical/metric correctness) |
+| `tests/` | 151 tests: `unit/`, `integration/` (needs the real BGE model, cached after first run), `science/` (statistical/metric correctness) |
 | `examples/sample_input.csv` | 12-row synthetic fixture used in every doc's smoke-test example |
 | `data/` | Real labeled datasets, not synthetic fixtures — see that directory's own note below |
 | `scripts/` | One-off real-data validation script (`run_real_data_is9.py`) and its captured output (`is9_real_data_metrics.json`) |

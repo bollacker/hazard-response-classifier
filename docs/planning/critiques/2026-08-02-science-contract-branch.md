@@ -452,9 +452,13 @@ Riki directed the branch proposal to use a simple split:
   handling.
 
 `SCIENCE.md` now states that proposed split and moves the detailed L/E meaning
-rules to the human-label and model guidance. If Riki and Kurt approve it, this
-removes the requirement that the final integrator reconstruct semantic facts
-that no earlier component supplied. Until then, C-1 is not closed.
+rules to the human-label and model guidance. This removes the requirement that
+the final integrator reconstruct semantic facts that no earlier component
+supplied.
+
+**Closed 2026-08-03.** Kurt approved the split as stated. Combined with Riki's
+direction recorded above, C-1 has agreement from both and is no longer a gate
+on queue item 1. Sub-review 1.7 proceeded on this basis.
 
 **Tabled for the architecture step:** the exact field names and formats, how
 the steps pass information, which version of the response each model reads,
@@ -532,10 +536,77 @@ a science-to-decision review before any 1.1 architecture or implementation
 change. `STATUS.md` is identified as the live queue. The stale claim that only
 Phase 6 remained was removed.
 
-### Findings without a user disposition
+### Q-4, Q-6, Q-7, N-1, N-2 — repaired in later commits
 
-No user response has yet accepted, rejected, or deferred Q-1, Q-3 through
-Q-7, N-1, or N-2. They remain open.
+Recorded 2026-08-03 during the queue item 1 bookkeeping pass. These five were
+fixed by commits landed after this critique's disposition sections were last
+written; the sections were not updated at the time, so the findings read as
+open when the repairs were already on `main`.
+
+- **Q-4** — closed by `24ad379`. Both standards are vendored into
+  `../../standards/` with checksums and a stated update rule, so the
+  repository's scientific contract can no longer change without a commit.
+  `SCIENCE.md` cites the local copies alongside the retrieval date and source
+  links.
+- **Q-6** — closed by `406a813`. "Content-as-harm" is defined in
+  `SCIENCE.md` §Hazard scope: content whose existence is intrinsically
+  harmful — the harm is the content itself, not what it describes or what it
+  equips a reader to do.
+- **Q-7** — closed by `bd25def`. `SCIENCE.md` §Evidence and outputs now
+  carries an Estimability paragraph: every reported benchmark metric carries
+  an uncertainty estimate and the method that produced it, a bare point
+  estimate is not a reportable result, and a per-row multinomial distribution
+  explicitly does not satisfy it. `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 gained
+  the matching exit criterion.
+- **N-1** — closed by `406a813`. The refusal-detection success criterion was
+  rewritten to the formula every other component section uses, and the
+  requirement itself stated more precisely: a refusal followed by assistance
+  is both, only the refusal text is removed, and judging what survives is the
+  E model's work.
+- **N-2** — closed by `406a813`. All three L/E-to-result tables now use the
+  `L \ E` corner header.
+
+### Q-5 — resolved by the ledger restoration
+
+The dropped `STATUS.md` narrative was restored when the full ledger was
+restored (`40b4ff7` and the commits after it). The finding's most specific
+concern — the note that `test_predict_resolution.py`'s truth table was
+hand-verified to fail under the pre-D-11-amendment precedence, which existed
+nowhere else in that form — is present again in `STATUS.md`'s trailing log.
+No further repair is needed.
+
+### Q-1 — precedence rule supplied; stale sentences repaired
+
+Half of this finding was answered by the ledger's demotion: `META_PLAN.md`
+§1.1 now states document authority outright, and `DECISIONS.md`'s index
+carries a Release 1.1 column marking every entry *carried*, *baseline-only*,
+*under review*, or *open* — which is the per-entry marker at the point of
+conflict that this finding asked for.
+
+Two sentences predating the demotion survived it and were repaired in this
+pass: `SCIENCE.md`'s opening said the ledger "governs implementation choices,"
+and `RELEASE_1_1_QUEUE_PROPOSAL.md`'s entry gate said "`DECISIONS.md` governs
+implementation until amended" — flatly contradicting *provenance, not
+authority*. Both now point at the specification-governs rule.
+
+### Q-3 — resolved by design, not repaired
+
+`SCIENCE.md` contains no D-number references and will not gain any. Under the
+ledger's demotion this is the intended state rather than lost traceability: a
+specification states the requirement, and provenance for how the repository
+arrived at its implementation lives one hop away in `DECISIONS.md`'s index,
+which maps every entry to the specification that absorbed it and to its
+Release 1.1 disposition.
+
+Restoring the old spec→decision links would recreate exactly the condition
+Q-1 identified — two documents that a reader must reconcile — and would
+attach baseline provenance to requirements that come from the Assessment
+Standard, not from this repository's decisions. The traceability direction
+that matters after the demotion is decision → governing specification, and
+that path exists and is complete.
+
+This disposition is documentation-only and reversible; if a reader-facing
+need for the reverse path appears, the index is where it would be added.
 
 ## Tabled for Architecture
 
@@ -546,9 +617,16 @@ Q-7, N-1, or N-2. They remain open.
 
 ## Open Questions
 
+Updated 2026-08-03 (queue item 1 bookkeeping pass).
+
 - C-1's proposed model/integrator split requires agreement from Riki and Kurt.
+  This is the only remaining finding that blocks other work — queue item 1.7
+  cannot close without it.
 - C-6's limitations-document disposition requires agreement from Riki and
   Kurt. The README already satisfies the existing D-2 and D-8 disclosure
   requirements; whether C-6 requires anything broader remains open.
-- Q-1 and Q-3 through Q-7 remain open for scoped disposition or repair.
-- N-1 and N-2 remain open; neither blocks the documentation corrections above.
+
+Every other finding is dispositioned. C-2 and C-4 are tabled for the
+architecture step; C-3 and C-5 are resolved by the canonical rules; C-6's
+mechanical half is repaired; Q-1, Q-3, Q-5, and Q-2 are resolved above; Q-4,
+Q-6, Q-7, N-1, and N-2 were repaired in later commits and are recorded above.

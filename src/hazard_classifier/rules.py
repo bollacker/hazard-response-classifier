@@ -229,7 +229,7 @@ def resolve_component_action(
     amendment) but never an unseen hazard (step 1 already returned).
     Step 3 (D-3/D-5/D-11, D-20): only reached for a non-empty response on a
     known hazard -- an **allow-list**, not a deny-list (D-20): a cell status
-    of exactly `"fit"` serves; `"skipped"` (D-5's amended degeneracy
+    of exactly `"fit"` serves; `"skipped"` (D-45's degeneracy
     trigger), `None` (absent entirely), or any other non-`"fit"` value all
     fail closed identically -- an absent/invalid required cell is always a
     defect (corrupt/partial artifact, a heads.npz/thresholds.json

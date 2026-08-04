@@ -13,7 +13,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from hazard_classifier.model import choose_holdout_seed_prompts, fit
+from hazard_classifier.model import (
+    BlankOrdinalGroundTruthError,
+    choose_holdout_seed_prompts,
+    fit,
+)
 
 _ENABLEMENT_ONLY = frozenset({"prv"})
 _N = 20
@@ -26,6 +30,9 @@ def _make_fixture(seed: int = 0) -> tuple[pd.DataFrame, dict[str, np.ndarray], d
     df = pd.DataFrame(
         {
             "seed_prompt_id": [f"sp{i // 2}" for i in range(_N)],
+            # Guaranteed present in every mode by schema.py's _CORE_COLUMNS;
+            # D-46's error reports offending rows by this id.
+            "prompt_uid": [f"uid{i}" for i in range(_N)],
             "hazard": _HAZARDS,
             # Mixed 0/1/2 labels for both hazards, non-degenerate.
             "enablement_value": ([str(v) for v in ([0, 1, 2] * 4)[:10]] + [str(v) for v in ([0, 1, 2] * 4)[:10]]),
@@ -162,3 +169,119 @@ def test_choose_holdout_seed_prompts_is_deterministic_and_respects_zero_fraction
     assert first == second
     assert first
     assert first <= set(ids)
+
+
+# --- D-46: blank ordinal ground truth on a fitted row ------------------------
+#
+# `DECISIONS.md` D-46 (superseding D-29), `PLAN.md` §3 step 1. The point of
+# these tests is scoping as much as raising: the error must fire on rows that
+# survive D-1/D-4/D-18's filtering and must stay silent on rows those
+# exclusions already removed, because a blank label is *expected* there.
+
+
+def test_blank_enablement_label_raises_naming_the_offending_rows() -> None:
+    df, features, effective = _make_fixture()
+    df.loc[3, "enablement_value"] = ""
+
+    with pytest.raises(BlankOrdinalGroundTruthError) as excinfo:
+        fit(df, features, effective, _ENABLEMENT_ONLY)
+
+    message = str(excinfo.value)
+    assert "uid3" in message
+    assert "enablement_value" in message
+    assert "D-46" in message
+
+
+def test_blank_legitimization_label_on_a_required_hazard_raises() -> None:
+    """The exact case D-29 left raising a bare `ValueError` from `int('')`:
+    a non-enablement-only hazard's row is required for Legitimization (D-18),
+    so its label may not be blank.
+    """
+    df, features, effective = _make_fixture()
+    df.loc[2, "legitimization_value"] = ""  # row 2 is "hte", not enablement-only
+
+    with pytest.raises(BlankOrdinalGroundTruthError) as excinfo:
+        fit(df, features, effective, _ENABLEMENT_ONLY)
+
+    message = str(excinfo.value)
+    assert "uid2" in message
+    assert "legitimization_value" in message
+
+
+def test_blank_legitimization_on_an_enablement_only_hazard_does_not_raise() -> None:
+    """Forcing function for the scoping half: the baseline fixture's `prv`
+    rows already carry blank `legitimization_value` by construction (D-18
+    filters them out of Legitimization's row set), so a correct D-46 check
+    must be silent here. A check written against the raw column instead of
+    the filtered row set fails this test.
+    """
+    df, features, effective = _make_fixture()
+    assert (df.loc[df["hazard"] == "prv", "legitimization_value"] == "").all()
+
+    classifier = fit(df, features, effective, _ENABLEMENT_ONLY)
+
+    assert ("legitimization", "hte") in classifier.cells
+    assert ("legitimization", "prv") not in classifier.cells
+
+
+def test_blank_label_on_a_holdout_row_does_not_raise() -> None:
+    """D-1 excludes holdout rows from the fit entirely, so their labels are
+    never converted and a blank one is not a defect this run can see.
+    """
+    df, features, effective = _make_fixture()
+    holdout = choose_holdout_seed_prompts(df["seed_prompt_id"], 0.5, seed=7)
+    assert holdout
+    blanked = df["seed_prompt_id"].isin(holdout)
+    df.loc[blanked, "enablement_value"] = ""
+
+    fit(df, features, effective, _ENABLEMENT_ONLY, holdout_seed_fraction=0.5, seed=7)
+
+
+def test_blank_label_on_a_d4_excluded_row_does_not_raise() -> None:
+    """D-4's empty/echo-only rows are excluded via `component_effective`
+    before any label is read, so a blank there is likewise not a defect.
+    """
+    df, features, effective = _make_fixture()
+    effective = copy.deepcopy(effective)
+    df.loc[5, "enablement_value"] = ""
+    effective["enablement"][5] = False
+
+    fit(df, features, effective, _ENABLEMENT_ONLY)
+
+
+def test_blank_label_error_lists_every_offender_up_to_the_cap() -> None:
+    """`_N` (20) equals the reporting cap, so this is the exact
+    no-truncation boundary: all 20 ids listed, no "and N more" suffix.
+    """
+    df, features, effective = _make_fixture()
+    df["enablement_value"] = ""
+
+    with pytest.raises(BlankOrdinalGroundTruthError) as excinfo:
+        fit(df, features, effective, _ENABLEMENT_ONLY)
+
+    message = str(excinfo.value)
+    assert f"{_N} training row(s)" in message
+    assert "more)" not in message
+    for i in range(_N):
+        assert f"uid{i}" in message
+
+
+def test_blank_label_error_truncates_beyond_the_cap() -> None:
+    """One row past the cap, so the suffix must appear and the tail must not.
+    Guards against an error that dumps every id of a wholly-blank column.
+    """
+    df, features, effective = _make_fixture()
+    extra = df.iloc[[0]].copy()
+    extra["prompt_uid"] = "uid_overflow"
+    df = pd.concat([df, extra], ignore_index=True)
+    df["enablement_value"] = ""
+    features = {k: np.vstack([v, v[:1]]) for k, v in features.items()}
+    effective = {k: np.append(v, v[:1]) for k, v in effective.items()}
+
+    with pytest.raises(BlankOrdinalGroundTruthError) as excinfo:
+        fit(df, features, effective, _ENABLEMENT_ONLY)
+
+    message = str(excinfo.value)
+    assert f"{_N + 1} training row(s)" in message
+    assert "(and 1 more)" in message
+    assert "uid_overflow" not in message

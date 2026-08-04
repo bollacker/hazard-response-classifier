@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from hazard_classifier import embed
@@ -97,3 +98,28 @@ def test_hrc_train_fatal_on_schema_error(tmp_path, monkeypatch, capsys) -> None:
     assert exc_info.value.code == 1
     # A clean, single message on stderr -- not a raw traceback.
     assert "hrc-train" in capsys.readouterr().err
+
+
+def test_hrc_train_fatal_on_blank_ordinal_label(tmp_path, monkeypatch, capsys) -> None:
+    """`DECISIONS.md` D-46: a blank ordinal label on a row that survives the
+    fit filtering exits cleanly, naming the offending row. The error exists to
+    be readable, so a traceback would defeat it -- this asserts it goes through
+    `_common.fatal` like every other data-defect error in this CLI.
+    """
+    monkeypatch.setattr(embed, "embed_sentences", _fake_embed_sentences)
+    source = pd.read_csv(_SAMPLE_INPUT, dtype=str)
+    source.loc[2, "enablement_value"] = ""
+    bad_input = tmp_path / "blank_label.csv"
+    source.to_csv(bad_input, index=False)
+    output_dir = tmp_path / "model"
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--input", str(bad_input), "--output-dir", str(output_dir)])
+
+    assert exc_info.value.code == 1
+    stderr = capsys.readouterr().err
+    assert "hrc-train" in stderr
+    assert str(source.loc[2, "prompt_uid"]) in stderr
+    assert "enablement_value" in stderr
+    # A failed run must not leave a half-written artifact behind.
+    assert not output_dir.exists()
