@@ -283,6 +283,8 @@ assembled evaluator works.
 - Every placeholder is visible and creates no judgment.
 - Component-quality results are published only where fixed human ground truth
   and approved success criteria exist.
+- Every reported benchmark metric carries an uncertainty estimate and the
+  method that produced it (`SCIENCE.md` §Evidence and outputs, Estimability).
 - **Proposed; requires agreement from Riki and Kurt:** before a model is
   promoted to staging or assigned a release point version, publish its
   standalone, version-specific limitations document. Pre-staging prototypes
