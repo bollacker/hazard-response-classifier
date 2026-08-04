@@ -601,6 +601,31 @@ Detailed phased proposal:
    structure requires a different artifact format. Propose any further
    decision amendments; do not change code in this queue item.
 
+   **Two proposals parked here from the 2026-08-03 ledger work.** Both
+   originated in commit `333f86d`'s rewritten D-3 and D-4, are architecture
+   statements with no specification to land in until `ARCHITECTURE.md` is
+   updated, and are proposals — neither has joint approval:
+
+   1. **Exhaustion short-circuit.** "If any module returns an empty string as
+      working text, the pipeline skips every remaining module and sends the
+      complete carried record to the final integrator." `SCIENCE.md` covers a
+      blank *payload*; nothing covers working text emptied by the detection
+      stages, which is a routine outcome for components whose job is removing
+      text. Note the consequence to settle: the flag set the integrator
+      receives depends on *where* exhaustion happened, not just that it
+      happened — a response emptied at prompt-repetition never reaches refusal
+      detection.
+   2. **No-fallback generalized to any hazard-branching module.** "If a module
+      branches its operation by hazard and has no operation available for a
+      qualifying hazard, scoring fails. Do not fall back to another operation
+      or invent a module result." D-3 scopes this to `(component, hazard)`
+      cells in the two-head baseline, where "component" means something
+      different than it does in the 1.1 pipeline. `SCIENCE.md` has the
+      integrator-side rule ("returns a per-hazard failure when a required
+      judgment is unavailable") but no cross-cutting module-side rule. Also
+      unstated anywhere: that a run-entry rejection returns a clear,
+      human-readable error.
+
 4. [ ] **Build the approved 1.1 modular release.** Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
    prompt-repetition and disclaimer detection; visible placeholders for
@@ -608,6 +633,13 @@ Detailed phased proposal:
    pass per scoring batch; and stable component contracts. Placeholders pass
    content through and are reported as not evaluated until populated. Execute
    the approved phases in `RELEASE_1_1_QUEUE_PROPOSAL.md` in order.
+
+5. [ ] **Implement D-46** — `hrc-train`'s purpose-built error on a blank
+   ordinal ground-truth label. `PLAN.md` §3 step 1 now specifies it and
+   `model.py`'s `fit` does not yet do it, so the baseline has a known
+   spec/code gap until this lands. Needs the `fit`-side check, an error naming
+   the offending rows, and a test. Baseline maintenance, independent of the
+   1.1 review — not ordered relative to items 1–4 (META_PLAN §5).
 
 ## Awaiting User
 

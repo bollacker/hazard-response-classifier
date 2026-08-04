@@ -16,9 +16,12 @@ that is the pattern that failed.
 
 ## 1. Decision Ledger (`DECISIONS.md`)
 
-`DECISIONS.md` in this repo is the single source of truth for what has been
-decided, not chat history and not the plan doc's prose. Every time a
-recommendation is curated and accepted, it becomes a numbered, dated entry:
+`DECISIONS.md` records what has been decided and why — not chat history and
+not the plan doc's prose. It is **provenance, not authority**: once a
+decision's effect has been written into a specification, that specification
+governs, and the entry stands as the record of the reasoning and the rejected
+alternatives. Every time a recommendation is curated and accepted, it becomes
+a numbered, dated entry:
 
 ```
 ## D-<n>: <short title>
@@ -38,6 +41,35 @@ Rules for Claude:
 - If two locked decisions conflict with each other (this is exactly the kind
   of non-obvious interference that caused the original looping), stop and
   raise it as an Open Question rather than picking one silently.
+- **Retiring an entry is a move, never a delete.** Supersede it in place —
+  change its `Status`, point at the entry or specification that replaced it,
+  and leave the original text and its amendment trail where they are. Deleting
+  an entry destroys the rejected-alternative record and breaks every reference
+  to it in the source, the tests, and the rest of the docs.
+
+### 1.1 Document authority
+
+Recorded 2026-08-03, joint Riki–Kurt Release 1.1 science-contract review.
+
+- **Assessment behavior comes from the selected Assessment Standard.**
+  `../SCIENCE.md` documents the current standard and scientific target. It is
+  mutable when the selected standard, its version, or its authoritative
+  interpretation changes. Repository decisions may constrain how the evaluator
+  implements, exposes, tests, versions, or records that standard; they may not
+  replace an Assessment requirement or permanently freeze one.
+- **`../ARCHITECTURE.md` owns module order, interfaces, records, and
+  implementation structure.** The ledger records choices that constrain the
+  architecture without duplicating its specification.
+- **The ledger records only decisions jointly approved by Riki and Kurt.**
+  Proposals and unanswered questions belong in `STATUS.md`. An entry that
+  states a proposal must say so in its `Status` line and name what approval it
+  is waiting on.
+- **Reusing a pre-staging baseline choice for Release 1.1 requires a new joint
+  decision**, not a citation of the old entry. The baseline ledger is
+  implementation provenance; it does not carry forward by default.
+- **Do not restate a specification's content in an entry.** Two normative
+  statements of one rule in two mutable files will drift. State the decision
+  and point at the specification that carries it.
 
 ## 2. Scoped, Separated Passes
 

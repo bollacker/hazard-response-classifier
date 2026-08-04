@@ -77,7 +77,7 @@ the `STATUS.md` item shown. *open* — needs a call.
 | [D-2](#d-2) | In-sample threshold/centering bias preserved | `PLAN.md` §3 step 4, §8.2; `README.md` | under review (1.8, 1.9) |
 | [D-3](#d-3) | Fail closed on unknown/unfit cells | `PLAN.md` §6, §11.1 | baseline-only; module-capability half open (1.6) |
 | [D-4](#d-4) | Empty/echo-only rows excluded from the fit | `PLAN.md` §3 step 4, §6 step 2 | baseline-only → `SCIENCE.md` §Final integration |
-| [D-5](#d-5) | Zero-row cells keep the constant-probability substitute | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | reversal proposed as D-45 |
+| [D-5](#d-5) | Zero-row cells keep the constant-probability substitute | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | reversal proposed as [D-45](#d-45), unapproved |
 | [D-6](#d-6) | CPU-only; determinism | `PLAN.md` §3 step 3, §8.1; `ARCHITECTURE.md` Module map | carried |
 | [D-7](#d-7) | Standardization stats unweighted per component | `PLAN.md` §2.3, §3 step 4 | under review (1.8) |
 | [D-8](#d-8) | `class_weight` / sample-weight wart documented | `PLAN.md` §3 step 4; `README.md` | under review (1.8, 1.9) |
@@ -101,8 +101,8 @@ the `STATUS.md` item shown. *open* — needs a call.
 | [D-26](#d-26) | `hrc-evaluate` CLI contract | `PLAN.md` §2.1, §5, §8.1; `ARCHITECTURE.md` CLI layer | baseline-only |
 | [D-27](#d-27) | Hazard normalization at load; one `rules.json` lookup | `PLAN.md` §2.1 | normalization carried; unseen-hazard check baseline-only |
 | [D-28](#d-28) | Wholly-skipped component surfaced at train/load time | `PLAN.md` §3 step 5, §4; `ARCHITECTURE.md` Artifact format | carried |
-| [D-29](#d-29) | Natural error on an unconvertible blank ordinal label | **gap** | open |
-| [D-30](#d-30) | `is_safe_ground_truth` encodes exactly `"safe"`/`"unsafe"` | `PLAN.md` §2.1 (**partial** — presence only) | baseline-only |
+| [D-29](#d-29) | Natural error on an unconvertible blank ordinal label | — | **superseded by [D-46](#d-46)** |
+| [D-30](#d-30) | `is_safe_ground_truth` encodes exactly `"safe"`/`"unsafe"` | `PLAN.md` §2.1 | baseline-only |
 | [D-31](#d-31) | `score(rows)` never raises; per-row result entries | `PLAN.md` §11 item 5 | baseline-only |
 | [D-32](#d-32) | `rule_reasons` covers D-4's forced zero only | `PLAN.md` §6 | under review (1.7) |
 | [D-33](#d-33) | `qwk` reports `null` when undefined | `PLAN.md` §5 | under review (1.9) |
@@ -111,21 +111,22 @@ the `STATUS.md` item shown. *open* — needs a call.
 | [D-36](#d-36) | Pooling is mean-only | `PLAN.md` §11 item 2; `ARCHITECTURE.md` Module map | under review (item 2) |
 | [D-37](#d-37) | `.npz` + JSON artifacts; no `joblib` | `PLAN.md` §11 item 4; `ARCHITECTURE.md` Artifact format | under review (item 3) |
 | D-38 – D-44 | *withdrawn 2026-08-03, never approved; numbers not reused* | — | — |
+| [D-45](#d-45) | No constant-probability substitute; unfittable = unavailable | *awaiting approval* | **proposed**, supersedes D-5 |
+| [D-46](#d-46) | Purpose-built error on an unconvertible blank ordinal label | `PLAN.md` §3 step 1 | carried; supersedes D-29 |
 
 ### Absorption gaps
 
-Two decisions have no specification carrying their effect. Both need a
-disposition before queue item 1 closes:
+**Both gaps found by the 2026-08-03 audit are closed.**
 
-- **D-29** — the train-time behavior on a blank ground-truth label it cannot
-  convert to an ordinal int exists only in `model.py` and in this entry, which
-  ratifies observed behavior without writing it anywhere normative. `PLAN.md`
-  §2.1 covers blank *evaluate*-path labels, not this.
-- **D-30** — `PLAN.md` §2.1 states `is_safe_ground_truth` is checked for column
-  presence only, and §2.1's schema table describes it as "ground-truth final
-  safe/unsafe." Neither states D-30's actual decision: that the encoding is the
-  exact strings `"safe"`/`"unsafe"`. Superseded for 1.1 by
-  violating/non-violating naming, but the baseline contract is unwritten.
+- **D-29** — closed by superseding it. The train-time behavior on a blank
+  ordinal label existed only in `model.py` and in an entry that ratified
+  observed behavior without writing it anywhere normative. D-46 replaces the
+  decision and `PLAN.md` §3 step 1 now carries it. D-46 requires a code change;
+  it is queued in `STATUS.md`, so `PLAN.md` currently specifies behavior
+  `model.py` does not yet implement.
+- **D-30** — closed by absorption. `PLAN.md` §2.1 previously stated the literal
+  encoding was "not pinned by any locked decision," which had been false since
+  D-30 locked it on 2026-07-25. That sentence now carries the pin.
 
 <a id="d-1"></a>
 ## D-1: Holdout-seed rows are excluded from the training fit
@@ -438,7 +439,8 @@ built** — that is IS-7's job, over the predict/evaluate pipeline.
 <a id="d-5"></a>
 ## D-5: Zero-row cells keep the constant-probability substitution but are marked skipped
 Date: 2026-07-23
-Status: locked
+Status: locked — reversal **proposed** as [D-45](#d-45) (2026-08-03), not yet
+approved. D-5 remains in force until Riki and Kurt agree.
 Decision: `(component, hazard)` cells with zero training rows keep the toy's
 existing behavior — a constant-probability substitution that yields a
 degenerate 0.5-centered threshold search — but each such cell is explicitly
@@ -2387,7 +2389,9 @@ tests (was 96), zero regressions.
 <a id="d-29"></a>
 ## D-29: `hrc-train` raises the natural, unpolished error on a blank ground-truth label it cannot convert to an ordinal int
 Date: 2026-07-25
-Status: locked
+Status: **superseded-by [D-46](#d-46)** (2026-08-03). D-46 selects this entry's
+own option 2. The deliberate `hrc-train`/`hrc-evaluate` asymmetry recorded
+below is no longer accepted; the two now match.
 Decision: When `model.py`'s `fit` encounters a blank `legitimization_value`
 (or, symmetrically, a blank `enablement_value`) on a row that survives
 D-1/D-4/D-18's filtering and therefore should have real ground truth to
@@ -2827,3 +2831,74 @@ This is a statement of the current absence of any such requirement, not a
 guarantee no future consumer will ever raise one; if one does, this
 decision would need to be reopened at that point, not silently worked
 around.
+
+<a id="d-45"></a>
+## D-45: Unfittable operations are explicitly unavailable; no constant-probability substitute
+Date: 2026-08-03
+Status: **proposed** — requires agreement from Riki and Kurt
+Supersedes: D-5
+
+Decision: If training cannot produce a valid operation, mark that operation
+unavailable. Do not create a constant-probability substitute or otherwise
+invent an operation result. An artifact may still serve its other available
+operations; a request that requires the unavailable operation fails under
+D-3's no-fallback rule.
+
+Rationale: this reverses D-5, which preserved the research prototype's
+constant-probability substitution (a degenerate 0.5-centered threshold search)
+and made it safe by marking the cell `"skipped"` so it would never be served.
+The substitute is fitted, serialized, and never used — wasted work whose only
+effect is to make an unavailable operation look like a fitted one in the
+artifact. `SCIENCE.md`'s not-evaluated posture wants the opposite: a component
+without a valid fit reports itself as unavailable rather than producing a
+value nobody may consume. Rejected alternative: keep D-5 and rely on the
+`"skipped"` marker, which works but leaves the artifact carrying values that
+D-3 and D-11 exist to prevent anyone from reading.
+
+Approval status: this text originates in commit `333f86d`, which rewrote D-5
+in place with the attribution "Modified: 2026-08-03 by Kurt and Riki." The
+2026-08-03 joint meeting record in `STATUS.md` lists seven confirmed canonical
+requirements and this is not among them, so the reversal is recorded here as a
+proposal rather than as a locked decision. If the meeting did approve it, flip
+this entry to `locked` and cite the meeting.
+
+Touches: `PLAN.md` §3 step 4 (cell enumeration), §4 (`thresholds.json`
+`status` and `constant_probability` fields); `ARCHITECTURE.md` Artifact
+format; `heads.py`, `model.py`. Not yet absorbed into any specification —
+absorption waits on approval.
+
+Boundary: D-45 governs what training does when a fit is impossible. D-3
+governs what scoring does when it meets an unavailable operation.
+
+<a id="d-46"></a>
+## D-46: `hrc-train` raises a purpose-built error on an unconvertible blank ordinal label
+Date: 2026-08-03
+Status: locked
+Approved by: Kurt
+Supersedes: D-29
+
+Decision: When `model.py`'s `fit` encounters a blank `enablement_value` or
+`legitimization_value` on a row that survives D-1/D-4/D-18's filtering and
+therefore should carry real ground truth, `hrc-train` raises a clear,
+purpose-built error naming the offending row or rows. This replaces D-29's
+choice to let Python's `ValueError: invalid literal for int() with base 10: ''`
+surface from the `int()` conversion inside `fit`.
+
+Rationale: D-29 posed three options and selected option 1 (leave the natural
+`ValueError`), explicitly accepting an asymmetry with `hrc-evaluate`, which
+raises a purpose-built error for the same underlying data defect (D-26). This
+entry selects that entry's own **option 2** — "raise a clearer, purpose-built
+error naming the offending row(s), mirroring D-26's `hrc-evaluate` precedent
+of erroring on this exact condition" — removing the asymmetry. Rejected
+alternative, unchanged from D-29: option 3, silently excluding such rows from
+the fit as a fourth D-4-style exclusion, which would hide a data defect rather
+than report it.
+
+Touches: `PLAN.md` §3 step 1 (**absorbed** — the blank-ordinal-ground-truth
+paragraph); `src/hazard_classifier/model.py` `fit` — **requires a code
+change**, unlike D-29, which ratified existing behavior. `tests/` needs a case
+asserting the new error names the offending rows. Queued in `STATUS.md`.
+
+Boundary: D-46 governs `hrc-train`'s error on a blank ordinal label. D-26
+governs `hrc-evaluate`'s handling of the same defect and is unchanged. D-30
+governs the separate `is_safe_ground_truth` column's encoding.
