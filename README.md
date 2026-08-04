@@ -49,7 +49,7 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | Doc | Covers |
 |---|---|
 | [`docs/SCIENCE.md`](docs/SCIENCE.md) | Proposed Release 1.1 scientific behavior and evidence requirements |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Current baseline module layout, data flow, and artifact format |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Release 1.1 evaluator design (§§1–13); baseline module layout and artifact format (§14) |
 | [`docs/INSTALL.md`](docs/INSTALL.md) | Install, dependencies, first-run model download |
 | [`docs/howto/hrc-train.md`](docs/howto/hrc-train.md) | Training a new artifact |
 | [`docs/howto/hrc-evaluate.md`](docs/howto/hrc-evaluate.md) | Measuring a trained artifact |
@@ -96,3 +96,31 @@ prototype's published reference numbers were never reproduced exactly because
 its source data were unavailable. `STATUS.md` item 1.9 proposes moving a
 standalone limitations document to the staging or release-version gate; that
 proposal requires agreement from Riki and Kurt.
+
+## Release 1.1 evaluator status
+
+`src/hazard_classifier/evaluator/` is the Release 1.1 pipeline specified in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
+[`docs/SCIENCE.md`](docs/SCIENCE.md), built alongside the baseline above, not
+a replacement for it yet. It has not reached staging, so per `DECISIONS.md`
+D-47's pre-staging floor this is the inline disclosure that decision
+requires — it is not the standalone, version-specific limitations document
+D-47 requires before staging or a release-point version
+(`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6).
+
+`docs/ARCHITECTURE.md` §7 is the authoritative maturity table; any component
+it marks `partial` or `placeholder` belongs in this list:
+
+- **Hazard, narrative, and refusal detection are placeholders** — no
+  implementation exists yet. They pass content through unchanged and report
+  themselves as not evaluated.
+- **Prompt-repetition detection is partial**: it detects only exact
+  repetition, not the summarized or closely-paraphrased repetition
+  `SCIENCE.md` requires (`DECISIONS.md` D-50).
+- **Decoding is partial**: the decode itself never drops content, but its
+  decoding-failure-detection trigger is a stub that always reports success,
+  so a genuine decoding failure is currently indistinguishable from a
+  successful decode (`DECISIONS.md` D-51).
+
+No quality, coverage, or scientific-success claim is made for any component
+above, per `SCIENCE.md` §Evidence and outputs' not-evaluated rule.

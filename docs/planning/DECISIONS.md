@@ -3195,6 +3195,25 @@ results, and looks healthy in any output. Found by an absorption check on
 2026-08-04 — D-50 and D-51 named this obligation in their own `Touches` lines,
 but nothing a PR 6 author would actually read had been updated.
 
+**Second correction (2026-08-04, PR 2 slice B verification sweep): narrowing
+1's README disclosure did not extend to the 1.1 evaluator.** This entry's
+original `Touches` line claimed `README.md` §Current baseline risks
+"satisfies narrowing 1 today." That was true only for the pre-staging
+**baseline**'s two statistical warts (D-2, D-8), which is all that section
+has ever documented. It said nothing about the five 1.1 evaluator shortfalls
+narrowing 2 already enumerates, because PR 1 — the work that actually put
+those shortfalls into running code — landed after this entry was written on
+2026-08-03. Narrowing 1's pre-staging exemption reaches the 1.1 evaluator
+too: it has not reached staging either, so the same inline-disclosure
+obligation applies to it, separately from the baseline's.
+
+Closed by adding a `## Release 1.1 evaluator status` section to `README.md`,
+kept distinct from `## Current baseline risks` rather than folded into it —
+the baseline and the 1.1 evaluator are two different pre-staging prototypes
+with different failure surfaces, and conflating their risk disclosures would
+blur which one a given wart belongs to. Touches: `README.md` (**absorbed** —
+new section added).
+
 <a id="d-48"></a>
 ## D-48: The unchanged-output requirement binds the implementation being refactored, not a standard-conforming rebuild
 Date: 2026-08-04

@@ -82,6 +82,10 @@ tests and a `STATUS.md` update.
 
 ### Slice A — Close what PR 1 already earns (start here)
 
+**Complete** (2026-08-04). Landed as `tests/unit/test_evaluator_pr2_text_flow.py`
+(commit `a285656`), all four assertions below built exactly as scoped, 285
+tests green.
+
 PR 2 has exit criteria that PR 1's components already satisfy behaviorally but
 that **nothing asserts**. This slice makes them verified rather than assumed.
 
@@ -128,22 +132,44 @@ Exit: the four criteria above are asserted, not assumed; 280 + n tests green.
 
 ### Slice B — Verification sweep and PR 2 close
 
+**Complete** (2026-08-04). Findings below.
+
 - Full suite green, including `test_baseline_parity.py` — the baseline must
-  still be byte-identical (D-48).
+  still be byte-identical (D-48). **Confirmed:** 287 tests, zero regressions;
+  `test_baseline_parity.py`'s 10 tests (including the forcing function,
+  `test_a_perturbed_head_fails_parity`) all pass unchanged.
 - A real, non-mocked run covering PR 2's paths, extending
   `tests/integration/test_evaluator_real_bge.py`. PR 1's own verification gap
   was exactly this: the real provider went unexercised because every test
-  stubbed it.
+  stubbed it. **Added two tests** against the real cached BGE model and the
+  golden artifact: an empty response never reaching the encoder (a second
+  exhaustion route beyond the prompt-only case PR 1 already covered), and a
+  mixed repetition-plus-authored response that *does* reach the encoder, on
+  the authored remainder only (`provider.calls == before + 1`, repeated
+  prompt wording absent from `texts.working`).
 - Confirm the limitations-document inventory (D-47 narrowing 2) names all
   five 1.1 shortfalls: the hazard, narrative, and refusal placeholders, plus
   **decoding's stubbed failure trigger** (D-51) and **stage 4's exact-only
   scope** (D-50). The last two are shortfalls against a stated success
   criterion rather than absent components, which makes them easy to omit.
+  **Not confirmed — a second absorption gap found and closed.** D-47's own
+  `Touches` line claimed `README.md` §Current baseline risks "satisfies
+  narrowing 1 today," but that section only ever documented the
+  pre-staging **baseline**'s two statistical warts (D-2, D-8); it said
+  nothing about the five 1.1 evaluator shortfalls, because PR 1 — which is
+  what actually put those shortfalls into running code — landed after this
+  entry was written. Closed by adding a `## Release 1.1 evaluator status`
+  section to `README.md` and a corrective note to `DECISIONS.md` D-47
+  (mirroring the narrowing-2 correction already on that entry).
 - Map each PR 2 exit criterion to the test that verifies it, and record any
   criterion met by scoping rather than by building — with a ledger entry,
-  never silently.
+  never silently. **§4's table below is confirmed accurate** and updated to
+  note slice B's real-BGE additions; no criterion needed a new ledger entry
+  (D-50/D-51 already cover the two scoping-not-building cases).
 - `STATUS.md` updated: slices in Recently Completed, new decisions in
-  `DECISIONS.md`, new assumed-concurrence rows in the register.
+  `DECISIONS.md`, new assumed-concurrence rows in the register. **No new
+  assumed-concurrence row was needed** — the README/D-47 fix applies an
+  already-locked decision rather than making a new call.
 
 ### 3.1 Closed before execution — what D-50/D-51/D-52 already did
 
@@ -161,10 +187,10 @@ rather than pending. Recorded here so a session does not go looking for them:
 
 | PR 2 exit criterion | Verified by |
 |---|---|
-| Empty and prompt-only responses remain distinct | Slice A contrast test |
+| Empty and prompt-only responses remain distinct | Slice A contrast test (stub embedding), plus slice B's real-BGE empty-response test alongside PR 1's existing real-BGE prompt-only test — both exhaustion routes now confirmed against the real encoder too |
 | Repeated material is removed without losing authored additions | Slice A mixed-content test (behavior exists since slice 1B; unasserted until now) |
 | Decoding never silently drops content | Slice A original-preserved test. **Met by construction, not detection** — `test_evaluator_decoding_stub.py` pins the stubbed trigger (D-51), so an unrecovered decode is currently indistinguishable from a successful one |
-| Mixed repetition and authored-content cases are scored on the authored content | Slice A `decided_by == "B2"` test |
+| Mixed repetition and authored-content cases are scored on the authored content | Slice A `decided_by == "B2"` test, plus slice B's real-BGE version confirming the encoder actually runs on the authored remainder (`provider.calls` increments) rather than being stubbed away |
 | Prompt-only responses receive the final result required by `SCIENCE.md` | Slice A L1/E0 test, parameterized across families |
 | *(work item)* Detect **exact** prompt repetition | Already built (slice 1B) and scoped to exact-only by D-50. Summarized and paraphrased are **not in 1.1**; the gap is disclosed, not verified |
 | *(work item)* ~~Record when the prompt resolves an ambiguous reference~~ | **Removed from 1.1** (D-52) — nothing to verify |

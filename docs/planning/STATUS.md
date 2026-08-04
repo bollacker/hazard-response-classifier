@@ -552,13 +552,23 @@ Detailed phased proposal:
    [`PR1_EXECUTION_PLAN.md`](PR1_EXECUTION_PLAN.md), is now a record of what
    was built rather than live work.
 
-   **PR 2 is next**, and its plan is
-   [`PR2_EXECUTION_PLAN.md`](PR2_EXECUTION_PLAN.md) — written 2026-08-04 to be
-   runnable from a clean session. **No entry condition remains:** the three
-   specification questions it raised were answered the same day and locked as
-   D-50/D-51/D-52, and their effects are absorbed into the specifications.
-   **Slice A is complete** (2026-08-04): PR 2's five exit criteria are now
-   asserted, not assumed. **Slice B (verification sweep and close) is next.**
+   **PR 2 is complete** (2026-08-04): slices A and B, pushed as `a285656`
+   plus slice B's commit. Its plan,
+   [`PR2_EXECUTION_PLAN.md`](PR2_EXECUTION_PLAN.md), is now a record of what
+   was built rather than live work. Slice B's verification sweep found and
+   closed a second `DECISIONS.md` D-47 absorption gap: `README.md` §Current
+   baseline risks documented only the pre-staging baseline's statistical
+   warts (D-2, D-8), never the five 1.1 evaluator shortfalls PR 1 actually
+   shipped — closed by a new `README.md` §Release 1.1 evaluator status
+   section and a corrective note on D-47. 287 tests, zero regressions,
+   including two new real-BGE integration tests and `test_baseline_parity.py`
+   unchanged (D-48 still holds).
+
+   **PR 3 (hazard detection and multi-hazard routing) is next**, per
+   `RELEASE_1_1_QUEUE_PROPOSAL.md`'s phase order — it has no entry condition
+   of its own. No execution plan for it exists yet; per `META_PLAN.md` §5 a
+   session does not chain into unplanned work on its own, so writing that
+   plan is the next startable step here, not something this pass did.
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -738,6 +748,38 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 2 slice B landed: verification sweep, PR 2 closed.**
+
+  - Full suite green including `test_baseline_parity.py` (D-48 still holds,
+    unchanged): 287 tests, zero regressions.
+  - Extended `tests/integration/test_evaluator_real_bge.py` with two tests
+    against the real cached BGE model and the golden artifact: an empty
+    response never reaching the encoder (a second exhaustion route beyond
+    the prompt-only case PR 1 already covered), and a mixed
+    repetition-plus-authored response that *does* reach the encoder, on the
+    authored remainder only.
+  - **Confirming the D-47 narrowing-2 limitations inventory surfaced a
+    second absorption gap, not a clean confirmation.** D-47's own `Touches`
+    line claimed `README.md` §Current baseline risks "satisfies narrowing 1
+    today," but that section only ever documented the pre-staging
+    **baseline**'s two statistical warts (D-2, D-8) — it said nothing about
+    the five 1.1 evaluator shortfalls (three placeholders, two partials)
+    that PR 1 actually put into running code, because PR 1 landed after
+    this D-47 line was written. Closed by adding a `README.md` §Release 1.1
+    evaluator status section, kept separate from the baseline's own risks
+    section, plus a corrective note on `DECISIONS.md` D-47 mirroring its
+    existing narrowing-2 correction. Also fixed in passing: `README.md`'s
+    documentation table still described `ARCHITECTURE.md` as baseline-only,
+    which stopped being true when it became the Release 1.1 evaluator's
+    specification.
+  - `PR2_EXECUTION_PLAN.md` §4's exit-criterion-to-test map confirmed
+    accurate and updated to note slice B's real-BGE additions; no PR 2
+    criterion needed a new ledger entry (D-50/D-51 already cover the two
+    criteria met by scoping rather than by building).
+  - No new decisions, no new assumed-concurrence rows — every fix this
+    slice made applies an already-locked decision to a place it had not yet
+    reached, rather than making a new call.
 
 - 2026-08-04 — **PR 2 slice A landed: exit criteria PR 1 already earns are
   now asserted, not assumed.** New
