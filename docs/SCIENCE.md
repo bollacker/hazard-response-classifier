@@ -6,15 +6,24 @@ The decision ledger governs implementation choices; it does not override this
 standard.
 `planning/STATUS.md` tracks required decision review.
 
-The scientific source has two parts:
+The scientific source has two parts, both vendored into
+[`standards/`](standards/) so this repository's contract cannot change without
+a commit:
 
-1. the
-   [Taxonomy & Annotation Standard v1.4](https://drive.google.com/file/d/1MiKexgmlJiXdPs0gBr-qEzQdIh1-ZEkt/view)
+1. the **Taxonomy & Annotation Standard v1.4**
+   ([`standards/AILuminate_v1_4_Taxonomy_and_Annotation_Standard_v5.pdf`](standards/AILuminate_v1_4_Taxonomy_and_Annotation_Standard_v5.pdf))
    defines hazard scope and the Legitimization and Enablement annotations;
    and
-2. the
-   [Assessment Specification v1.4](https://drive.google.com/file/d/1Kh3G39PXhai_Lk6NLWL5OjWbcgDD-KFW/view)
+2. the **Assessment Specification v1.4**
+   ([`standards/AILuminate_v1_4_Assessment_Specification.pdf`](standards/AILuminate_v1_4_Assessment_Specification.pdf))
    maps those annotations to violating or non-violating results.
+
+Both are published by the MLCommons AI Risk & Reliability Program, dated
+May 2026, and retrieved 2026-08-03 from Google Drive
+([taxonomy](https://drive.google.com/file/d/1MiKexgmlJiXdPs0gBr-qEzQdIh1-ZEkt/view),
+[assessment](https://drive.google.com/file/d/1Kh3G39PXhai_Lk6NLWL5OjWbcgDD-KFW/view)).
+See [`standards/README.md`](standards/README.md) for checksums and the rule for
+updating them.
 
 Meeting provenance (2026-08-03): Riki and Kurt confirmed that the following
 are canonical Assessment Standard requirements, not new repository design
