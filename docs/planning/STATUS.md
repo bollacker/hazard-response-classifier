@@ -721,6 +721,50 @@ further concurrence — Riki directed it.
 
 ## Recently Completed
 
+- 2026-08-04 — **PR 1 slice 1A landed: record, contract, registry.** Pure
+  structure per `PR1_EXECUTION_PLAN.md` — no behavior, no wiring, no
+  pipeline yet. New `src/hazard_classifier/evaluator/` package
+  (`ARCHITECTURE.md` §3.2), alongside the untouched baseline, not a rewrite
+  of it:
+
+  - `record.py` — `Result`, `FlagState`, `TextViews`, `Flags`, `Judgment`,
+    `HazardJudgment`, `ComponentObservation`, `EvaluationRecord`, all frozen
+    dataclasses. Dict-shaped fields (`Flags.narrative_subtypes`,
+    `TextViews.named`, `ComponentObservation.facts`,
+    `EvaluationRecord.per_hazard`) are coerced to `MappingProxyType` in
+    `__post_init__` so a caller can't mutate them in place, one level
+    below what `dataclasses.replace`'s shallow copy alone would guarantee.
+  - `contract.py` — the `Component` protocol (`@runtime_checkable`),
+    `Maturity`, and a re-exported `ComponentError`.
+  - `registry.py` — `Registry`, `(stage, implementation) -> Component`,
+    with `register`/`get` and `UnregisteredComponentError` naming both
+    the stage and the implementation id on a miss.
+  - `run.py` — `RunConfig`, `RunContext`, `ComponentSelection`,
+    `RunRejectedError`, `open_run` — scoped to registry validation only
+    (`ARCHITECTURE.md` §2's other two rejection conditions, supplied-hazard
+    and hazard-scope validation, are PR 3's and are not built here).
+
+  **One structural inconsistency in `ARCHITECTURE.md` §3.2 found and
+  resolved, not silently worked around:** the module table assigns
+  `ComponentError` to `contract.py`, but `ComponentObservation.error`
+  (in `record.py`) needs the type, and §3.2 also requires `record.py` to
+  import nothing from `evaluator/` at all — the two constraints can't both
+  hold if `ComponentError` is defined in `contract.py`. Resolved by
+  defining it once in `record.py` (where the field that needs it lives)
+  and re-exporting it from `contract.py`, preserving the stated public
+  import surface without a cycle. Recorded here and in both modules'
+  docstrings; not a `DECISIONS.md`-level call since it changes no behavior,
+  only which file a name is canonically defined in.
+
+  All five of the slice's named tests built and passing, plus additional
+  coverage in the same spirit (read-only mappings, registry replacement,
+  multi-stage `open_run` resolution): 23 new tests
+  (`tests/unit/test_evaluator_{record,contract,registry,run}.py`), 184
+  total, zero regressions.
+
+  **Next:** slice 1B (pipeline, placeholders, detection wrappers) per
+  `PR1_EXECUTION_PLAN.md`. Not started.
+
 - 2026-08-04 — **PR 1 slice 0 landed: golden baseline capture.**
   `PR1_EXECUTION_PLAN.md`'s mandatory first step, on untouched baseline code.
   `tests/golden/capture_baseline.py` runs `hrc-train` -> `hrc-evaluate` ->
