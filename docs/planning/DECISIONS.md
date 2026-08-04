@@ -77,7 +77,7 @@ the `STATUS.md` item shown. *open* — needs a call.
 | [D-2](#d-2) | In-sample threshold/centering bias preserved | `PLAN.md` §3 step 4, §8.2; `README.md` | under review (1.8, 1.9) |
 | [D-3](#d-3) | Fail closed on unknown/unfit cells | `PLAN.md` §6, §11.1 | baseline-only; module-capability half open (1.6) |
 | [D-4](#d-4) | Empty/echo-only rows excluded from the fit | `PLAN.md` §3 step 4, §6 step 2 | baseline-only → `SCIENCE.md` §Final integration |
-| [D-5](#d-5) | Zero-row cells keep the constant-probability substitute | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | reversal proposed as [D-45](#d-45), unapproved |
+| [D-5](#d-5) | Zero-row cells keep the constant-probability substitute | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | **superseded by [D-45](#d-45)** |
 | [D-6](#d-6) | CPU-only; determinism | `PLAN.md` §3 step 3, §8.1; `ARCHITECTURE.md` Module map | carried |
 | [D-7](#d-7) | Standardization stats unweighted per component | `PLAN.md` §2.3, §3 step 4 | under review (1.8) |
 | [D-8](#d-8) | `class_weight` / sample-weight wart documented | `PLAN.md` §3 step 4; `README.md` | under review (1.8, 1.9) |
@@ -111,7 +111,7 @@ the `STATUS.md` item shown. *open* — needs a call.
 | [D-36](#d-36) | Pooling is mean-only | `PLAN.md` §11 item 2; `ARCHITECTURE.md` Module map | under review (item 2) |
 | [D-37](#d-37) | `.npz` + JSON artifacts; no `joblib` | `PLAN.md` §11 item 4; `ARCHITECTURE.md` Artifact format | under review (item 3) |
 | D-38 – D-44 | *withdrawn 2026-08-03, never approved; numbers not reused* | — | — |
-| [D-45](#d-45) | No constant-probability substitute; unfittable = unavailable | *awaiting approval* | **proposed**, supersedes D-5 |
+| [D-45](#d-45) | No constant-probability substitute; unfittable = unavailable | *pending — `PLAN.md` §3/§4 still describe D-5* | carried; supersedes D-5 |
 | [D-46](#d-46) | Purpose-built error on an unconvertible blank ordinal label | `PLAN.md` §3 step 1 | carried; supersedes D-29 |
 
 ### Absorption gaps
@@ -439,8 +439,9 @@ built** — that is IS-7's job, over the predict/evaluate pipeline.
 <a id="d-5"></a>
 ## D-5: Zero-row cells keep the constant-probability substitution but are marked skipped
 Date: 2026-07-23
-Status: locked — reversal **proposed** as [D-45](#d-45) (2026-08-03), not yet
-approved. D-5 remains in force until Riki and Kurt agree.
+Status: **superseded-by [D-45](#d-45)** (2026-08-03). The constant-probability
+substitute is no longer created; an unfittable operation is marked unavailable.
+The code still implements D-5 until `STATUS.md` item 6 lands.
 Decision: `(component, hazard)` cells with zero training rows keep the toy's
 existing behavior — a constant-probability substitution that yields a
 degenerate 0.5-centered threshold search — but each such cell is explicitly
@@ -2835,7 +2836,8 @@ around.
 <a id="d-45"></a>
 ## D-45: Unfittable operations are explicitly unavailable; no constant-probability substitute
 Date: 2026-08-03
-Status: **proposed** — requires agreement from Riki and Kurt
+Status: locked
+Approved by: Kurt, 2026-08-03
 Supersedes: D-5
 
 Decision: If training cannot produce a valid operation, mark that operation
@@ -2855,17 +2857,17 @@ value nobody may consume. Rejected alternative: keep D-5 and rely on the
 `"skipped"` marker, which works but leaves the artifact carrying values that
 D-3 and D-11 exist to prevent anyone from reading.
 
-Approval status: this text originates in commit `333f86d`, which rewrote D-5
-in place with the attribution "Modified: 2026-08-03 by Kurt and Riki." The
-2026-08-03 joint meeting record in `STATUS.md` lists seven confirmed canonical
-requirements and this is not among them, so the reversal is recorded here as a
-proposal rather than as a locked decision. If the meeting did approve it, flip
-this entry to `locked` and cite the meeting.
+Provenance: this text originates in commit `333f86d`, which rewrote D-5 in
+place. It was held as `proposed` because the 2026-08-03 joint meeting record
+lists seven confirmed canonical requirements and this was not among them.
+Kurt accepted it directly on 2026-08-03.
 
 Touches: `PLAN.md` §3 step 4 (cell enumeration), §4 (`thresholds.json`
 `status` and `constant_probability` fields); `ARCHITECTURE.md` Artifact
-format; `heads.py`, `model.py`. Not yet absorbed into any specification —
-absorption waits on approval.
+format; `heads.py`, `model.py` — **requires a code change**: the substitute is
+currently fitted and serialized. Not yet absorbed into a specification;
+`PLAN.md` and `ARCHITECTURE.md` still describe D-5's behavior. Queued in
+`STATUS.md`.
 
 Boundary: D-45 governs what training does when a fit is impossible. D-3
 governs what scoring does when it meets an unavailable operation.

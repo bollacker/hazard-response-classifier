@@ -674,6 +674,17 @@ Detailed phased proposal:
    the offending rows, and a test. Baseline maintenance, independent of the
    1.1 review — not ordered relative to items 1–4 (META_PLAN §5).
 
+6. [ ] **Implement D-45 and absorb it into the specifications** — stop creating
+   the constant-probability substitute; mark an unfittable operation
+   unavailable instead. D-45 was accepted 2026-08-03 but nothing is written
+   down yet: `PLAN.md` §3 step 4 and §4, and `ARCHITECTURE.md`'s artifact
+   table, still describe D-5's behavior, and `heads.py`/`model.py` still fit
+   and serialize the substitute. Update both specifications first, then the
+   code. Check the `thresholds.json` `constant_probability` field and the
+   `"skipped"` status semantics — D-3 and D-11's fail-closed guarantees rest on
+   that marker and must keep working. Baseline maintenance; not ordered
+   relative to items 1–4.
+
 ## Awaiting User
 
 _Empty._
