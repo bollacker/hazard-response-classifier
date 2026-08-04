@@ -183,9 +183,12 @@ per-row `rules.json` lookup (§6, D-27).
 D-26's 2026-07-25 amendment, corrected 2026-07-25 building `schema.py`):** the
 family-**agnostic** structural checks — the three ground-truth columns are
 present, and any non-blank `enablement_value`/`legitimization_value` is in
-`{0,1,2}` (`is_safe_ground_truth` is checked for **column presence only** —
-its literal safe/unsafe encoding is not pinned by any locked decision; see
-D-26's correction note) — stay up front here; but the family-**aware**
+`{0,1,2}` (`is_safe_ground_truth` is checked for **column presence only** at
+load — its literal encoding is the exact, case-sensitive strings `"safe"` and
+`"unsafe"`, locked by `DECISIONS.md` D-30, but that value is parsed and
+enforced per surviving row on the evaluate path rather than up front; any
+other non-blank value is a data-defect parse error) — stay up front here;
+but the family-**aware**
 judgment of whether a *blank* ground-truth cell is a tolerated case (an
 enablement-only hazard's blank `legitimization_value`, D-15/D-18) or a
 data-defect error (a blank on a measured non-enablement-only row) is **not**
@@ -279,6 +282,17 @@ Steps:
    path may also reject unrecognized codes up front. This is the same
    normalization the predict/evaluate paths apply, so train-time keys and
    serve-time lookups always agree.
+
+   **Blank ordinal ground truth (locked, `DECISIONS.md` D-46, superseding
+   D-29):** a row that survives D-1/D-4/D-18's filtering and therefore should
+   carry a real ordinal label, but whose `enablement_value` or
+   `legitimization_value` is blank, is a data defect. `hrc-train` raises a
+   purpose-built error naming the offending row or rows, matching
+   `hrc-evaluate`'s existing error contract for the same condition (D-26)
+   rather than surfacing Python's built-in `ValueError` from the `int()`
+   conversion in step 4. `schema.py` cannot make this call at load time — it
+   cannot resolve hazard family without an artifact — so the check belongs to
+   `model.py`'s `fit`.
 2. Preprocess each `response_text` → decoded sentences with repetition/disclaimer
    flags (deterministic; the `/usr/share/dict/words` dependency is removed in
    favor of a **bundled** wordlist so output is host-independent — see §7).

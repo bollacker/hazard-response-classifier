@@ -16,28 +16,89 @@ that is the pattern that failed.
 
 ## 1. Decision Ledger (`DECISIONS.md`)
 
-`DECISIONS.md` in this repo is the single source of truth for what has been
-decided, not chat history and not the plan doc's prose. Every time a
-recommendation is curated and accepted, it becomes a numbered, dated entry:
+`DECISIONS.md` records what has been decided and why — not chat history and
+not the plan doc's prose. It is **provenance, not authority**: once a
+decision's effect has been written into a specification, that specification
+governs, and the entry stands as the record of the reasoning and the rejected
+alternatives. Every time a recommendation is curated and accepted, it becomes
+a numbered, dated entry:
 
 ```
+<a id="d-<n>"></a>
 ## D-<n>: <short title>
 Date: YYYY-MM-DD
-Status: locked | open | superseded-by D-<m>
+Status: locked | proposed | open | superseded-by D-<m>
+Approved by: <who agreed, and when — omit only for `proposed`>
+Supersedes: D-<k>          (only when replacing an earlier entry)
 Decision: <what was decided>
 Rationale: <why, including what alternative was rejected and why>
-Touches: <files/subsystems affected>
+Touches: <files/subsystems affected; mark the one that absorbed it>
+Boundary: <what this entry does not govern, and which entry does>
 ```
+
+Field notes:
+
+- **`Status`.** `locked` — agreed and in force. `proposed` — written down but
+  not yet agreed; must name what approval it waits on, and the entry it would
+  supersede stays in force meanwhile. `open` — a question, not a decision.
+  `superseded-by D-<m>` — retired in place, text left intact.
+- **`Approved by`.** Who agreed. A rewrite attributed to someone in a commit
+  message is not an approval; if the agreement is not on record, the entry is
+  `proposed`.
+- **`Touches`** doubles as the absorption record. When a decision's effect is
+  written into a specification, mark that entry — `PLAN.md` §3 step 1
+  (**absorbed**) — so the index can point a reader from the entry to the
+  document that now governs. An entry whose effect reaches no specification is
+  an absorption gap and needs one before it can be treated as settled.
+- **`Boundary`** is optional but worth writing whenever an adjacent entry
+  governs a case a reader would plausibly expect this one to cover. It is what
+  keeps two entries from silently overlapping.
+- **Anchors.** Every entry carries an `<a id="d-<n>">` immediately above its
+  heading, so `DECISIONS.md#d-16` keeps resolving when a title is edited.
+  The index table at the top of the ledger must gain a row for every new
+  entry.
 
 Rules for Claude:
 - Treat every `locked` entry as a hard constraint. Do not propose changes that
   contradict one unless you flag it explicitly under Open Questions (see §3)
   with a reasoned argument for reopening it — never silently override it.
+- A `locked` entry that has been absorbed into a specification constrains
+  nothing on its own: cite the specification, not the entry. Read the entry
+  for the reasoning and the rejected alternatives.
 - When a session accepts a new fix or decision, append it to `DECISIONS.md`
   yourself as part of that session's output, so the ledger stays current.
 - If two locked decisions conflict with each other (this is exactly the kind
   of non-obvious interference that caused the original looping), stop and
   raise it as an Open Question rather than picking one silently.
+- **Retiring an entry is a move, never a delete.** Supersede it in place —
+  change its `Status`, point at the entry or specification that replaced it,
+  and leave the original text and its amendment trail where they are. Deleting
+  an entry destroys the rejected-alternative record and breaks every reference
+  to it in the source, the tests, and the rest of the docs.
+
+### 1.1 Document authority
+
+Recorded 2026-08-03, joint Riki–Kurt Release 1.1 science-contract review.
+
+- **Assessment behavior comes from the selected Assessment Standard.**
+  `../SCIENCE.md` documents the current standard and scientific target. It is
+  mutable when the selected standard, its version, or its authoritative
+  interpretation changes. Repository decisions may constrain how the evaluator
+  implements, exposes, tests, versions, or records that standard; they may not
+  replace an Assessment requirement or permanently freeze one.
+- **`../ARCHITECTURE.md` owns module order, interfaces, records, and
+  implementation structure.** The ledger records choices that constrain the
+  architecture without duplicating its specification.
+- **The ledger records only decisions jointly approved by Riki and Kurt.**
+  Proposals and unanswered questions belong in `STATUS.md`. An entry that
+  states a proposal must say so in its `Status` line and name what approval it
+  is waiting on.
+- **Reusing a pre-staging baseline choice for Release 1.1 requires a new joint
+  decision**, not a citation of the old entry. The baseline ledger is
+  implementation provenance; it does not carry forward by default.
+- **Do not restate a specification's content in an entry.** Two normative
+  statements of one rule in two mutable files will drift. State the decision
+  and point at the specification that carries it.
 
 ## 2. Scoped, Separated Passes
 

@@ -1,9 +1,18 @@
-# Verification Plan — confirming every locked decision
+# Baseline Verification Record — how the pre-staging baseline was confirmed
 
-**Purpose.** A durable collection of the checks that together confirm all 28
-locked decisions in `DECISIONS.md` actually compose and are correctly built.
-This is the master backlog; `STATUS.md`'s thin queue pulls a few items from here
-at a time (META_PLAN §5), one per session. See `META_PLAN.md` for the process.
+**Scope.** This document covers the **pre-staging baseline** (D-1 through
+D-37) and nothing else. It is the record of how those decisions were confirmed
+to compose and to be correctly built — a closed backlog, not a live one.
+Release 1.1 verification requirements live in
+[`../SCIENCE.md`](../SCIENCE.md) §Evidence and outputs; they are not tracked
+here, and a D-number in the matrix below does not imply a 1.1 constraint. See
+`DECISIONS.md`'s index for what each decision means for 1.1.
+
+**Purpose.** A durable collection of the checks that confirm the locked
+baseline decisions in `DECISIONS.md` compose and identify which are correctly
+built. This was the master backlog; `STATUS.md`'s thin queue pulled a few items
+from here at a time (META_PLAN §5), one per session. See `META_PLAN.md` for the
+process.
 
 **Two item types (META_PLAN §2 / §4):**
 - **IC-n — Integration check** (paper, cross-decision): confirms decisions
@@ -27,7 +36,18 @@ notes below). **This closes the entire backlog: every locked decision
 (D-1 through D-35) now has a landed implementation. Nothing remains
 queued.**
 
-- **Built + green (125 tests, `pytest` passing — all but 3 need no network,
+D-36 and D-37 document the completed baseline without adding behavior.
+Canonical Release 1.1 requirements live in `../SCIENCE.md`; they are not
+decision-ledger entries. The "What the Release 1.1 standard replaces"
+note at the top of `DECISIONS.md` identifies, clause by clause, which verified
+baseline behavior does not constrain Release 1.1.
+
+**Two later decisions are not covered by this record.** D-45 (proposed) would
+reverse D-5's constant-probability substitute, and D-46 supersedes D-29 with a
+purpose-built blank-label error that `model.py` does not yet raise (`STATUS.md`
+item 5). The D-5 and D-29 rows below verify the superseded behavior.
+
+- **Built + green (142 tests, `pytest` passing — all but 3 need no network,
   3 integration tests need it on first run only, model cached after):**
   - `schema.py` — **new, IS-1 landed.** `normalize_hazard` (D-27, ported
     verbatim from the toy) and `load_csv` (mode-scoped required columns —
@@ -227,7 +247,7 @@ queued.**
 | D-5 whole-component skipped trigger | model.py ✓ (**IS-4 landed** — falls out of `heads.py`'s per-cell degeneracy check automatically since every hazard's fit shares the same row-level labels; forcing fn: single-class labels → every cell skipped) | **green (unit)** |
 | D-6 CPU-only; determinism | model.py ✓ (**IS-5 landed**, bit-identical save→load round-trip); IS-1 (no --device, already true — no `--device` flag exists) | **green (unit, round-trip)** |
 | D-7 standardization stats net of D-1/D-4; Legit ex-enablement-only | IS-3 ✓ (mean/scale identical across hazard weightings; row-set determines mean/scale, forcing fn); model.py ✓ (**IS-4 landed** — Legit's actual enablement-only row-set exclusion now wired via `is_required_component`, forcing fn confirms identical mean/scale across hazards through the full `fit()` call) | **green (unit)** |
-| D-8 class_weight wart documented | IS-9 (closed via adjacent data, D-34 — parity comparison superseded) + README note | not built |
+| D-8 class_weight wart documented | `PLAN.md` §3 and README §Current baseline risks record the wart; `STATUS.md` item 1.9 proposes changing when a separate limitations document becomes mandatory | **green (paper requirement met; proposed change unresolved)** |
 | D-9 / D-10 monotonicity gate | test_threshold_optimizer ✓✓ | **green** |
 | D-11 predict precedence split | test_predict_resolution ✓ (forcing fn) | **green** |
 | D-12 no `--cv` | `cli/evaluate.py` ✓ (**D-35 landed** — no `--cv` flag exists) | **green (paper decision, confirmed by absence)** |

@@ -1,30 +1,35 @@
 # hazard-response-classifier
 
-Production implementation of a two-component ordinal hazard-response
+Pre-staging implementation of a two-component ordinal hazard-response
 classifier: given an AI system's response to a hazardous prompt, score how
 much it **Enabled** the hazard and how much it **Legitimized** it (each
 0/1/2), and combine those into a final `safe`/`unsafe` label. This
-productionizes a research prototype (internally called "the toy") into a
+turns a research prototype (internally called "the toy") into a
 fit-once, frozen-artifact package with three command-line tools:
 
 - `hrc-train` — fit a model artifact from a labeled CSV.
 - `hrc-evaluate` — measure a trained artifact's accuracy against a labeled CSV.
 - `hrc-predict` — score new, unlabeled responses with a trained artifact.
 
-See [`docs/SCIENCE.md`](docs/SCIENCE.md) for what the model actually does and
-every assumption behind it, and [`PLAN.md`](docs/planning/PLAN.md) for the
-full normative spec this package implements.
+This package is the current working baseline, not the Release 1.1 target. See
+[`docs/SCIENCE.md`](docs/SCIENCE.md) for the proposed 1.1 scientific standard
+and [`PLAN.md`](docs/planning/PLAN.md) for the specification of the baseline
+implemented today. `PLAN.md` is the contract for that pre-staging baseline; it
+does not override the Release 1.1 target in `SCIENCE.md`.
 
 ## Status
 
-Phases 0–5 of `PLAN.md`'s build plan are complete: all three CLIs are
+The working baseline completed phases 0–5 of `PLAN.md`: all three CLIs are
 installed console scripts, backed by 142 tests (unit, integration, and
-science), verified against both synthetic fixtures and real, non-mocked BGE
-model runs. Every design decision behind the implementation is recorded in
-[`DECISIONS.md`](docs/planning/DECISIONS.md) (D-1 through D-37);
-[`STATUS.md`](docs/planning/STATUS.md) tracks session-to-session progress.
-Phase 6 (this documentation set, plus CI wiring) is the only remaining item
-on `PLAN.md`'s own phase table.
+science), and verified against synthetic fixtures and real, non-mocked BGE
+model runs. It has not reached staging and is expected to be replaced by the
+Release 1.1 design.
+
+The active work is a science-to-decision review before any 1.1 architecture
+or implementation change. [`STATUS.md`](docs/planning/STATUS.md) is the live
+queue. [`DECISIONS.md`](docs/planning/DECISIONS.md) is the provenance record —
+why each choice was made and what was rejected — with an index mapping every
+decision to the specification that now carries it.
 
 ## Quick start
 
@@ -43,8 +48,8 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 
 | Doc | Covers |
 |---|---|
-| [`docs/SCIENCE.md`](docs/SCIENCE.md) | What the model does, the pipeline stages, and every stated assumption/known limitation |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Module layout, data flow, artifact format |
+| [`docs/SCIENCE.md`](docs/SCIENCE.md) | Proposed Release 1.1 scientific behavior and evidence requirements |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Current baseline module layout, data flow, and artifact format |
 | [`docs/INSTALL.md`](docs/INSTALL.md) | Install, dependencies, first-run model download |
 | [`docs/howto/hrc-train.md`](docs/howto/hrc-train.md) | Training a new artifact |
 | [`docs/howto/hrc-evaluate.md`](docs/howto/hrc-evaluate.md) | Measuring a trained artifact |
@@ -62,8 +67,8 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | `scripts/` | One-off real-data validation script (`run_real_data_is9.py`) and its captured output (`is9_real_data_metrics.json`) |
 | `docs/` | This documentation set |
 | `docs/planning/` | The process apparatus this project runs on: |
-| `docs/planning/PLAN.md` | The normative spec: what the package must do |
-| `docs/planning/DECISIONS.md` | The locked decision ledger (D-1…D-37): every design choice, its rationale, and what was rejected |
+| `docs/planning/PLAN.md` | The implemented baseline specification, binding until amended |
+| `docs/planning/DECISIONS.md` | The decision ledger: why each choice was made and what was rejected. Provenance, not authority — an index maps each decision to the specification that carries its effect |
 | `docs/planning/STATUS.md` | Session-to-session queue and progress log |
 | `docs/planning/VERIFICATION.md` | Decision → implementation/test coverage matrix |
 | `docs/planning/META_PLAN.md` | The process contract governing how the four files above get updated |
@@ -73,12 +78,21 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 jailbreak-style prompts and hazard-relevant model responses used for
 research/validation), not synthetic examples — treat it accordingly.
 
-## Known limitations
+## Current baseline risks
 
-The model deliberately preserves some of the original research prototype's
-statistical quirks rather than silently fixing them (see `DECISIONS.md` D-2,
-D-8). Real-data validation (D-34) confirms the pipeline works end-to-end and
-produces plausible held-out metrics, but the original prototype's exact
-published reference numbers were never reproduced bit-for-bit — its source
-data never resurfaced. See [`docs/SCIENCE.md`](docs/SCIENCE.md)'s "Known
-limitations and accepted risk" section for the full list.
+The pre-staging baseline deliberately preserves two statistical problems from
+the research prototype rather than silently fixing them. Both are specified in
+[`PLAN.md`](docs/planning/PLAN.md) §3; the reasoning is in `DECISIONS.md` D-2
+and D-8:
+
+- thresholds and centering values are fitted on the same rows used to fit the
+  model, which can make measured performance look better than it will be on
+  new data; and
+- class balancing ignores the separate hazard-row weights, so the weighted
+  training data are not fully balanced.
+
+Real-data validation confirms that the pipeline runs end to end, but the
+prototype's published reference numbers were never reproduced exactly because
+its source data were unavailable. `STATUS.md` item 1.9 proposes moving a
+standalone limitations document to the staging or release-version gate; that
+proposal requires agreement from Riki and Kurt.

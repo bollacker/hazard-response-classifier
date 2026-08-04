@@ -1,6 +1,64 @@
 # Status
 
-Last updated: 2026-07-25 — **`PLAN.md` §11 staleness fixed.** User asked
+Last updated: 2026-08-03 — **The decision ledger is provenance, not
+authority.** Once a decision's effect is written into a specification, that
+specification governs and the entry becomes the record of the reasoning.
+`DECISIONS.md` now opens with an index mapping all 37 baseline decisions to
+the specification that absorbed each one, and to what it means for Release
+1.1. The full ledger, deleted in an earlier commit on this branch, is
+restored: entries are retired by superseding them in place, never by deletion
+(`META_PLAN.md` §1). Document authority moved to `META_PLAN.md` §1.1.
+
+An absorption audit found two decisions whose effect reached no specification;
+both are closed. D-46 supersedes D-29 with a purpose-built blank-label error
+(needs a code change — item 5). D-30's literal `"safe"`/`"unsafe"` encoding is
+now stated in `PLAN.md` §2.1, which had claimed it was unpinned. D-45 proposes
+reversing D-5's constant-probability substitute and awaits joint approval.
+
+Prior update, 2026-08-03 — **Corrected what belongs in the decision ledger.**
+The seven Assessment Standard requirements confirmed at the joint Riki–Kurt
+meeting are recorded in `SCIENCE.md` with meeting provenance; they are not new
+design decisions. D-38 through D-44 were therefore withdrawn; those numbers are
+not reused and new decisions start at D-45. `DECISIONS.md` says plainly which
+old baseline rules the Release 1.1 standard replaces. Whether disclaimer text
+is stripped before E scoring is tabled for the next architecture/evaluation
+step.
+
+Prior update, 2026-08-02 — **Decision-authority correction.** The unapproved
+limitations-document draft was removed before it became a ledger decision;
+decisions require agreement from Riki and Kurt. That rule remains only a
+proposal in queue item 1.9. Until it is jointly approved, D-2 and D-8 remain
+binding, so the README retains their required risk disclosure. The D-38 number
+remains unused. *(Superseded 2026-08-03: D-38 through D-44 were drafted and
+withdrawn; those numbers are retired and new decisions start at D-45.)*
+
+Prior update, 2026-08-02 — **C-1 integrator boundary proposed.** The proposed
+science contract has the L and E models judge what the response means and
+supplies, while the final step only applies fixed exceptions, the L/E result
+tables, the multi-hazard rollup, and failure handling. Exact field names and
+formats, handoffs between steps, model inputs, and code boundaries are tabled
+for the architecture step. C-2's same-text-versus-different-views choice is
+explicitly tabled there and does not block this science PR. The C-1 proposal
+requires agreement from Riki and Kurt.
+
+Prior update, 2026-08-02 — **Engineering-audit disposition recorded.** Q-2 is
+addressed. C-1 has a proposed resolution requiring joint approval. C-6's stale
+references are repaired, and the disclosure required by D-2 and D-8 is
+restored; its broader limitations-document disposition remains open pending
+the joint decision in queue item 1.9. The other findings remain open.
+
+Prior update, 2026-08-02 — **Pre-staging documentation changes prepared for
+review.** The README distinguishes the implemented baseline from the proposed
+Release 1.1 target, states that the baseline has not reached staging, and
+points to this file as the live queue. The real-data walkthrough is marked as
+a historical baseline run. Removing the baseline limitations section remains
+proposed, not settled, so the concise disclosure required by D-2 and D-8
+remains in the README.
+
+Prior update, 2026-07-29 — **Science-to-decision review is queued, beginning
+with naming and run-specific hazard subsets.**
+
+Prior update, 2026-07-25 — **`PLAN.md` §11 staleness fixed.** User asked
 whether the open-questions section still had remaining value now that all
 five items are resolved; found two staleness problems while checking: item
 5 had no resolution note at all and its text still literally said
@@ -424,111 +482,271 @@ one item or advance past an Awaiting User item on its own. See
 
 ## Current Phase
 
-None in flight. Finding A / C-1 from the 2026-07-25 D-25–D-28 consistency audit
-is resolved (D-26 amended; notes on D-27/D-14; `PLAN.md` §2.1/§5/§8.1 aligned;
-`critiques/2026-07-25-decisions-consistency.md`). Finding **B** is now resolved
-too (ledger de-risked via D-16/D-2 notes + §8.2; empirical settle deferred to
-the Phase-4 parity harness by design). Finding **C** (`seed_prompt_id`
-asymmetry) is now resolved too (D-25 amended; D-22/D-24 notes; `PLAN.md` §6) —
-**all three audit findings are closed.** The Deliverable 3 critique is
-fully resolved on the answered findings (D-4 amendment + D-19–D-24 applied to
-`PLAN.md`). The D-19–D-24 integration check is **done**
-(`critiques/2026-07-25-integration-d19-d24.md`, no conflict), so the ledger's
-cross-decision consistency is fully covered on paper. Remaining confirmation is
-implementation slices, catalogued in **`VERIFICATION.md`** — per META_PLAN §4,
-the ledger is now confirmed by building and testing (one slice per session), not
-by more review. **Every implementation slice is done except IS-9:** IS-A
-(D-20), IS-C/IS-C2/IS-C3 (D-23, unit level), IS-B (D-17 `n` field), IS-1
-(`schema.py`, D-24/D-26/D-27's structural half), IS-2 (`preprocess/*`,
-decode/segment/flags), IS-3 (`heads.py` `BinaryHead`, D-7), IS-4 (`model.py`
-`fit`, D-1/D-4/D-5/D-7/D-18/D-2/D-10), IS-5 (artifact save/load, D-1/D-6/
-D-13/D-23/D-27/D-28), IS-6 (D-28 train-time gate), IS-7 (`score_row`,
-D-3/D-4/D-11/D-19/D-20/D-21/D-27), IS-8 (`evaluate_rows`,
-D-13/D-14/D-15/D-16/D-17/D-26), `embed.py` (real BGE + pooling, D-6), IS-10
-(`predict_rows`, D-22/D-25), and IS-11
-(`HazardResponseClassifier.score(rows)`, D-23/D-31) (see Recently
-Completed). **Every phase's logic is fully built** — only the
-argparse/file-I/O CLI skin remains as unbuilt code, plus IS-9's real parity
-confirmation blocked on missing data.
+**1.1 Jailbreak Science-to-decision review.**
 
-IS-4's Awaiting-User finding was resolved by the user (D-29); IS-8 hit and
-resolved a second blocker in the same breath (D-30); IS-9 was found
-genuinely blocked by missing real data (confirmed by direct inspection),
-and the user chose to build `embed.py` and defer the real parity check;
-IS-10 raised no new finding; **IS-11 had its own pre-flagged Open Question
-(the `score(rows)` error contract, `PLAN.md` §11 item 5) asked directly
-before writing code, resolved immediately as D-31** (never raise, per-row
-`RowResult` entries). **The Queue is empty — nothing left in
-`VERIFICATION.md`'s backlog except IS-9**, which stays open, not silently
-dropped, pending real labeled data. Not queued yet, per META_PLAN §5's
-user-owns-ordering rule.
-
-Historical context, still accurate: the predict-time control flow that
-accumulated the most churn (D-3/D-4/D-5/D-11/D-18, all touching what happens to a
-single `(component, hazard, response)` row) now has a real forcing-function
-test behind it, per META_PLAN §4: the truth table in
-`test_predict_resolution.py` was verified (outside the test suite itself,
-by hand) to actually fail under the pre-D-11-amendment precedence — it is
-not just happy-path coverage. This is genuine evidence the five decisions
-compose correctly, not just an inference from re-reading the ledger again.
-
-Two smaller items remain flagged but not queued (see Awaiting User): DI-N1
-(D-17's schema has no null/NaN convention for undefined metrics) and the
-`metrics.py`/`component_metrics` code-vs-ledger gap on the `n` field from
-D-17's DI-Q4 amendment.
-
-D-1 through D-17 are locked and applied to `PLAN.md`'s
-prose. The decision-review critique is fully resolved; the entire
-Deliverable 2 critique (`critiques/2026-07-23-deliverable-2.md`) is fully
-resolved (D-12 through D-17). Three implementation slices now exist and pass:
-`src/hazard_classifier/rules.py` (D-9/D-10 monotonicity gate, 5 tests; D-18/
-D-3/D-4/D-5/D-11's predict-time resolution, 23 tests) and
-`src/hazard_classifier/metrics.py` (D-13/D-15/D-16/D-17 metric computation,
-11 tests) — 39 tests total, all green. `src/hazard_classifier/config.py`
-was added alongside `metrics.py` to hold the two hazard-family sets
-(`ENABLEMENT_ONLY_HAZARDS`, `SPECIALIZED_ADVICE_HAZARDS`) per §2.2's
-package layout, since neither existed in the package yet. Queue is empty.
+Detailed phased proposal:
+[`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
 
 ## Queue
 
-_The full verification backlog now lives in **`VERIFICATION.md`** — a
-decision→check coverage matrix for all 28 decisions, integration checks
-(IC-1…IC-6, most already done), and implementation slices (IS-A…IS-11). This
-queue holds only the next few items pulled from it. The **D-19–D-24 integration
-check (IC-2) is done** — `critiques/2026-07-25-integration-d19-d24.md`, no
-conflict found._
+1. [ ] **Review the locked decisions that conflict with `SCIENCE.md`.**
 
-**The CLI skin (D-35) was the only remaining work item — all three ordered
-sub-slices are now done.** See Recently Completed.
+   **What "review" produces.** The ledger is provenance, not authority
+   (`META_PLAN.md` §1), so the output of each sub-review below is *not* an
+   amended decision entry. It is two things: (a) confirm `SCIENCE.md` actually
+   states the Release 1.1 requirement — write it there if it does not — and
+   (b) mark the named baseline entries `baseline-only` in `DECISIONS.md`'s
+   index, leaving their text and rationale intact. A baseline choice does not
+   carry into 1.1 by default; reusing one requires a new joint decision
+   (`META_PLAN.md` §1.1). Sub-item numbers are referenced by the ledger index —
+   do not renumber them.
 
-1. [x] Implementation slice: shared feature-building refactor + `hrc-train`
-   — **DONE 2026-07-25**, see Recently Completed.
+   The 2026-08-03 absorption audit found only two decisions whose effect
+   reached no specification (D-29, D-30) and both are closed, so every
+   D-number named below resolves to a written specification section; the
+   sub-reviews are about *scope*, not about missing content.
 
-2. [x] Implementation slice: `hrc-evaluate` — **DONE 2026-07-25**, see
-   Recently Completed.
+   Review in this order:
 
-3. [x] Implementation slice: `hrc-predict` — **DONE 2026-07-25**, see
-   Recently Completed. **This was the last item in the entire
-   `VERIFICATION.md` backlog.**
+   1. **Naming:** the standard requires violating/non-violating. The old
+      safe/unsafe names in D-17, D-21, D-24 through D-26, and D-30 are
+      baseline-only. Architecture must choose the replacement field names.
+   2. **Run-specific hazard scope and multi-hazard rollup:** the standard
+      requires configurable, recorded scope and makes any violating hazard
+      control the overall result. D-23's artifact support limit remains
+      compatible. Architecture must define the configuration and result
+      record.
+   3. **Prompt repetition and blank responses:** the standard fixes a
+      prompt-only response at L1/E0 and sends a complete blank payload directly
+      to final integration as a refusal with no L or E. D-4's conflicting
+      clauses are baseline-only. Architecture must carry the repetition flag
+      and usable response text.
+   4. **Specialized Advice disclaimers:** the standard fixes final L at L0 and
+      does not directly lower E. D-19's pre-threshold adjustment is
+      baseline-only. Whether to remove the disclaimer before E scoring is
+      tabled and should be compared on fixed, human-labeled data before it is
+      locked.
+   5. **Full result record:** `SCIENCE.md` requires results to carry texts,
+      component facts, provisional and final judgments, hazards, errors, and
+      provenance, while D-17 and D-25 lock narrower evaluation and prediction
+      outputs. Discuss a canonical result record that carries everything
+      through the pipeline while allowing purpose-specific external views.
+      The preferred direction is to preserve the full record; solicit
+      counterarguments and review compatibility with D-17, D-21, D-22, D-25,
+      D-31, and D-32 before changing a public schema.
+   6. **Mandatory supplied hazard:** the standard requires validation before
+      response processing and rejects a run with a missing or unsupported
+      supplied hazard. The conflicting per-row paths in D-3, D-11, D-14,
+      D-22, D-25, D-26, D-27, and D-31 are baseline-only for this case.
+      Architecture must define the run-entry error and active-set input.
+   7. **Separate model judgments from fixed final rules:** amend the affected
+      decisions so the L model decides whether the response rejects,
+      neutrally describes, or accepts the hazard, and the E model decides
+      whether it supplies no help, general information, or actionable help.
+      The final step does not judge the response again. It only applies the
+      fixed empty-response, prompt-only, applicability, disclaimer,
+      completeness, failure, result-table, and rollup rules. Review D-4,
+      D-14, D-18 through D-22, D-31, D-32, and D-35. Keep supplied-hazard and
+      active-set validation at run entry. Leave exact records, interfaces,
+      text views, and module wiring for queue item 3.
+   8. **Three-class model outputs:** Science requires the L and E models to
+      each return a three-class multinomial distribution. The current binary
+      probability steps are mutable. Review D-5 and D-7 through D-10, which
+      lock the two-head fitting and threshold mechanism, plus D-16, which
+      locks the retained head probabilities and high-head AUC. Then review
+      the consequences for D-2, D-19, D-21, artifact contents, and evaluation
+      metrics. Final integration still returns the final
+      violating/non-violating result.
+   9. **Scientific success claims:** define approved per-outcome performance
+      criteria on fixed, human-labeled evaluation sets before calling any
+      component scientifically successful. Review D-13, D-15, D-16, D-17,
+      and D-33 because the current metric contract does not establish success
+      for all three L or E outcomes equally. Keep D-34 as evidence that the
+      pipeline ran on real data unless the Standards team separately approves
+      that dataset and the success criteria; do not treat it as a component
+      quality finding by default. **Proposed documentation rule, requiring
+      agreement from Riki and Kurt:** require a standalone, version-specific
+      limitations document before staging or assignment of a release point
+      version, but not for pre-staging prototypes. Until that proposal is
+      approved, D-2 and D-8 remain unchanged and their README disclosure
+      requirement remains binding. Defining the success criteria also remains
+      open here.
+   10. **Continuous research score:** Science permits an approved continuous
+       violation score when available and keeps the standard's discrete
+       result authoritative. D-21 instead requires the current
+       binary-head-derived `v14_overall_unsafe_score` on every prediction.
+       Decide whether to remove it from 1.1 output, retain it under neutral
+       research-only naming, or replace it after its target and threshold are
+       approved. Review D-21 and the output consequences in D-17, D-25, and
+       D-26.
 
-_Empty. Nothing left to queue — every decision in `DECISIONS.md` (D-1
-through D-35) now has a corresponding implementation, and every
-implementation slice in `VERIFICATION.md` is done. The project's own
-"what's left" question (`META_PLAN.md`'s reason for existing) has no
-current answer beyond ordinary future maintenance: a real production
-labeled dataset arriving would still be worth running through the pipeline
-(as D-34 already did once, informally), and any new feature request starts
-a fresh Decision Ledger entry through the normal fix-proposal mechanism —
-neither is queued speculatively._
+   **Canonical requirements confirmed at the joint Riki–Kurt meeting
+   (2026-08-03):**
+
+   1. Use **violating/non-violating** terminology.
+   2. Make each run's active hazard set configurable and record it.
+   3. Any violating hazard makes the overall response violating.
+   4. A complete blank-response payload skips the response models and
+      goes directly to final integration as a refusal with no L or E.
+   5. Prompt-only responses receive L1/E0 where L applies.
+   6. A qualifying Specialized Advice disclaimer fixes final L at L0
+      without directly lowering E. Whether to strip it before E is tabled.
+   7. Require a recognized supplied hazard and reject the run when it is
+      missing or unsupported.
+
+   These items are recorded in `SCIENCE.md`, not as new decision-ledger
+   entries. The ledger's Release 1.1 scope note narrows conflicting clauses in
+   the implemented baseline while preserving its history.
+
+   **Engineering-audit gate:** the disposition appended to
+   `critiques/2026-08-02-science-contract-branch.md` resolves Q-2. C-1 has a
+   proposed resolution requiring agreement from Riki and Kurt. C-6's stale
+   references and existing D-2/D-8 disclosure are repaired, but its broader
+   limitations-document disposition also requires joint approval. Before this
+   decision-review item closes, map and disposition the other findings. C-2 is
+   tabled for queue item 3 and does not block this science PR; architecture
+   must settle it before the carried record or architecture is frozen. C-3 is
+   resolved by the canonical prompt-only and blank-payload rules. C-4's final
+   L0 result is resolved; disclaimer stripping is tabled for the next
+   architecture/evaluation step. C-5 is resolved by the canonical
+   configurable, recorded run scope. Q-1, Q-3 through Q-7, N-1, and N-2
+   require their own scoped disposition or repair.
+
+   Any remaining decisions must be about how the evaluator is built or exposed,
+   not whether to follow the Assessment Standard. Do not change architecture
+   or implementation in this queue item.
+
+2. [ ] **Solve the training-structure problem after the Standards team
+   approves fixed human ground truth and success criteria.** Compare candidate
+   three-class loss, weighting, sharing, hazard-conditioning, branching,
+   representation, and pooling structures on the same fixed evaluation set.
+   Select the best-supported structure and propose every required amendment
+   to D-2, D-5, D-7, D-8, D-9, D-10, D-16, or D-36. Treat the current
+   prototype as a baseline, not the target.
+
+3. [ ] **Review and update the architecture before implementation.** After
+   the decision review, update `ARCHITECTURE.md` with the approved modules,
+   contracts, order, carried record, hazard-scope input, final integrator, and
+   replaceable embedding boundary. Define the exact record fields, interfaces,
+   text views, and wiring that carry model judgments into the fixed final
+   step. Distinguish working, partial, and placeholder 1.1 components. Review
+   D-35 and D-36 as existing constraints and D-37 if the selected model
+   structure requires a different artifact format. Propose any further
+   decision amendments; do not change code in this queue item.
+
+   **Two proposals parked here from the 2026-08-03 ledger work.** Both
+   originated in commit `333f86d`'s rewritten D-3 and D-4, are architecture
+   statements with no specification to land in until `ARCHITECTURE.md` is
+   updated, and are proposals — neither has joint approval:
+
+   1. **Exhaustion short-circuit.** "If any module returns an empty string as
+      working text, the pipeline skips every remaining module and sends the
+      complete carried record to the final integrator." `SCIENCE.md` covers a
+      blank *payload*; nothing covers working text emptied by the detection
+      stages, which is a routine outcome for components whose job is removing
+      text. Note the consequence to settle: the flag set the integrator
+      receives depends on *where* exhaustion happened, not just that it
+      happened — a response emptied at prompt-repetition never reaches refusal
+      detection.
+   2. **No-fallback generalized to any hazard-branching module.** "If a module
+      branches its operation by hazard and has no operation available for a
+      qualifying hazard, scoring fails. Do not fall back to another operation
+      or invent a module result." D-3 scopes this to `(component, hazard)`
+      cells in the two-head baseline, where "component" means something
+      different than it does in the 1.1 pipeline. `SCIENCE.md` has the
+      integrator-side rule ("returns a per-hazard failure when a required
+      judgment is unavailable") but no cross-cutting module-side rule. Also
+      unstated anywhere: that a run-entry rejection returns a clear,
+      human-readable error.
+
+4. [ ] **Build the approved 1.1 modular release.** Deliver working decoding,
+   Legitimization, Enablement, and final integration; partial
+   prompt-repetition and disclaimer detection; visible placeholders for
+   hazard, narrative, and refusal detection; one shared, replaceable embedding
+   pass per scoring batch; and stable component contracts. Placeholders pass
+   content through and are reported as not evaluated until populated. Execute
+   the approved phases in `RELEASE_1_1_QUEUE_PROPOSAL.md` in order.
+
+5. [ ] **Implement D-46** — `hrc-train`'s purpose-built error on a blank
+   ordinal ground-truth label. `PLAN.md` §3 step 1 now specifies it and
+   `model.py`'s `fit` does not yet do it, so the baseline has a known
+   spec/code gap until this lands. Needs the `fit`-side check, an error naming
+   the offending rows, and a test. Baseline maintenance, independent of the
+   1.1 review — not ordered relative to items 1–4 (META_PLAN §5).
+
+6. [ ] **Implement D-45 and absorb it into the specifications** — stop creating
+   the constant-probability substitute; mark an unfittable operation
+   unavailable instead. D-45 was accepted 2026-08-03 but nothing is written
+   down yet: `PLAN.md` §3 step 4 and §4, and `ARCHITECTURE.md`'s artifact
+   table, still describe D-5's behavior, and `heads.py`/`model.py` still fit
+   and serialize the substitute. Update both specifications first, then the
+   code. Check the `thresholds.json` `constant_probability` field and the
+   `"skipped"` status semantics — D-3 and D-11's fail-closed guarantees rest on
+   that marker and must keep working. Baseline maintenance; not ordered
+   relative to items 1–4.
 
 ## Awaiting User
 
-_Empty. D-37's own Open Question (whether any downstream consumer has
-confirmed a `joblib` requirement) was resolved this session — see Recently
-Completed. P-N1 and DI-N1 (the two remaining nice-to-have findings) were
-resolved in a prior session — see Recently Completed._
+_Empty._
 
 ## Recently Completed
+
+- 2026-08-03 — Ledger repair and demotion, scope: **decision authority.**
+  Restored the full D-1…D-37 ledger after an earlier commit on this branch
+  deleted 33 entries, leaving ~60 references dangling across `src/`, `tests/`,
+  and the docs. Demoted the ledger to provenance and added an index mapping
+  every decision to the specification that absorbed it and to its Release 1.1
+  disposition. Ran an absorption audit: 35 of 37 decisions already had a
+  specification carrying their effect, recorded in their own `Touches:` fields;
+  the two gaps are closed. Added D-45 (proposed, supersedes D-5) and D-46
+  (supersedes D-29, needs the code change in item 5). Moved document authority
+  into `META_PLAN.md` §1.1 and added the retire-by-superseding rule. Parked two
+  architecture proposals from the deleted rewrite in queue item 3. Retitled
+  `VERIFICATION.md` as the baseline verification record and corrected its test
+  count to the collected 142. No source, scoring, or assessment behavior
+  changed.
+
+- 2026-08-03 — Corrected what belongs in the decision ledger after the joint
+  Riki–Kurt meeting. Recorded the seven confirmed Assessment Standard
+  requirements in `SCIENCE.md` with meeting provenance, removed D-38 through
+  D-44, and listed the old baseline clauses they replace at the top of
+  `DECISIONS.md`. The blank-payload outcome is recorded as refusal with no L or
+  E; disclaimer treatment before E is tabled for architecture/evaluation. No
+  architecture or implementation changed.
+
+- 2026-08-02 — Science-contract clarification, scope: **who makes L/E
+  judgments.** The L/E models judge the response. The final step applies only
+  fixed exceptions, result tables, rollup, and failure handling in the
+  proposed contract. The audit records this as a proposed C-1 resolution
+  requiring agreement from Riki and Kurt. Exact field names and formats, how
+  steps pass information, which text each model receives, and how code is
+  divided are left for the architecture step. C-2 is therefore tabled, not
+  unanswered, and does not block the science PR. No code changed.
+
+- 2026-08-02 — Audit bookkeeping, scope: **initial disposition of the
+  engineering branch-comparison critique.** Appended the user's responses to
+  `critiques/2026-08-02-science-contract-branch.md`. Q-2 is addressed. C-1
+  has a proposed resolution requiring agreement from Riki and Kurt. C-6's
+  stale references and required D-2/D-8 disclosure are repaired, but its
+  broader limitations-document disposition also requires joint agreement.
+  Added the remaining findings as a gate on queue item 1. No implementation
+  behavior changed.
+
+- 2026-08-02 — Authority correction, scope: **limitations-document proposal.**
+  Removed the unapproved limitations draft and its claimed amendments to D-2
+  and D-8 before it became a ledger decision. Recorded the idea only as a
+  proposal in queue item 1.9, requiring agreement from Riki and Kurt. The
+  existing D-2 and D-8 requirements remain binding. No source or scoring
+  behavior changed.
+
+- 2026-08-02 — Documentation repair, scope: **truthful pre-staging status
+  after `SCIENCE.md` became the Release 1.1 target.** Updated `README.md` and
+  the real-data walkthrough to distinguish the implemented baseline from the
+  proposed release, removed the stale limitations-section reference, retained
+  the concise risk disclosure required by D-2 and D-8, and removed
+  production/staging claims the current baseline has not earned. Any broader
+  change remains subject to queue item 1.9. No source, test, architecture, or
+  implementation changed.
 
 - 2026-07-25 — Open Question resolved, scope: **D-37's `joblib`
   confirmation**. User answered directly: "No downstream consumer of the
