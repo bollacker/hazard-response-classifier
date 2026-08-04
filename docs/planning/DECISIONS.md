@@ -2837,7 +2837,7 @@ around.
 ## D-45: Unfittable operations are explicitly unavailable; no constant-probability substitute
 Date: 2026-08-03
 Status: locked
-Approved by: Kurt, 2026-08-03
+Approved by: Riki and Kurt, 2026-08-03
 Supersedes: D-5
 
 Decision: If training cannot produce a valid operation, mark that operation
@@ -2857,10 +2857,14 @@ value nobody may consume. Rejected alternative: keep D-5 and rely on the
 `"skipped"` marker, which works but leaves the artifact carrying values that
 D-3 and D-11 exist to prevent anyone from reading.
 
-Provenance: this text originates in commit `333f86d`, which rewrote D-5 in
-place. It was held as `proposed` because the 2026-08-03 joint meeting record
-lists seven confirmed canonical requirements and this was not among them.
-Kurt accepted it directly on 2026-08-03.
+Provenance: this text originates in Riki's commit `333f86d`, which rewrote D-5
+in place under the attribution "Modified: 2026-08-03 by Kurt and Riki." It was
+briefly recorded as `proposed` while that attribution was unverified — the
+2026-08-03 joint meeting record lists seven confirmed canonical requirements
+and this was not among them. Both halves are now on record: the attribution is
+Riki's own, and Kurt accepted it directly on 2026-08-03. The reversal is a
+scientific change to how training handles an unfittable operation, so it is
+carried as its own numbered entry rather than as an in-place edit to D-5.
 
 Touches: `PLAN.md` §3 step 4 (cell enumeration), §4 (`thresholds.json`
 `status` and `constant_probability` fields); `ARCHITECTURE.md` Artifact
