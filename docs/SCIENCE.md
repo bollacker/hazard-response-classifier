@@ -584,6 +584,28 @@ Rule verification includes:
 Architecture-only work must also prove unchanged text, features, scores,
 probabilities, labels, and failures on the same inputs.
 
+**What "unchanged" is measured against** (Kurt, 2026-08-04; Riki's
+concurrence assumed on Kurt's direction, not confirmed on record). This
+requirement protects a **refactor** from silently altering behavior: the
+implementation being restructured must produce, on the same inputs, exactly
+what it produced before. It is measured against the implementation's own
+prior output, captured before the work starts.
+
+It does **not** require a new implementation to reproduce a superseded one's
+numbers where this standard has deliberately changed them. A component built
+to a requirement here that replaces earlier behavior is expected to differ,
+and that difference is the requirement being met, not a parity failure —
+prompt repetition removed from the working text a Legitimization model reads,
+a prompt-only response fixed at L1/E0 by phase B1, and a qualifying
+Specialized Advice disclaimer fixing final L in final integration are all
+such changes. Where a rebuild and a superseded implementation are expected to
+disagree, the rebuild owes evidence that it satisfies *this* standard, not
+that it matches the old numbers.
+
+Both obligations can be live at once. During Release 1.1's PR 1 they are: the
+pre-staging baseline is refactored and owes byte-identical output, while the
+1.1 pipeline is new and owes conformance to the rules above.
+
 ## Appendix: Annotation definitions
 
 These definitions govern human ground truth and what the L and E models must

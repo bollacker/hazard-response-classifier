@@ -600,64 +600,19 @@ across schemes:
 
 ## Awaiting User
 
-Updated 2026-08-04. **Nothing here blocks slice work**, but the first item
-below decides whether PR 1 can be called complete, so it needs an answer
-before PR 1 closes rather than before the next slice starts. Queue items 1
-and 3 are complete and retired, and both architecture-pass findings (A-1,
-A-2) are resolved and applied to `SCIENCE.md`. The three calls that were
-awaiting Riki's concurrence are in force under an assumed concurrence, and
-the Standards-team request remains explicitly non-blocking.
+Updated 2026-08-04. **Nothing here blocks anything.** Queue items 1 and 3 are
+complete and retired, and both architecture-pass findings (A-1, A-2) are
+resolved and applied to `SCIENCE.md`. The calls awaiting Riki's concurrence
+are in force under an assumed concurrence, and the Standards-team request
+remains explicitly non-blocking.
 
-**Riki's review now has six items, not three.** The phase B fold and the
-withdrawal of cross-hazard completeness are science changes made on Kurt's call
-alone, and the second one removes a safeguard; the `META_PLAN.md` §5 amendment
-is process bookkeeping. See the assumed-concurrence table.
-
-### PR 1's "unchanged scores" criterion — which path does it govern?
-
-Raised 2026-08-04 building slice 1C, per `META_PLAN.md` §3: this is a
-specification conflict, not a confidence gap, so it is surfaced rather than
-resolved.
-
-**The question.** PR 1's goal is "convert the current evaluator into
-independently replaceable components **without changing current scores**,"
-its exit criterion is "the same inputs produce unchanged current text,
-features, scores, probabilities, labels, and failures," and `SCIENCE.md`
-§Evidence and outputs says "architecture-only work must also prove
-unchanged text, features, scores, probabilities, labels, and failures on
-the same inputs." Two readings:
-
-1. **The baseline path must not change.** The three baseline CLIs keep
-   producing byte-identical output. This is what slice 0's goldens capture,
-   what `PR1_EXECUTION_PLAN.md` §3's verification table points at ("Slice 0
-   goldens + slice 1C parity"), and what `ARCHITECTURE.md` §3.2 sets up by
-   making 1.1 a new package alongside an untouched baseline. **This reading
-   is met** — the parity test passes with the full pipeline in the repo.
-2. **The new 1.1 pipeline must reproduce the baseline's numbers.** **This
-   reading cannot be met, and not because of an implementation shortfall.**
-   Three already-approved 1.1 requirements deliberately change the numbers:
-   - `SCIENCE.md` §Prompt-repetition detection requires repeated spans
-     removed from the working text — the baseline never removed them for
-     Legitimization at all, so Legitimization now scores different text;
-   - phase B1 fixes a prompt-only response at L1/E0, where the baseline ran
-     Legitimization through the head (`DECISIONS.md` records D-4's
-     prompt-only rule as baseline-only for exactly this reason);
-   - phase C fixes final L at L0 for a qualifying Specialized Advice
-     disclaimer, replacing D-19's pre-threshold adjustment — a different
-     mechanism at a different point in the pipeline, recorded as
-     baseline-only.
-
-**Why it matters.** Under reading 2, PR 1 cannot be called complete by any
-implementation, and the criterion would need rewording against the
-requirements that supersede it. Under reading 1 it is already satisfied.
-Slice 1C was built to reading 1, since that is what the execution plan's own
-verification table specifies — but the ledger's baseline-only dispositions
-are what make reading 2 impossible, and that consequence appears not to have
-been drawn explicitly when the criterion was written.
-
-**Nothing is blocked.** The work stands either way; what changes is how
-PR 1's completion is judged and whether the criterion's wording needs
-amending.
+**Riki's review now has eight items.** The phase B fold, the withdrawal of
+cross-hazard completeness, and **D-48's scoping of the unchanged-output
+requirement** are science changes made on Kurt's call alone; the second
+removes a safeguard and the third amends `SCIENCE.md` §Evidence and outputs.
+**D-49** defers a PR 1 exit criterion and carries a counterargument stated in
+the entry itself. The `META_PLAN.md` §5 amendment is process bookkeeping. See
+the assumed-concurrence table.
 
 ### Item 4 entry gate — cleared; one sequencing call remains
 
@@ -702,6 +657,8 @@ as though it were. This is the one item to close at Riki's next review.
 | **`RELEASE_1_1_QUEUE_PROPOSAL.md` approved** (2026-08-04): status flipped from proposed; the phases now authorize implementation | In force | The document's status line; queue item 4's authority to execute |
 | **`META_PLAN.md` §5 amended** (2026-08-04): queue numbers are identifiers not priorities; a session takes a *startable* item; retirement rule added | In force | `META_PLAN.md` §5. Process bookkeeping, not science — lowest-stakes row here |
 | **Cross-hazard completeness withdrawn** (2026-08-04): no hazard's result is conditioned on another hazard being present; Sexual Content is treated for completeness like any other hazard | In force | `SCIENCE.md` phase D and §Hazard detection; `ARCHITECTURE.md` §12.1. **Removes a safeguard** — see the note below |
+| **Unchanged-output requirement scoped** (2026-08-04): measured against the refactored implementation's own prior output, not imposed on a standard-conforming rebuild. Locked as **[D-48](DECISIONS.md#d-48)** | In force | `SCIENCE.md` §Evidence and outputs' scope paragraphs; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1's goal and exit criterion; `PR1_EXECUTION_PLAN.md` §3. Reverting makes PR 1 unclosable unless D-4's and D-19's baseline-only dispositions reopen with it |
+| **1.1 evaluator artifact deferred** (2026-08-04): out of PR 1, format finalized at PR 5, round-tripped at PR 6. Locked as **[D-49](DECISIONS.md#d-49)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1's artifact exit criterion; `PR1_EXECUTION_PLAN.md` §3. Reverting reopens that criterion inside PR 1 and requires building a writer with no reader — see D-49's stated counterargument |
 
 **Rework exposure:** item 3 built directly on the amendment's dispositions, so
 architecture proceeded on the assumption rather than waiting on it. That is the
@@ -769,6 +726,38 @@ further concurrence — Riki directed it.
 
 ## Recently Completed
 
+- 2026-08-04 — **D-48 locked: the unchanged-output requirement binds the
+  implementation being refactored, not a standard-conforming rebuild.**
+  Kurt's call on the conflict slice 1C raised.
+
+  `SCIENCE.md` §Evidence and outputs, PR 1's goal, and PR 1's exit criterion
+  all read as though one parity requirement covered both the baseline and
+  the new 1.1 pipeline. Slice 1C established by construction that no
+  implementation can satisfy that reading: three already-approved
+  requirements deliberately change the numbers (prompt repetition removed
+  from the text Legitimization reads, phase B1's prompt-only L1/E0, phase
+  C's disclaimer handling replacing D-19's pre-threshold adjustment), and
+  all three are already recorded as baseline-only. The strict reading would
+  therefore have made PR 1 unclosable while demanding the rebuild reproduce
+  behavior the standard retired.
+
+  **Resolved by scoping, not by deleting.** The requirement keeps full force
+  where it applies — the baseline owes byte-identical output, verified
+  against slice 0's goldens — and the 1.1 pipeline is judged against
+  `SCIENCE.md`'s own rules instead. Both obligations are live at once during
+  PR 1, which `SCIENCE.md` now says explicitly. The rejected alternative
+  (reopening the three displaced requirements so the pipeline could match
+  the baseline) would have inverted `META_PLAN.md` §1.1's authority order
+  and traded three approved improvements for a parity number with no
+  scientific claim behind it.
+
+  Absorbed into `SCIENCE.md` §Evidence and outputs and
+  `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1; `PR1_EXECUTION_PLAN.md` §3's
+  verification table updated. Riki's concurrence is assumed on Kurt's
+  direction and is now the seventh row of the assumed-concurrence table —
+  it amends `SCIENCE.md`, so it belongs there rather than passing as
+  bookkeeping. No code changed.
+
 - 2026-08-04 — **PR 1 slice 1C landed: embedding, scoring, integration,
   views.** The pipeline now runs end to end. New:
 
@@ -818,23 +807,35 @@ further concurrence — Riki directed it.
   B1's bullet order both ways, phase C against phase D, and the rollup's
   precedence.
 
-  **Two exit criteria are not fully met; neither is silently claimed** —
-  see the new Awaiting User item below for the third and most consequential
-  one:
-  - *"Artifact save and load preserve component and rule versions."* The
-    1.1 artifact format (`ARCHITECTURE.md` §10's manifest carrying
-    component implementations, versions, and rule version) has **no writer
-    yet**, and none was in this slice's deliverables. What is verified
-    instead is that the run context's selections and versions survive the
-    pipeline into `result_view`. The artifact half is genuinely unbuilt.
+  **Three questions this slice raised, all now settled** — none silently
+  claimed as met:
+  - *Which path the "unchanged scores" criterion governs.* Settled the same
+    day as **[D-48](DECISIONS.md#d-48)**: the baseline path. See its own
+    entry above.
+  - *"Artifact save and load preserve component and rule versions."*
+    **Deferred to PR 5 / PR 6 as [D-49](DECISIONS.md#d-49)** — the plan had
+    assigned this to a slice-1C round-trip test without scheduling anyone to
+    build the artifact. PR 1 carries the weaker property its scope supports
+    instead: component selections, versions, and rule version survive into
+    the `results.jsonl` view.
   - *"Embeddings are created once per scoring batch."* Verified as once per
-    **response**, shared across every evaluated hazard — which is the part
-    §8 states testably. A batch spanning *several responses* is not
-    expressible in `ARCHITECTURE.md` §3's per-record pipeline at all, so
-    "per batch" across responses is neither implemented nor tested.
+    **response**, shared across every evaluated hazard — the part §8 states
+    testably, now confirmed against the **real** encoder and not only a
+    stub. A batch spanning *several responses* is not expressible in
+    `ARCHITECTURE.md` §3's per-record pipeline at all; recorded as a
+    known limit of the current wording rather than as a met criterion.
 
-  **Next:** PR 1's remaining exit-criteria gaps above, then PR 2. Not
-  started.
+  **Real non-mocked run added, closing a gap in this slice's own
+  verification.** Every other 1.1 test substitutes a stub provider, so
+  `BgeEmbeddingProvider` — the one component that touches the encoder — was
+  never executed. `tests/integration/test_evaluator_real_bge.py` now runs the
+  assembled pipeline against the real cached BGE model and the committed
+  golden artifact: every stage reached, one encoder call per response, a
+  prompt-only response never reaching the encoder at all, and a
+  JSON-serializable view with a real 768-wide vector correctly omitted.
+  273 tests total.
+
+  **Next:** PR 2. PR 1's slices are complete.
 
 - 2026-08-04 — **PR 1 slice 1B landed: pipeline, placeholders, detection
   wrappers.** `evaluator/pipeline.py` — `STAGE_ORDER` (the ten stages from

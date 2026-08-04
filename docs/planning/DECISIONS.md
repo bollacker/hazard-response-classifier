@@ -24,7 +24,7 @@ Release 1.1 requires a new joint decision, not a citation of the old entry.
 Entries are retired by superseding them in place, never by deletion. The index
 below is the map; every D-number that has ever existed appears in it.
 
-Numbering: new decisions start at **D-45**. D-38 through D-44 were drafted
+Numbering: new decisions start at **D-50**. D-38 through D-44 were drafted
 during the 2026-08-02/03 science-contract work and withdrawn before approval;
 those numbers are not reused.
 
@@ -182,6 +182,12 @@ of their own.
 rejected, the reversal scope is the table above, and `../SCIENCE.md`'s phase B1
 plus the final-L/E line under §Evidence and outputs revert together.
 
+**These three are not the whole list.** Later calls were placed on the same
+footing — notably [D-48](#d-48) (2026-08-04), which amends `../SCIENCE.md`
+§Evidence and outputs. `STATUS.md`'s assumed-concurrence table is the complete
+register and carries each one's reversal scope; this section records only the
+2026-08-03 set that first established the practice.
+
 **Recorded assumption (Kurt, 2026-08-03): label sparsity is not a design
 driver.** Release 1.1 planning assumes the Standards team supplies enough
 human ground truth that per-class sparsity edge cases are unlikely. This is
@@ -261,6 +267,8 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-45](#d-45) | No constant-probability substitute; unfittable = unavailable | `PLAN.md` §3 step 4, §4; `ARCHITECTURE.md` Artifact format | carried; supersedes D-5 |
 | [D-46](#d-46) | Purpose-built error on an unconvertible blank ordinal label | `PLAN.md` §3 step 1 | carried; supersedes D-29 |
 | [D-47](#d-47) | Limitations document gates staging / release-version assignment | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 | carried; discharges D-2/D-8 disclosure |
+| [D-48](#d-48) | Unchanged-output binds the refactored implementation, not a rebuild | `../SCIENCE.md` §Evidence and outputs; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1 | carried |
+| [D-49](#d-49) | 1.1 evaluator artifact deferred out of PR 1 to PR 5/PR 6 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1 exit criteria | carried |
 
 ### Absorption gaps
 
@@ -3145,3 +3153,117 @@ whether a component may be called scientifically successful — those are an
 external input from the Standards team, still outstanding. It also does not
 govern `../SCIENCE.md`'s not-evaluated reporting rule, which stands on its own
 and which this decision only points at.
+
+<a id="d-48"></a>
+## D-48: The unchanged-output requirement binds the implementation being refactored, not a standard-conforming rebuild
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record** — same footing as [D-47](#d-47); see the
+approval-state note at the top of this file. Raised from implementation, in
+`STATUS.md`'s Awaiting User, while building PR 1 slice 1C.
+
+Decision: `../SCIENCE.md` §Evidence and outputs' "architecture-only work must
+also prove unchanged text, features, scores, probabilities, labels, and
+failures on the same inputs" is measured against **the refactored
+implementation's own prior output**, captured before the work starts. It does
+not require a new implementation built to a superseded requirement's
+replacement to reproduce the old numbers. For Release 1.1 PR 1 specifically:
+the pre-staging baseline owes byte-identical output, and the new 1.1 pipeline
+owes conformance to `../SCIENCE.md`'s rules instead.
+
+Rationale: PR 1's goal, its exit criterion, and the `../SCIENCE.md` sentence
+above all read, literally, as though one requirement covered both paths. Slice
+1C established by construction that no implementation can satisfy that reading:
+three requirements the 2026-08-03 joint meeting and the queue item 1 review had
+already approved deliberately change the numbers — prompt repetition removed
+from the working text a Legitimization model reads (`../SCIENCE.md`
+§Prompt-repetition detection, where the baseline removed nothing for
+Legitimization at all), a prompt-only response fixed at L1/E0 by phase B1
+(displacing D-4's prompt-only-through-the-head rule), and a qualifying
+Specialized Advice disclaimer fixing final L in final integration (displacing
+D-19's pre-threshold adjustment). Each is already recorded as baseline-only in
+this ledger's scope notes. So the strict reading does not impose a hard
+standard on the rebuild; it makes PR 1 unclosable while requiring the rebuild
+to reproduce behavior the standard retired. The conflict was latent rather than
+introduced: it became visible only when both paths existed in one repository.
+
+Rejected alternative: requiring the 1.1 pipeline to match the baseline's
+numbers, and reopening the three displaced requirements to make that possible.
+This inverts the authority `META_PLAN.md` §1.1 sets — the selected Assessment
+Standard governs behavior, and a repository decision may not replace an
+Assessment requirement — and would trade three approved improvements for a
+parity number with no scientific claim behind it. Also rejected: deleting the
+requirement, which would drop the protection it exists to give (a refactor
+silently altering behavior) on the one path where it applies cleanly and is
+already verified.
+
+Touches: `../SCIENCE.md` §Evidence and outputs (**absorbed** — carries the
+general rule and the both-obligations-live-at-once case);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1 goal and exit criteria (**absorbed** —
+scoped to the baseline); `PR1_EXECUTION_PLAN.md` §3's verification table;
+`tests/golden/` and `tests/integration/test_baseline_parity.py` (the goldens
+this decision names as the measurement); D-4 and D-19 (already baseline-only —
+this entry records the consequence of that, and changes neither).
+
+Boundary: this governs only what the unchanged-output requirement is measured
+against. It does not weaken any other exit criterion, does not license an
+unexplained scoring change on either path, and says nothing about whether the
+1.1 pipeline is *correct* — that rests on `../SCIENCE.md`'s own rules and, for
+any quality claim, on the Standards team's per-outcome criteria (D-47's
+boundary).
+
+<a id="d-49"></a>
+## D-49: The 1.1 evaluator artifact is deferred out of PR 1 to PR 5/PR 6
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record** — same footing as [D-47](#d-47) and
+[D-48](#d-48). Raised from implementation while closing PR 1 slice 1C.
+
+Decision: PR 1's exit criterion "artifact save and load preserve component and
+rule versions" is **deferred**. No 1.1 evaluator artifact writer or loader is
+built in PR 1. The artifact format is finalized in PR 5, alongside the model
+structure queue item 2 selects, and its round-trip test is PR 6's — where
+`RELEASE_1_1_QUEUE_PROPOSAL.md`'s exit criteria already require tests covering
+"artifact round trips." PR 1 instead carries the weaker property its own
+scope supports, which slice 1C built and tested: the run context's component
+selections **and versions**, plus the rule version, survive the pipeline into
+the `results.jsonl` view (`ARCHITECTURE.md` §11).
+
+Rationale: `PR1_EXECUTION_PLAN.md` §3 assigned this criterion to "slice 1C
+round-trip test," but slice 1C's own deliverables list never included an
+artifact writer, so the plan asked for a test of something it did not schedule
+anyone to build — a latent inconsistency that surfaced only when the slice was
+closed. Of the two ways to resolve it, building the artifact now was rejected:
+`ARCHITECTURE.md` §10 defines the artifact's `model/` payload as "a format the
+selected structure defines," and that structure is queue item 2's, still
+blocked on the Standards team's fixed dataset. More decisively, **nothing in
+PR 1 saves or loads a 1.1 artifact** — the pipeline receives its classifier by
+direct injection — so a writer built now would have no reader, could not be
+round-tripped against a real consumer, and would very likely be rewritten once
+item 2 lands.
+
+**Stated against this decision, because it is true and a later reader needs
+it:** the manifest fields this criterion actually names — component
+implementations, versions, and rule version — are *not* themselves blocked by
+item 2. `ARCHITECTURE.md` §10 deliberately versions the manifest so the model
+payload can change without breaking the surrounding contract, so that half
+could have been built now. The deferral rests on the absent consumer and the
+duplicated PR 6 coverage, not on an impossibility. If PR 5 slips far enough
+that an evaluator artifact is needed before it, this entry should be revisited
+rather than cited.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1 exit criteria (**absorbed** —
+criterion marked deferred and pointed at PR 5/PR 6) and PR 6 exit criteria
+(already requires artifact round-trip tests; unchanged);
+`PR1_EXECUTION_PLAN.md` §3's verification table; `ARCHITECTURE.md` §10 (the
+format this defers, unchanged); `STATUS.md` queue item 2 (the entry condition
+that gates the model structure).
+
+Boundary: this defers *when* the 1.1 evaluator artifact is built and
+round-tripped. It does not change `ARCHITECTURE.md` §10's specification of
+that format, does not affect the **baseline** artifact (built, tested, and
+round-tripped since IS-5), and does not relax D-23 — whenever the 1.1 artifact
+does land, family and hazard-support lookups still read the frozen artifact
+rather than installed config.

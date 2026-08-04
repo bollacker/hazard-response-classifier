@@ -61,7 +61,18 @@ rather than the entry itself.
 ### Goal
 
 Convert the current evaluator into independently replaceable components
-without changing current scores.
+without changing the current evaluator's scores.
+
+**Scope of "without changing scores"** (Kurt, 2026-08-04; Riki's concurrence
+assumed, not confirmed on record). This binds the **baseline**: the three
+baseline CLIs keep producing byte-identical output throughout PR 1, verified
+against goldens captured before any refactor began. It does **not** require
+the new 1.1 pipeline to reproduce the baseline's numbers — it cannot, because
+three requirements this release already approved deliberately change them
+(prompt repetition removed from the text Legitimization reads, phase B1's
+prompt-only L1/E0, and phase C's disclaimer handling replacing D-19's
+pre-threshold adjustment). See `../SCIENCE.md` §Evidence and outputs, which
+carries the general rule.
 
 ### Work
 
@@ -91,10 +102,20 @@ without changing current scores.
 - The wrapped L/E models report `partial` and `distribution=None`; nothing
   synthesizes a distribution from the two binary heads.
 - IDs and the complete carried record survive the full pipeline.
-- The same inputs produce unchanged current text, features, scores,
-  probabilities, labels, and failures.
+- The same inputs produce unchanged **baseline** text, features, scores,
+  probabilities, labels, and failures — measured against goldens captured
+  before the refactor, per the goal's scope note above. The 1.1 pipeline is
+  judged against `../SCIENCE.md`'s rules instead, not against these numbers.
 - Embeddings are created once per scoring batch.
-- Artifact save and load preserve component and rule versions.
+- ~~Artifact save and load preserve component and rule versions.~~
+  **Deferred to PR 5 / PR 6 on 2026-08-04 (`DECISIONS.md` D-49).** No 1.1
+  evaluator artifact is written or read anywhere in PR 1, and
+  `ARCHITECTURE.md` §10 defines the artifact's model payload in terms of the
+  structure queue item 2 selects. The format is finalized in PR 5 and
+  round-tripped in PR 6, whose exit criteria already require artifact
+  round-trip tests. What PR 1 carries instead: the run context's component
+  selections and versions, plus the rule version, survive the pipeline into
+  the `results.jsonl` view.
 
 ## PR 2 — Empty responses, decoding, and prompt repetition
 

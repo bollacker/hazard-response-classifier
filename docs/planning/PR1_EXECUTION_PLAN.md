@@ -184,9 +184,9 @@ Tests:
 | Placeholders pass through without creating judgments | Slice 1B `not_evaluated` forcing function |
 | Wrapped L/E report `partial` and `distribution=None`; nothing synthesizes one | Slice 1C scoring tests |
 | IDs and the complete carried record survive the pipeline | Slice 1B end-to-end record assertions |
-| Same inputs → unchanged text, features, scores, probabilities, labels, failures | Slice 0 goldens + slice 1C parity |
+| Same inputs → unchanged **baseline** text, features, scores, probabilities, labels, failures | Slice 0 goldens + slice 1C parity. Scoped to the baseline path 2026-08-04 (`DECISIONS.md` D-48) — the 1.1 pipeline deliberately differs and is judged against `SCIENCE.md` |
 | Embeddings created once per scoring batch | Slice 1C call-count test |
-| Artifact save/load preserve component and rule versions | Slice 1C round-trip test |
+| ~~Artifact save/load preserve component and rule versions~~ | **Deferred to PR 5 / PR 6, 2026-08-04 (`DECISIONS.md` D-49)** — this row asked slice 1C to test an artifact no slice was scheduled to build. PR 1 carries instead: component selections, versions, and rule version survive into the `results.jsonl` view (slice 1C view test) |
 
 ## 4. Explicitly out of scope for PR 1
 
