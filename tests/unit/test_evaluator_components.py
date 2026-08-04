@@ -113,7 +113,9 @@ def test_decoder_text_out_is_none_when_decoding_does_not_change_the_text() -> No
     assert observation.text_out is None
     assert updated.texts.history == ()
     assert updated.texts.decoded == record.texts.working
-    assert updated.flags.decoding_failed == "not_detected"
+    # `not_evaluated`, not `not_detected` -- the failure check is a stub and
+    # never looked (D-51). See test_evaluator_decoding_stub.py.
+    assert updated.flags.decoding_failed == "not_evaluated"
 
 
 def test_decoder_text_out_and_history_are_set_when_decoding_changes_the_text() -> None:

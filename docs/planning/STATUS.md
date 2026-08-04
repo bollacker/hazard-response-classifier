@@ -554,12 +554,11 @@ Detailed phased proposal:
 
    **PR 2 is next**, and its plan is
    [`PR2_EXECUTION_PLAN.md`](PR2_EXECUTION_PLAN.md) — written 2026-08-04 to be
-   runnable from a clean session. **Entry condition:** its §2 raises three
-   specification questions (the summarized/paraphrased repetition conflict, the
-   decoding-failure trigger and consequence, and whether ambiguity recording is
-   in 1.1 scope). Slice A is ungated and can start immediately; slices B, C,
-   and D each need an answer first, and a session must not resolve one on its
-   own (`META_PLAN.md` §3).
+   runnable from a clean session. **No entry condition remains:** the three
+   specification questions it raised were answered the same day and locked as
+   D-50/D-51/D-52, and their effects are absorbed into the specifications. Two
+   slices remain — slice A (assert the exit criteria PR 1 already earns) and
+   slice B (verification sweep and close). Start with slice A.
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -617,13 +616,15 @@ resolved and applied to `SCIENCE.md`. The calls awaiting Riki's concurrence
 are in force under an assumed concurrence, and the Standards-team request
 remains explicitly non-blocking.
 
-**Riki's review now has eight items.** The phase B fold, the withdrawal of
-cross-hazard completeness, and **D-48's scoping of the unchanged-output
-requirement** are science changes made on Kurt's call alone; the second
-removes a safeguard and the third amends `SCIENCE.md` §Evidence and outputs.
-**D-49** defers a PR 1 exit criterion and carries a counterargument stated in
-the entry itself. The `META_PLAN.md` §5 amendment is process bookkeeping. See
-the assumed-concurrence table.
+**Riki's review now has nine rows, covering eleven calls.** The phase B fold,
+the withdrawal of cross-hazard completeness, and **D-48's scoping of the
+unchanged-output requirement** are science changes made on Kurt's call alone;
+the second removes a safeguard and the third amends `SCIENCE.md` §Evidence and
+outputs. **D-49** defers a PR 1 exit criterion and carries a counterargument
+stated in the entry itself. **D-50 through D-52** (one grouped row) set PR 2's
+scope; two of them are shortfalls against a `SCIENCE.md` success criterion and
+land in the limitations document rather than being met. The `META_PLAN.md` §5
+amendment is process bookkeeping. See the assumed-concurrence table.
 
 ### Item 4 entry gate — cleared; one sequencing call remains
 
@@ -670,6 +671,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **Cross-hazard completeness withdrawn** (2026-08-04): no hazard's result is conditioned on another hazard being present; Sexual Content is treated for completeness like any other hazard | In force | `SCIENCE.md` phase D and §Hazard detection; `ARCHITECTURE.md` §12.1. **Removes a safeguard** — see the note below |
 | **Unchanged-output requirement scoped** (2026-08-04): measured against the refactored implementation's own prior output, not imposed on a standard-conforming rebuild. Locked as **[D-48](DECISIONS.md#d-48)** | In force | `SCIENCE.md` §Evidence and outputs' scope paragraphs; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1's goal and exit criterion; `PR1_EXECUTION_PLAN.md` §3. Reverting makes PR 1 unclosable unless D-4's and D-19's baseline-only dispositions reopen with it |
 | **1.1 evaluator artifact deferred** (2026-08-04): out of PR 1, format finalized at PR 5, round-tripped at PR 6. Locked as **[D-49](DECISIONS.md#d-49)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1's artifact exit criterion; `PR1_EXECUTION_PLAN.md` §3. Reverting reopens that criterion inside PR 1 and requires building a writer with no reader — see D-49's stated counterargument |
+| **PR 2 scope calls** (2026-08-04): exact-only repetition **[D-50](DECISIONS.md#d-50)**, stubbed decoding-failure trigger and `partial` decoder **[D-51](DECISIONS.md#d-51)**, ambiguous-reference recording removed **[D-52](DECISIONS.md#d-52)**. Grouped as one row: made together, on one footing, each carrying its own reversal scope | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 and the release outcome; `ARCHITECTURE.md` §7 row 2, §7.1; `PR1_EXECUTION_PLAN.md` §4; `evaluator/components/decoding.py`. **Two are shortfalls against a `SCIENCE.md` success criterion**, so reverting either means building the real capability, not just re-wording |
 
 **Rework exposure:** item 3 built directly on the amendment's dispositions, so
 architecture proceeded on the assumption rather than waiting on it. That is the
@@ -736,6 +738,41 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 2's three entry-gate questions answered and closed:
+  D-50, D-51, D-52.** All three specifications updated the same day, so PR 2
+  now has no entry condition.
+
+  - **D-50 — exact-only repetition for 1.1.** Resolves the three-way conflict
+    in favor of `ARCHITECTURE.md` §7.1. `SCIENCE.md` still requires all three
+    match types and is **not** amended; 1.1 simply does not meet all of it,
+    which is what `partial` means. `PR1_EXECUTION_PLAN.md` §4's contradictory
+    line is corrected. `repetition.py` needed no change.
+  - **D-51 — the decoding-failure trigger is stubbed, and the decoder is
+    `partial`.** The decoder always returns a result and its worst case is
+    the un-decoded text, so content never drops; what is absent is the
+    ability to *notice* a failure. Two consequences were implemented rather
+    than left implicit: `flags.decoding_failed` is now **`not_evaluated`,
+    not `not_detected`** — the old value claimed a negative finding from a
+    check that never ran, which is precisely the anti-pattern slice 1B's
+    placeholder forcing function exists to catch — and the decoder's maturity
+    dropped to `partial`, which in turn corrected
+    `RELEASE_1_1_QUEUE_PROPOSAL.md`'s release outcome from "working decoding"
+    to a qualified claim. 7 new tests pin the stub, the flag state, the
+    maturity, and the seam's signature so a real trigger has a target.
+  - **D-52 — ambiguous-reference recording removed from 1.1**, not deferred.
+    It had no specification, no record field, and no component that resolves
+    an ambiguous reference for it to record. Removed rather than deferred
+    because there was nothing concrete to defer.
+
+  **The limitations-document inventory (D-47 narrowing 2) now has five
+  entries, not three:** the hazard, narrative, and refusal placeholders, plus
+  decoding's stubbed failure trigger and stage 4's exact-only scope. The last
+  two are shortfalls against a stated success criterion rather than absent
+  components, which makes them the easy ones to omit. `ARCHITECTURE.md` §7
+  now says "three placeholders and **three** partials."
+
+  280 tests, zero regressions.
 
 - 2026-08-04 — **PR 2 execution plan written.** `PR2_EXECUTION_PLAN.md`,
   same shape as PR 1's: read-first list, preconditions, slices, an

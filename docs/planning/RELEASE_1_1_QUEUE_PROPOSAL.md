@@ -14,10 +14,13 @@ question.
 
 Deliver a runnable evaluator with:
 
-- working decoding;
+- decoding that recovers supported obfuscation and never drops content —
+  **`partial`, not working**: its failure-detection trigger is stubbed for
+  1.1 (`DECISIONS.md` D-51);
 - working Legitimization and Enablement scoring;
 - working final integration;
-- partial prompt-repetition and disclaimer detection;
+- partial prompt-repetition (**exact-only**, `DECISIONS.md` D-50) and
+  disclaimer detection;
 - visible placeholders for hazard, narrative, and refusal detection;
 - one shared, replaceable embedding pass per scoring batch; and
 - stable contracts that allow every implementation to be replaced
@@ -128,12 +131,24 @@ honest record of exclusions and failures.
 
 - Detect genuinely empty responses without changing the response.
 - Decode supported obfuscation while retaining the original text.
-- Return the best available text, a failure flag, and an error when decoding
-  cannot recover all substantive content.
-- Detect exact, summarized, and closely paraphrased prompt repetition.
+- ~~Return the best available text, a failure flag, and an error when decoding
+  cannot recover all substantive content.~~ **Stubbed for 1.1
+  (`DECISIONS.md` D-51.)** The decoder always returns a result and its worst
+  case is the un-decoded text, so it never drops content; the *failure
+  detection* is a stub that always reports success. `decoding_failed` is
+  therefore recorded as `not_evaluated`, the decoder's maturity is
+  `partial`, and no integrator consequence is defined because the flag
+  cannot fire. Revisit with real obfuscated data.
+- Detect **exact** prompt repetition. ~~summarized, and closely paraphrased~~
+  **Scoped to exact-only for 1.1 (`DECISIONS.md` D-50)**, matching
+  `ARCHITECTURE.md` §7.1. `SCIENCE.md` still requires all three; the
+  component stays `partial` and the gap is disclosed. Measure first, then
+  revisit.
 - Remove only repeated prompt material from working text.
 - Preserve response-authored additions.
-- Record when the prompt resolves an ambiguous reference.
+- ~~Record when the prompt resolves an ambiguous reference.~~ **Removed from
+  1.1 (`DECISIONS.md` D-52)** — no specification, no record field, and no
+  1.1 component that resolves an ambiguous reference for it to record.
 - Pass all flags and text versions to final integration.
 - Apply empty-response and prompt-only consequences only in final integration,
   using the procedure in `SCIENCE.md`.
@@ -142,7 +157,11 @@ honest record of exclusions and failures.
 
 - Empty and prompt-only responses remain distinct.
 - Repeated material is removed without losing authored additions.
-- Decoding never silently drops content.
+- Decoding never silently drops content. **Met by construction, not by
+  detection (`DECISIONS.md` D-51):** the decoder's worst case is the
+  un-decoded text, so content always survives — but an unrecovered decode is
+  currently indistinguishable from a successful one, because the failure
+  trigger is stubbed.
 - Mixed repetition and authored-content cases are scored on the authored
   content.
 - Prompt-only responses receive the final result required by `SCIENCE.md`.

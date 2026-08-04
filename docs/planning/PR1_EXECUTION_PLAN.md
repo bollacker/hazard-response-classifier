@@ -193,8 +193,12 @@ Tests:
 Named so a session does not drift into them:
 
 - Supplied-hazard and hazard-scope validation, and multi-hazard routing — PR 3.
-- Summarized or closely-paraphrased prompt repetition — PR 2, and `SCIENCE.md`
-  wants all three eventually; 1.1 ships exact-only as **partial**.
+- Summarized or closely-paraphrased prompt repetition — **not in Release 1.1
+  at all** (`DECISIONS.md` D-50). `SCIENCE.md` wants all three eventually;
+  1.1 ships exact-only as **partial** and discloses the gap. *(Corrected
+  2026-08-04: this line previously assigned the work to PR 2 while also
+  saying 1.1 ships exact-only — contradictory, since PR 2 is a 1.1 PR. That
+  contradiction is what D-50 resolved.)*
 - Real narrative, refusal, or hazard detection — placeholders until the
   Standards examples and approved implementations exist.
 - Any three-class model work — PR 5, blocked on the Standards dataset.

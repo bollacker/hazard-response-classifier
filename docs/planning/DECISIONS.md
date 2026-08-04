@@ -24,7 +24,7 @@ Release 1.1 requires a new joint decision, not a citation of the old entry.
 Entries are retired by superseding them in place, never by deletion. The index
 below is the map; every D-number that has ever existed appears in it.
 
-Numbering: new decisions start at **D-50**. D-38 through D-44 were drafted
+Numbering: new decisions start at **D-53**. D-38 through D-44 were drafted
 during the 2026-08-02/03 science-contract work and withdrawn before approval;
 those numbers are not reused.
 
@@ -269,6 +269,9 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-47](#d-47) | Limitations document gates staging / release-version assignment | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 | carried; discharges D-2/D-8 disclosure |
 | [D-48](#d-48) | Unchanged-output binds the refactored implementation, not a rebuild | `../SCIENCE.md` §Evidence and outputs; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1 | carried |
 | [D-49](#d-49) | 1.1 evaluator artifact deferred out of PR 1 to PR 5/PR 6 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1 exit criteria | carried |
+| [D-50](#d-50) | 1.1 ships exact-only prompt-repetition detection | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2; `../ARCHITECTURE.md` §7.1 | carried |
+| [D-51](#d-51) | Decoding-failure trigger stubbed; decoder is `partial` | `evaluator/components/decoding.py`; `../ARCHITECTURE.md` §7 | carried |
+| [D-52](#d-52) | Ambiguous-reference recording removed from 1.1 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 work list | carried |
 
 ### Absorption gaps
 
@@ -3267,3 +3270,150 @@ that format, does not affect the **baseline** artifact (built, tested, and
 round-tripped since IS-5), and does not relax D-23 — whenever the 1.1 artifact
 does land, family and hazard-support lookups still read the frozen artifact
 rather than installed config.
+
+<a id="d-50"></a>
+## D-50: Release 1.1 ships exact-only prompt-repetition detection
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record** — same footing as [D-47](#d-47) through
+[D-49](#d-49). Raised as entry-gate question Q1 in `PR2_EXECUTION_PLAN.md`.
+
+Decision: Release 1.1's prompt-repetition component detects **exact**
+normalized-substring repetition only. Summarized and closely-paraphrased
+repetition are not implemented in 1.1. The component's maturity stays
+`partial` and the shortfall is a disclosed gap, named in the release's
+limitations document (D-47 narrowing 2). Performance is measured later and
+the scope revisited then if the gap proves material.
+
+Rationale: three documents disagreed. `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2's
+work list said "detect exact, summarized, and closely paraphrased";
+`../ARCHITECTURE.md` §7.1 scoped 1.1 to exact-only with the shortfall recorded
+as deliberate; and `PR1_EXECUTION_PLAN.md` §4 asserted both at once ("PR 2's
+work" *and* "1.1 ships exact-only as partial"), which cannot hold because
+PR 2 is a 1.1 PR. `../SCIENCE.md` §Prompt-repetition detection requires all
+three and is not amended by this entry — the requirement stands, and 1.1
+simply does not meet all of it yet, which is what `partial` means. This
+resolves the conflict in favor of §7.1, the most recent explicit scoping.
+Two reasons beyond recency: a paraphrase detector's quality cannot be claimed
+without the fixed human-labeled ground truth still blocking queue item 2, so
+building one in PR 2 yields an unvalidatable component; and shipping a
+similarity heuristic under a requirement worded "closely paraphrased" would
+blur what the stated maturity means — the same objection §7.1 already raised
+against reusing the baseline's `partial_contiguous`.
+
+Rejected alternative: implementing all three in PR 2. Rejected on the
+evaluation gap above, not on difficulty. Also rejected: promoting the
+component to `working` on the strength of exact-only, which would claim
+conformance the component does not have.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 work item and exit criteria
+(**absorbed**); `PR1_EXECUTION_PLAN.md` §4 (contradictory line corrected);
+`../ARCHITECTURE.md` §7.1 (already stated this; now cites this entry);
+`src/hazard_classifier/evaluator/components/repetition.py` (unchanged — it
+already implements exactly this scope).
+
+Boundary: this governs *which* repetition types 1.1 detects. It does not
+amend `../SCIENCE.md`'s requirement, does not license removing material that
+is not repeated prompt text, and says nothing about when the gap should be
+closed — that follows from the measurement this decision defers to.
+
+<a id="d-51"></a>
+## D-51: The decoding-failure trigger is stubbed for 1.1; the decoder is `partial`
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.** Raised as entry-gate question Q2 in
+`PR2_EXECUTION_PLAN.md`.
+
+Decision: The decoder always returns a result; its worst case is the
+un-decoded text. The **failure-detection trigger is a stub that always
+reports success** (`_detect_decoding_failure`), so no decoding failure is
+detectable in 1.1. Three consequences are part of the decision, not
+commentary on it:
+
+1. **`flags.decoding_failed` is recorded as `not_evaluated`, never
+   `not_detected`.** Writing `not_detected` would claim the component looked
+   and found nothing; it never looked. This is `../ARCHITECTURE.md` §3.1's
+   three-valued flag distinction and §6's placeholder rule applied to a
+   check inside an otherwise-running stage.
+2. **The decoder's maturity is `partial`, not `working`.**
+   `../SCIENCE.md` §Decoding's success criterion has two halves — an accurate
+   rendering, *and* a failure flag plus error when it cannot produce one —
+   and only the first is built.
+3. **No integrator consequence is defined**, because the flag cannot fire.
+   `../SCIENCE.md` assigns the consequence to final integration; that choice
+   is deferred with the trigger and must be made when the trigger is built.
+
+Rationale: the trigger was unspecified at both ends — nothing defined when
+decoding has failed (`best_readable_view` always returns its best-scoring
+candidate and has no notion of failing), and nothing defined the consequence.
+Choosing a trigger means setting a threshold on real obfuscated data this
+project does not have, where a false positive costs a scored result. Kurt's
+call was to stub it rather than guess, and revisit with data. Consequence 1
+is what keeps the stub honest: without it the record would assert a negative
+finding no component produced, which is exactly the failure mode slice 1B's
+placeholder forcing function exists to catch. Consequence 2 follows from
+`../SCIENCE.md`'s own success criterion; the alternative — calling the decoder
+`working` — would overclaim, and `RELEASE_1_1_QUEUE_PROPOSAL.md`'s release
+outcome is corrected rather than left asserting unqualified "working
+decoding."
+
+Rejected alternative: inventing a trigger now (a low-`english_score` or
+residual-encoded-material heuristic). Rejected as an unvalidatable threshold
+whose false positives silently cost results. Also rejected: leaving
+`decoding_failed` at `not_detected`, which is the status quo the stub
+replaces and which misrepresents an unrun check as a negative result.
+
+Touches: `src/hazard_classifier/evaluator/components/decoding.py`
+(**absorbed** — the stub, the `not_evaluated` flag, and `partial` maturity);
+`tests/unit/test_evaluator_decoding_stub.py` (pins all three);
+`../ARCHITECTURE.md` §7 row 2 (**absorbed**);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` release outcome and PR 2 work item
+(**absorbed**); D-47 narrowing 2 (this gap belongs in the limitations
+document's not-evaluated inventory).
+
+Boundary: this governs the *failure-detection* half of decoding only. The
+decode path itself is unchanged and still never drops content or empties the
+working text. It does not amend `../SCIENCE.md` §Decoding, which continues to
+require the full behavior 1.1 does not yet provide.
+
+<a id="d-52"></a>
+## D-52: The ambiguous-reference recording requirement is removed from Release 1.1
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.** Raised as entry-gate question Q3 in
+`PR2_EXECUTION_PLAN.md`.
+
+Decision: PR 2's work item "record when the prompt resolves an ambiguous
+reference" is **removed** from Release 1.1, not deferred to a later PR. No
+flag, field, or component is built for it.
+
+Rationale: the requirement had no specification behind it and no producer. It
+appeared only in `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2's work list;
+`../SCIENCE.md` §Technical restrictions *permits* using the prompt to resolve
+ambiguous references but requires no record of having done so;
+`../ARCHITECTURE.md` §4's `Flags` has no field for it; and no 1.1 component
+resolves an ambiguous reference in the first place — decoding uses the prompt
+as context for substitution maps and repetition uses it for matching, neither
+of which is disambiguation. Building a flag with no specification, no
+producer, and no consumer is speculative work, and a flag that no component
+ever sets would sit permanently at `not_evaluated`, adding a field to every
+record to describe something that never happens. Removed rather than deferred
+because there is nothing concrete to defer: a future need would arrive with
+its own requirement and shape.
+
+Rejected alternative: deferring it to a later PR on D-49's footing. Rejected
+because D-49 defers a thing that is specified and will certainly be built
+(the artifact); this has neither property, and carrying it forward as a
+perpetual to-do would misrepresent an unspecified idea as scheduled work.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 work list (**absorbed** — item
+removed); `PR2_EXECUTION_PLAN.md` §2 Q3 and slice D (both closed);
+`../ARCHITECTURE.md` §4 `Flags` (unchanged — deliberately gains no field).
+
+Boundary: this removes a *recording* requirement. It does not restrict how a
+component may use the prompt — `../SCIENCE.md` §Technical restrictions still
+permits disambiguation — and does not prevent a future release from adding
+the capability with a real specification behind it.

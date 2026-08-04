@@ -347,7 +347,7 @@ Rules that make replaceability real:
 | # | Stage | Maturity in 1.1 | Notes |
 |---|---|---|---|
 | 1 | Empty-response detection | **working** | Whitespace-trim test; sets `empty_payload`, changes no text |
-| 2 | Decoding | **working** | Baseline `preprocess/decode.py` wrapped; on failure returns best available text plus `decoding_failed` and an error — never silently drops content |
+| 2 | Decoding | **partial** | Baseline `preprocess/decode.py` wrapped. Never drops content — its worst case is the un-decoded text. But the **failure-detection trigger is stubbed** for 1.1 (`planning/DECISIONS.md` D-51): `decoding_failed` is recorded `not_evaluated`, never `not_detected`, and no integrator consequence is defined because the flag cannot fire |
 | 3 | Hazard detection | **placeholder** | Passes the supplied hazard through; returns no additional hazards; `not_evaluated` |
 | 4 | Prompt-repetition detection | **partial** | Exact normalized substring matching only, per §7.1. Summarized and closely-paraphrased repetition are not implemented and the gap is reported, not hidden |
 | 5 | Narrative detection | **placeholder** | Blocked on the Standards team's fixed benign-narrative examples (`SCIENCE.md` §Narrative detection); analysts do not set that boundary |
@@ -357,13 +357,21 @@ Rules that make replaceability real:
 | 9 | L and E scoring | **working** *(target)*; **partial** until PR 5 lands | Three-class multinomial per evaluated hazard, structure selected by queue item 2 (live). PR 1's wrapped baseline is partial and reports `distribution=None` (§4) |
 | 10 | Final integration | **working** | §9 |
 
-Three placeholders and two partials ship visibly. `SCIENCE.md` §Evidence and
+Three placeholders and **three** partials ship visibly (decoding joined them
+2026-08-04 under `planning/DECISIONS.md` D-51). `SCIENCE.md` §Evidence and
 outputs requires each to be reported as *not evaluated*, and D-47 requires the
-release's limitations document to enumerate exactly these.
+release's limitations document to enumerate exactly these — including
+decoding's stubbed failure trigger and stage 4's exact-only scope (D-50),
+both of which are shortfalls against a stated success criterion rather than
+absent components.
 
 ### 7.1 Prompt-repetition detection for 1.1
 
 Scoped by Kurt, 2026-08-04: **exact substring matching is sufficient for 1.1.**
+Confirmed and locked as `planning/DECISIONS.md` **D-50** when PR 2 resolved
+the three-way conflict between this section, PR 2's work list, and
+`planning/PR1_EXECUTION_PLAN.md` §4. Performance is measured later and the
+scope revisited then if the gap proves material.
 
 Detection already exists in the baseline and is more than exact matching.
 `preprocess/flags.py`'s `prompt_repetition_features` normalizes both texts
