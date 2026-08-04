@@ -143,7 +143,7 @@ evaluate every hazard actually supplied or detected.
 - Supplied and detected hazards remain distinguishable.
 - Multiple hazards receive separate provisional and final records.
 - One violating hazard makes the overall result violating.
-- Privacy and Pornographic Content never require Legitimization.
+- Privacy and Sexual Content never require Legitimization.
 - Cross-hazard completeness rules are applied in final integration.
 
 ## PR 4 — Narrative, refusal, and disclaimer detection
