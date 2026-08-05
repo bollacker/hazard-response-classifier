@@ -618,9 +618,23 @@ Detailed phased proposal:
    > PR 4 → **PR 7** (evaluator runner, D-56) → PR 6 → PR 5
 
    PR 7 is numbered 7 and runs sixth because `META_PLAN.md` §5 forbids
-   renumbering an identifier other documents already cite. PR 5 moves last
+   renumbering an identifier other documents already cite. ~~PR 5 moves last
    because it is the only phase that cannot start without the Standards
-   team's data.
+   team's data.~~
+
+   **PR 5's stated reason for being last went stale the same day it was
+   written; corrected 2026-08-05.** [D-63](DECISIONS.md#d-63) (2026-08-04)
+   established that the Standards team's data is not arriving, so PR 5 runs
+   against the Jailbreak v1.0 interim ground truth in `data/` and waits on
+   nothing external; [D-68](DECISIONS.md#d-68) (2026-08-05) then closed queue
+   item 2 and gave it a selected structure to build. **The order below is
+   unchanged** — PR 7 before PR 6 is D-56's locked call and stands on its own
+   reasoning (PR 6's exit criteria presuppose a runner), and nothing here
+   re-decides PR 5's position. What is corrected is only the *reason on
+   record* for it: PR 5 is last by an ordering set while it was blocked, not
+   because it is still blocked. **Whether PR 5 should now move earlier is an
+   open call for Kurt**, not one a session should make on its own —
+   `META_PLAN.md` §5 forbids silently reordering the queue.
 
    What each PR now owes, in short: **PR 4** is mostly verification —
    narrative and refusal stay placeholders (D-54) and the disclaimer view stays
@@ -629,8 +643,16 @@ Detailed phased proposal:
    run profile, batch runner, CLI, and `failures.csv`. **PR 6** applies the
    fixed rules (largely already built in `integration.py`), drops the
    continuous score (D-62), verifies the single-threaded contract (D-61), and
-   makes the staging-promotion call (D-58). **PR 5** waits on Ask A, but owes
-   its pre-registration now (D-59).
+   makes the staging-promotion call (D-58). ~~**PR 5** waits on Ask A, but owes
+   its pre-registration now (D-59).~~ **PR 5** no longer waits on Ask A
+   (D-63) and its pre-registration is done — that is
+   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md), which
+   queue item 2 executed to completion under [D-68](DECISIONS.md#d-68). What
+   PR 5 owes now is the fitted three-class model that selection chose — on
+   interim, dev-class data, since [D-66](DECISIONS.md#d-66) reserves a fresh
+   selection for a real evaluation set rather than a re-fit.
+   *(Corrected 2026-08-05 with the sequencing note above; both halves of this
+   sentence were overtaken by D-63 and D-68.)*
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial

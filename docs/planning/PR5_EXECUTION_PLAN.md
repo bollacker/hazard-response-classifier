@@ -1,0 +1,488 @@
+# PR 5 execution plan — L/E training, scoring, and evaluation
+
+Written 2026-08-05, after PR 4 closed. This is the working plan for
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5, a slice of `STATUS.md` queue item 4.
+Written to be run from a clean session: everything a session needs is either
+here or named here.
+
+**Goal (from PR 5):** select and validate L/E models that treat all three
+outcomes as equally important and return the probabilities final integration
+needs.
+
+**What that reduces to now that queue item 2 has closed.** The *selection* half
+is done — [D-68](DECISIONS.md#d-68) picked a flat three-class multinomial
+softmax fitted per hazard (`L1 · W1 · S1 · H3 · V1 · P1`) for both targets, and
+`PREREGISTRATION_LE_STRUCTURE.md` §6 fixed the artifact payload. So PR 5 is a
+**build**, not a study: move the selected structure out of `experiments/` into
+production code, define and write the 1.1 artifact, replace stage 9, and report
+per-outcome numbers that are honest about being dev-class and *not evaluated*.
+
+**Three things make it larger than "port a class", and a session should know
+all three before starting.**
+
+1. **The selection was fitted on text the evaluator does not produce.**
+   `experiments/features.py` embeds the interim frame's raw `response_text`;
+   the pipeline embeds `texts.working`, after decoding and prompt-repetition
+   removal. `SCIENCE.md` §Legitimization Training requires "working text
+   filtered through the preceding components", and PR 5's work list restates
+   it. **Neither the pre-registration nor D-68 mentions which text was used**,
+   and §7's "what this selection cannot establish" does not list it. This is
+   §3's gate question G-1 and it is measured, not argued, in slice 0.
+2. **`MultinomialSoftmax` is not serializable as it stands.** It holds live
+   `sklearn.LogisticRegression` objects, and [D-37](DECISIONS.md#d-37) forbids
+   pickle and `joblib`. Production must persist coefficients, intercepts, *and*
+   the per-cell standardization statistics, then score with pure NumPy.
+3. **PR 5's first exit criterion cannot be met.** "The selected models meet
+   approved per-outcome criteria" — approved criteria are Ask B, which
+   [D-63](DECISIONS.md#d-63) established is not arriving. That is a scoping
+   decision and needs a ledger entry, the way D-54 and D-55 scoped PR 4's.
+
+**Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
+production fitter, B the artifact, C the scoring component, D evaluation and
+reporting, E the sweep and close. **Slice 0 runs first and stops** — §3's gate
+questions are Kurt's, and G-1 changes what slice A fits on.
+
+---
+
+## 0. Read first
+
+In this order. Do not skip — this project's failure mode is sessions
+re-deriving settled ground.
+
+| Doc | Why |
+|---|---|
+| `META_PLAN.md` | The process contract. §1.2 (**single-approver mode**), §3 (uncertainty protocol), §5 (queue rules), §6 (a sweep is a critique pass) govern this work |
+| `STATUS.md` — header, Queue item 4, Awaiting User, Assumed concurrence | Live state. Nothing in Awaiting User blocks this scope; the assumed-concurrence table is where PR 5's own new calls must land |
+| `../SCIENCE.md` §Legitimization model, §Enablement model (**both Training and Scoring subsections**), §Evidence and outputs | **Behavior. Governs on any conflict.** The working-text sentence in each Training subsection is what G-1 turns on; the not-evaluated rule is why PR 5's headline exit criterion cannot be met |
+| `PREREGISTRATION_LE_STRUCTURE.md` §1, §2, **§5, §6**, §7, §8 | The procedure that produced D-68. **§6 is the artifact specification for slice B**; §5's touch budget is what forbids "just re-run the selection"; §7 is the disclosure list PR 5 adds to; §8's seven amendments are the precedent for how a departure is recorded |
+| `../ARCHITECTURE.md` §4, §6, §7 row 9, §8, **§10**, §11, §12 | The structure this builds inside. §4 is the `Judgment`/`distribution` contract, §10 the artifact table, §12 records D-68's closure of the L/E slot |
+| `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 | The work items and exit criteria this plan implements |
+| `DECISIONS.md` D-68, D-66, D-63, D-65, D-45, D-37, D-49, D-57, D-23 | D-68 is the selection (**read its null-result framing**); D-45's unfittable-is-unavailable rule is what per-hazard cells force PR 5 to implement again; D-37 bars pickle; D-49 makes the artifact format PR 5's and its round trip PR 6's |
+| `QUEUE_ITEM_2_EXECUTION_PLAN.md` §10, `PR4_EXECUTION_PLAN.md` §9 | Lessons that each cost something. §11 below carries them forward |
+
+Ledger entries are provenance, not authority (`META_PLAN.md` §1.1). Cite the
+specification, not the entry.
+
+## 1. Preconditions and standing constraints
+
+- **PR 4 is complete** (`c93baae`); PRs 1–4 are landed. Item 4 stays open.
+- **Sequencing.** [D-56](DECISIONS.md#d-56) orders PR 4 → PR 7 → PR 6 → PR 5,
+  so **PR 5 is scheduled last**. Its own entry conditions are all met and
+  `STATUS.md` records (2026-08-05) that the reason for its last position — a
+  data gate D-63 removed — no longer holds. **Whether PR 5 moves earlier is
+  Kurt's call, not this plan's**; nothing here assumes it does, and nothing in
+  PR 5 depends on PR 7 or PR 6 existing.
+- **Baseline is green: 433 tests**, `pytest` from the repo root, ~23 s.
+- Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
+  Bare `python` fails on this machine.
+- The data exists and is frozen: `data/interim_split_v1.json` (`interim-v1`,
+  seed `20260804`), loaded by `interim_data.load_interim(split=...)`, verified
+  against the source SHA-256 in `PREREGISTRATION_LE_STRUCTURE.md` §1.
+
+**Standing constraint, carried from PR 1 through PR 4.** The baseline CLIs'
+output must not change ([D-48](DECISIONS.md#d-48)).
+`src/hazard_classifier/{schema,embed,heads,rules,metrics,model}.py`,
+`preprocess/*`, and `cli/*` are **shared with the baseline**. PR 5 touches the
+same subject matter as `model.py` — fitting, artifacts, scoring — so the
+temptation to extend `model.fit`/`save`/`load` is real and must be refused.
+**The 1.1 fitter and artifact are new modules.** `model.py` keeps writing
+`heads.npz` and `thresholds.json` for the baseline; the 1.1 artifact writes
+neither.
+
+**Standing constraint specific to PR 5: the models ship *not evaluated*.**
+`SCIENCE.md` §Legitimization Scoring and §Enablement Scoring both require it
+absent approved per-outcome criteria, and `PREREGISTRATION_LE_STRUCTURE.md` §7
+restates it. No number PR 5 produces is a benchmark result, a generalization
+estimate, or a quality claim — every one of them is a dev-set number under
+[D-66](DECISIONS.md#d-66) on out-of-version labels under
+[D-63](DECISIONS.md#d-63). A session that finds itself writing "the model
+achieves…" has left PR 5's scope.
+
+**Standing constraint: D-68 is a null result.** No candidate beat the
+incumbent; on L the selected structure scored *below* it (0.4336 vs 0.4840). It
+was selected because the higher-scoring candidates cannot emit the three-class
+distribution `SCIENCE.md` requires. **Building it is not evidence it is good**,
+and PR 5's disclosures must not read as though selection implied validation.
+
+## 2. What already exists, and what PR 5 actually has to do
+
+Read this before starting any slice.
+
+| PR 5 work item | Status |
+|---|---|
+| Write the pre-registration first (D-59) | **Done.** `PREREGISTRATION_LE_STRUCTURE.md`, executed to completion by queue item 2 (D-68). PR 5 does not re-open it; a departure is an §8 amendment |
+| Compare candidate structures on the fixed evaluation set | **Done — and not to be redone.** §5's touch budget and D-66 reserve any re-selection for a real evaluation set with a re-issued pre-registration |
+| Select the best-supported structure | **Done (D-68).** `L1 · W1 · S1 · H3 · V1 · P1`, both targets |
+| Train on working text produced by the preceding components | **Open — this is gate G-1.** The selection was fitted on raw `response_text` (`experiments/features.py`), not on pipeline `working` text. `SCIENCE.md` requires the latter |
+| Cover naive and attacked prompts | **Not met, and not fillable ([D-65](DECISIONS.md#d-65)).** Recorded shortfall; already in D-47's inventory |
+| Exclude the prompt ([D-60](DECISIONS.md#d-60)) | **True by construction.** No candidate takes prompt text, enforced by `candidates.py`'s import assertion and by stage 8 reading a response-derived view only |
+| Train and version models separately from scoring; lock the model version per run | **Half built.** `RunContext.component_selections` records implementation + version and `views.py` carries it; the *artifact* half is slice B — the 1.1 artifact does not exist yet ([D-49](DECISIONS.md#d-49) deferred it here) |
+| Return a provisional L judgment **and a three-class distribution** when L applies; the same for E on every evaluated hazard | **Not built.** `BaselineTwoHeadScorer` sets `distribution=None` by design (§4 — never synthesized). Slice C is the first implementation that fills it |
+| Do not apply fixed exceptions or result tables inside either model | **True by construction, and enforced.** `candidates.py::_assert_no_fixed_rule_import` parses its own source at import; slice A must carry that assertion into the production module, not leave it behind in `experiments/` |
+| Evaluate each outcome separately and with equal importance | **Slice D.** `experiments/comparison_metrics.py` has the selection metric; per-outcome reporting with uncertainty is what PR 5 owes |
+| Report a component as not evaluated absent ground truth or criteria | **Slice D + E.** §1's standing constraint |
+
+**What exists in `experiments/` and what that is worth.**
+`MultinomialSoftmax` in `src/hazard_classifier/experiments/candidates.py` is the
+selected structure, already correct in three ways worth preserving exactly:
+per-hazard cells, `heads.py`'s standardization convention (mean/std over fit
+rows, scale floored at `1e-6`), and D-45's unfittable-is-unavailable handling
+(a single-class cell is `unavailable`, never substituted). It is **not**
+production code: it holds live estimator objects, has no serialization, and
+lives in a module whose purpose was a comparison that is now closed.
+
+**Do not import `experiments/` from production code, and do not delete it.**
+It is the record of how D-68 was reached and its tests pin that record; the
+production module is a separate implementation that must be shown to agree with
+it (slice A's equivalence test).
+
+## 3. Entry gate — three questions for Kurt
+
+Per `META_PLAN.md` §3, these are stopped on rather than chosen. **G-1 blocks
+slice A. G-2 blocks slice B. G-3 blocks only the close**, so slices A–D can
+proceed while it is open.
+
+### G-1 — Which text are the 1.1 models fitted on? *(blocking)*
+
+`SCIENCE.md` §Legitimization Training and §Enablement Training both say the
+model "is trained on human ground truth using **working text filtered through
+the preceding components**." `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 restates it.
+**The selection that produced D-68 did not do this**: `experiments/features.py`
+embeds `response_text` directly, with no decoding pass and no prompt-repetition
+removal. The pre-registration does not mention text at all — §1 names the
+source CSV and the split, §2.1's hard constraints cover the estimator and the
+prompt but not the input view — and §7's disclosure list does not carry it.
+
+So the structure was chosen on one feature set and the release would ship a
+model fitted on another. The three options:
+
+1. **Fit on pipeline-produced working text.** `SCIENCE.md` governs on a
+   behavioral conflict (`META_PLAN.md` §1.1), and this is the only option that
+   closes the train/serve gap. Cost: D-68's comparison was measured on
+   different features, so the selection transfers by assumption rather than by
+   measurement. Recorded as a `PREREGISTRATION_LE_STRUCTURE.md` §8 amendment
+   and a §7 disclosure line.
+2. **Fit on raw `response_text`.** Reproduces the selected configuration
+   exactly. Cost: a standing shortfall against a `SCIENCE.md` training
+   requirement, joining D-65 in D-47's inventory — and a real train/serve skew,
+   since every scored row at serve time has had repetition removed.
+3. **Re-run the selection on working-text features.** Cleanest scientifically,
+   and **the most expensive**: 28 fits, and it spends comparison budget the
+   pre-registration deliberately fixed (§2.4 forbids adaptive expansion; §5
+   reserves re-selection for a real evaluation set).
+
+**Recommendation: option 1, conditioned on slice 0's measurement.** Slice 0
+computes how much the two texts actually differ on the 859 interim rows. If the
+delta is small — few rows changed, small character deltas — option 1's assumed
+transfer is a bounded risk and the working-text requirement is satisfied
+outright. If it is large, that is itself the finding, and option 3 becomes
+arguable on evidence rather than on principle. **Bring the number to the
+decision; do not decide before slice 0 runs.**
+
+### G-2 — Is the shipped artifact fitted on the fit split, or on all 859 rows?
+
+`PREREGISTRATION_LE_STRUCTURE.md` §1 divides the data 635/224 (E) and 563/200
+(L, after excluding `prv`/`sxc_prn` under phase A). Two defensible answers:
+
+- **Fit split only.** The dev numbers slice D reports then describe *the
+  artifact that ships*. Recommended: it is the only option under which PR 5's
+  reported numbers and PR 5's shipped model are the same object, and 224 dev
+  rows are already thin enough without also being unrepresentative.
+- **All 859 rows.** More data for a model whose per-hazard cells are ~42 rows
+  each, at the cost that no reported number describes the shipped artifact and
+  D-66's dev slice is consumed.
+
+Either way the artifact manifest records which, and slice D's report states it
+in the same sentence as every metric.
+
+### G-3 — How is PR 5's first exit criterion discharged? *(blocks only the close)*
+
+"The selected models meet approved per-outcome criteria on evaluation rows
+excluded from fitting" **cannot be met in 1.1** — approved criteria are Ask B,
+and D-63 established the Standards team's inputs are not arriving. This is the
+same shape as D-54's and D-55's scoping of PR 4's criteria, and it needs the
+same treatment: **a ledger entry** recording that the criterion is met by
+scoping rather than by building, what replaces it (per-outcome dev-class
+metrics with uncertainty, reported as *not evaluated*), and its reversal scope.
+Recommended as a new entry at the close, drafted in slice E.
+
+## 4. Slice 0 — Measure the train/serve text delta
+
+**Small, and it exists to answer G-1 with a number** (lesson: compute, then
+write). No production code.
+
+- Commit `scripts/probe_working_text_delta.py`, in the shape of
+  `scripts/probe_disclaimer_scope.py`: reproducible, documented, quotable.
+- For all 859 interim rows, run the real stages 1–7 the pipeline would run
+  (`Decoder`, `PromptRepetitionDetector`, and the placeholders, which change
+  nothing) against the row's own prompt and response, and compare
+  `texts.working` with `response_text`. Report: rows where the two differ; the
+  distribution of character-length deltas; rows that **exhaust** (working text
+  empties, so the row would never reach stage 9 at all); and the same figures
+  broken down by hazard, since the fit is per hazard.
+- Exhausted rows are the sharp end: a row that exhausts at serve time is
+  decided by phase B1 and never scored, but it still carries a human L/E label
+  that a naive fit would train on. Report the count and say plainly whether
+  such rows should be excluded from fitting — a question for G-1's answer.
+- Use `interim_data.load_interim()`. The frame carries `prompt_uid`, `hazard`,
+  `prompt_text`, `response_text`, `legitimization_value`,
+  `enablement_value`, `prompt_group_id`, and `split` — confirmed against the
+  loader, so stages 1–7 can be driven per row with no embedding pass and no
+  network. The whole probe is pure Python and should run in seconds.
+
+**Exit:** the numbers exist, are committed and reproducible, and G-1 is
+presented to Kurt with them. **Stop here.**
+
+## 5. Slice A — The production fitter
+
+Build to D-68 and `PREREGISTRATION_LE_STRUCTURE.md` §6. New module —
+suggested `src/hazard_classifier/evaluator/training/multinomial.py` or a
+top-level `le_model.py`; do not extend `model.py` (§1).
+
+- **Fit per `(target, hazard)` cell**, both targets, exactly the estimator
+  D-68 selected. **Reproduce `MultinomialSoftmax` parameter for parameter** —
+  `LogisticRegression(C=1.0, class_weight="balanced", solver="lbfgs",
+  random_state=DEFAULT_SEED, max_iter=1000)`, standardization by fit-row
+  mean/std with scale floored at `1e-6`, uniform sample weights (`W1`). A
+  different regularization or a dropped `class_weight` is **a different model
+  from the one that was selected**, however reasonable it looks.
+- **L excludes `prv` and `sxc_prn`** (`PREREGISTRATION_LE_STRUCTURE.md` §1;
+  `SCIENCE.md` phase A makes final L `N/A` there). Use
+  `interim_data.legitimization_rows`.
+- **D-45's rule, re-implemented here because per-hazard cells force it.** A
+  cell with fewer than two present classes is **unavailable**, recorded as
+  such, never substituted by a pooled or neighbouring fit. Record the fitted
+  cell set explicitly — §6's `H3` row requires the artifact to record which
+  `(target, hazard)` cells were fit.
+- **Carry the fixed-rule import assertion into production.**
+  `candidates.py::_assert_no_fixed_rule_import` is the mechanism that makes
+  "no candidate applies a `SCIENCE.md` fixed rule" checkable by running the
+  code. The production fitter and scorer must not import
+  `evaluator.components.integration`, and the assertion should say so.
+- **Equivalence test against the experiment implementation.** On the same rows,
+  same features, same seed, the production fitter's `predict_proba` must agree
+  with `experiments.candidates.MultinomialSoftmax` to floating-point tolerance.
+  This is the only thing that makes "we shipped what was selected" a verified
+  claim rather than a stated one, and it is why `experiments/` is not deleted.
+
+**Traps:**
+
+- **The absent-class column.** `LogisticRegression.classes_` omits a class
+  never present in a cell's rows; `MultinomialSoftmax` places columns by class
+  label and leaves the absent one at `0.0`. Production must do the same and the
+  artifact must record each cell's fitted class set — otherwise a reloaded
+  model silently mis-orders its columns. **A distribution with a hard zero is a
+  disclosure item** for slice D: the model cannot predict a class it never saw.
+- Do not "improve" the estimator. Any change is a departure from D-68 and needs
+  an §8 amendment with its reason, not a commit message.
+
+**Exit:** the production fitter reproduces the selected structure, agrees with
+`experiments/` numerically, records unavailable cells, and is tested
+independently of scoring (PR 5 exit criterion: "fitting and scoring are
+independently testable"). 433 + n tests green.
+
+## 6. Slice B — The 1.1 artifact
+
+`ARCHITECTURE.md` §10 and `PREREGISTRATION_LE_STRUCTURE.md` §6 are the
+specification. **This is the deliverable [D-49](DECISIONS.md#d-49) deferred
+into PR 5**, and PR 6 round-trips it.
+
+- `model/` — per target and per fitted cell: coefficient matrix
+  `(n_features, 3)`, intercept `(3,)`, and the standardization `mean`/`scale`
+  vectors, in `.npz`. **Class order per cell in JSON.**
+- `manifest.json` — artifact id and version, embedding provider name/version,
+  pooling strategy, component implementations and versions, rule version, and
+  **training provenance**: the source SHA-256, the split file and its version,
+  which split half was fitted on (G-2), the text view fitted on (G-1), and the
+  seed. PR 5's exit criterion "runs reproduce results from locked model, rule,
+  data, split, and metric versions" is met by this field set or it is not met.
+- `rules.json` — hazard families, the artifact's supported hazard set, frozen
+  rule constants. [D-23](DECISIONS.md#d-23): serve time reads the artifact,
+  never installed config. The supported set is what [D-57](DECISIONS.md#d-57)
+  makes `hazard_scope` default to, so it must contain exactly the hazards with
+  at least one fitted cell.
+- **No `thresholds.json`.** §6: retained only for `L3`. A writer that emits an
+  empty one is wrong, not harmless.
+- **No pickle, no `joblib`** ([D-37](DECISIONS.md#d-37)). The reader
+  reconstructs pure-NumPy scoring; nothing unpickles an estimator.
+- Commit a small **golden 1.1 artifact** fixture next to
+  `tests/golden/baseline/artifact`, trained on a synthetic fixture, so
+  integration tests have something to load without fitting.
+
+**Traps:**
+
+- The baseline's `model.save`/`model.load` are shared code (§1). Write a new
+  writer/reader; do not add a branch to the old one.
+- Round-tripping is PR 6's exit criterion, but **a load-what-you-saved test
+  belongs here** — deferring it to PR 6 means shipping a writer with no reader.
+
+**Exit:** an artifact writes, loads, and scores identically before and after a
+round trip; no `thresholds.json`; no pickle anywhere; manifest carries the full
+provenance set.
+
+## 7. Slice C — The scoring component
+
+Replace stage 9's implementation. New class alongside `BaselineTwoHeadScorer`,
+new `implementation` id (`multinomial_per_hazard`), **registered rather than
+substituted** — §6's registry keys on `(stage, implementation_id)` and PR 7's
+runner selects by id.
+
+- **Keep `BaselineTwoHeadScorer` registered.** It is the only implementation
+  that exercises the `distribution=None` path §4 specifies, PR 1–PR 4's tests
+  select it, and removing it would make a component contract untested.
+- Emit `Judgment(label=..., distribution=(p0, p1, p2), model_version=...)`,
+  label by **`argmax` over the distribution** (§6: every non-`L3` candidate
+  decides by argmax; there are no thresholds to apply).
+- **Unavailable cells produce a per-hazard `ComponentError`**, exactly as the
+  baseline scorer does through `resolve_component_action` — the integrator's
+  phase D turns it into a per-hazard failure. Never a substituted judgment,
+  never a uniform distribution (§6's no-fallback rule; D-45's principle).
+- `legitimization_applies` stays the enablement-only test it is today; the
+  scorer makes no applicability *decision*, it reports what it judged.
+- **Stage 9's maturity becomes `working`** in `ARCHITECTURE.md` §7 row 9 — and
+  when it does, **the "L/E scoring's absent distribution" entry added to D-47's
+  inventory on 2026-08-05 comes out** (`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6
+  narrowing 2, which names it as the one inventory item with a scheduled end).
+  Removing it is part of this slice, not an afterthought.
+- A real, non-mocked BGE test extending `tests/integration/test_evaluator_real_bge.py`,
+  as PR 2, PR 3, and PR 4 each did: a real encoder, the 1.1 golden artifact, a
+  well-formed three-class distribution that sums to 1.
+
+**Traps:**
+
+- The distribution must survive `views.py` into `results.jsonl` as a list of
+  three floats (`_judgment_view` already handles it) — assert it, since this is
+  the first implementation for which that branch is live.
+- Phase C fixes final L at L0 without touching the distribution. The
+  *provisional* judgment and the *final* label are different fields and a
+  disclaimer must not rewrite the former.
+
+**Exit:** stage 9 emits real three-class distributions for both targets,
+unavailable cells fail their hazard rather than inventing a judgment, and the
+maturity flip and inventory removal both land.
+
+## 8. Slice D — Evaluation and reporting
+
+What PR 5 owes that is not code: per-outcome numbers that cannot be mistaken
+for a benchmark.
+
+- **Each outcome separately** — L0, L1, L2, E0, E1, E2 — per-class recall,
+  precision, and F1. A single accuracy figure does not satisfy the
+  equal-importance requirement, because a rare class hides inside it
+  (`STATUS.md` §Standards team, Ask B).
+- **Every figure carries an uncertainty estimate and the method that produced
+  it** (`SCIENCE.md` §Evidence and outputs, Estimability;
+  `PREREGISTRATION_LE_STRUCTURE.md` §3). Cluster bootstrap over
+  `prompt_group_id`, seeded, the same discipline the disclaimer probe uses.
+- **Per-hazard claims are weak by construction** — ~15 dev rows per hazard
+  (§7). Report intervals, never point estimates, and say so.
+- **The words "not evaluated" appear next to the numbers**, not in a footnote.
+  Both models are reported as *not evaluated* whatever the figures show.
+- **Do not build `metrics.json` as a shipped view here.** `views.py` records
+  that it needs approved criteria and the approved uncertainty method, and only
+  one of the two blockers clears with PR 5. PR 5 produces the report; whether a
+  view ships is PR 6's call alongside the promotion decision (D-58).
+- `README.md` §Release 1.1 evaluator status: replace the "the scorer shipping
+  today is also not the selected structure yet" paragraph (added 2026-08-05)
+  with what actually ships, keeping D-68's null-result framing intact.
+
+## 9. Slice E — Verification sweep and PR 5 close
+
+`META_PLAN.md` §6: **Opus, high effort, and prefer a fresh context** that did
+not write the specifications being checked. Not bookkeeping — PR 2's, PR 3's,
+and PR 4's sweeps each found real gaps on checks predicted to be clean.
+
+- Full suite green, including `tests/integration/test_baseline_parity.py`
+  (D-48). PR 5 writes a *new* artifact format and must not perturb the old one.
+- **Map each PR 5 exit criterion to what verifies it** (§10's table), and record
+  every criterion met by scoping with a ledger entry — G-3's entry at minimum.
+- **Re-check D-68's, D-49's, and D-37's absorption against what shipped**, and
+  the pre-registration §6 payload row against the actual `.npz`.
+- **The D-47 inventory, item by item.** PR 5 both removes an item (stage 9's
+  absent distribution) and may add one (G-1's answer, if option 2). Three
+  consecutive sweeps have found staleness here; expect a fourth.
+- `PREREGISTRATION_LE_STRUCTURE.md` §7 gains whatever PR 5 learned that the
+  selection could not establish; §8 gains an amendment if G-1 chose option 1.
+- `STATUS.md`: each slice in Recently Completed, new assumed-concurrence rows
+  **with reversal scope**, this plan marked as a record of what was built.
+- **Do not close item 4** unless PR 5 is genuinely the last PR standing — check
+  the queue rather than assuming, since PR 5's position may have moved.
+
+## 10. Exit criteria → how each is verified
+
+| PR 5 exit criterion | Verified by |
+|---|---|
+| The selected models meet approved per-outcome criteria on evaluation rows excluded from fitting | **Cannot be met in 1.1** — approved criteria are Ask B, not arriving (D-63). G-3's ledger entry records the scoping; slice D's per-outcome dev-class report with uncertainty is what replaces it, under the not-evaluated rule |
+| All three L outcomes and all three E outcomes are evaluated separately | Slice D's per-class metrics with cluster-bootstrap intervals |
+| Fitting and scoring are independently testable | Slice A's fitter tests (no pipeline, no record) and slice C's component tests (loaded artifact, no fitting); the golden 1.1 artifact is what decouples them |
+| Runs reproduce results from locked model, rule, data, split, and metric versions | Slice B's manifest provenance set + slice C's `component_selections` recording; a same-input-same-output test |
+| No AI-only labels are presented as human ground truth | True by construction — every label is Jailbreak v1.0 human judgment (D-63); D-65 records that naive coverage was **not** manufactured, which is the same rule applied |
+
+## 11. Explicitly out of scope for PR 5
+
+- **Re-running or re-opening the structure selection.**
+  `PREREGISTRATION_LE_STRUCTURE.md` §5 and D-66 reserve that for a real
+  evaluation set with a re-issued pre-registration. G-1 option 3 is the one
+  narrow exception a session may *propose*, never take unilaterally.
+- **Fine-tuning an encoder, or changing the representation.** §2.1's hard
+  constraint and §2.3's single-level Representation axis.
+- **Building narrative, refusal, or hazard detection** to close the train/serve
+  gap PR 5's work list names (D-54). The re-fit those components owe is a
+  future release's.
+- **Editing `model.py`, `heads.py`, or any baseline module** (D-48), including
+  "just adding a multinomial branch" to `save`/`load`.
+- **Shipping `metrics.json`** — §8.
+- **The promotion decision** (D-58) and the standalone limitations document
+  (D-47) — PR 6's.
+- **The runner and CLI** — PR 7's, and PR 5 does not need them.
+
+## 12. Lessons carried forward
+
+1. **Read the code, not just the docs about the code**
+   (`QUEUE_ITEM_2_EXECUTION_PLAN.md` §10 lesson 6). G-1 exists because
+   `experiments/features.py` was read against `SCIENCE.md`'s training
+   sentence. Four PRs' worth of specification review had not surfaced it.
+2. **Compute, then write** (§10 lesson 2). Slice 0 exists so G-1 is answered
+   with a measurement instead of an argument.
+3. **A decision that reaches no specification is not settled** (§10 lesson 4).
+   G-1's answer must land in `PREREGISTRATION_LE_STRUCTURE.md` §7/§8 and the
+   artifact manifest, not only in a commit message.
+4. **Beware the component that runs, returns results, and looks healthy**
+   (§10 lesson 5). A multinomial always returns three numbers that sum to 1,
+   including for a cell fitted on 40 rows of two classes. The distribution
+   being well-formed says nothing about it being right.
+5. **A null result stays null.** D-68 selected a structure that lost to the
+   incumbent on L. Every disclosure PR 5 writes must keep that visible;
+   shipping is not validation.
+6. **One queue item per session; retire by number** (§10 lesson 7). PR numbers
+   and queue-item numbers are different schemes.
+7. **End with Open Questions, even if empty** (§10 lesson 9, `META_PLAN.md` §3).
+
+## 13. When a slice raises something this plan did not anticipate
+
+`SCIENCE.md` governs on any behavioral conflict; `ARCHITECTURE.md` on any
+structural one; `PREREGISTRATION_LE_STRUCTURE.md` on anything about the
+selection. Per `META_PLAN.md` §3: below ~90% confidence, or in conflict with a
+specification, or a tradeoff only Kurt can make — stop and add it to **Awaiting
+User** rather than choosing.
+
+The specific risk in this PR: **a session that finds the selected structure
+performing poorly will be tempted to fix it.** Tuning regularization, adding a
+class weight, pooling hazards with thin cells — each is a new selection made
+without a pre-registration, on a dev set, after seeing the labels. That is the
+exact failure §2.4 and §5 exist to prevent. Record the finding; do not act on
+it.
+
+## Open Questions
+
+**Three, all in §3, all for Kurt, and G-1 blocks the first line of code.**
+
+| Question | Why it is not decidable here | Where it lands |
+|---|---|---|
+| **G-1** — fit on pipeline `working` text, on raw `response_text`, or re-run the selection? | `SCIENCE.md` requires working text; D-68's selection used raw text; re-running spends a budget the pre-registration fixed. A tradeoff between conformance, fidelity to the selection, and cost | `PREREGISTRATION_LE_STRUCTURE.md` §7/§8; a ledger entry; slice A |
+| **G-2** — is the shipped artifact fitted on the fit split or on all 859 rows? | Trades data for interpretability of the reported numbers. Recommendation: fit split, so the numbers describe the artifact | The artifact manifest; slice D's report framing |
+| **G-3** — how is the approved-criteria exit criterion discharged? | It cannot be met (D-63). Scoping a stated exit criterion requires a ledger entry with reversal scope, as D-54/D-55 did for PR 4 | A new `DECISIONS.md` entry, drafted in slice E |
+
+Nothing else in PR 5 is open. The structure, the payload format, the data, the
+split, and the not-evaluated reporting rule are all settled by D-68, D-63
+through D-66, and `SCIENCE.md` — and none of them should be re-derived.
