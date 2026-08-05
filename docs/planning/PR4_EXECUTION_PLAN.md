@@ -61,11 +61,12 @@ specification, not the entry.
   ([D-68](DECISIONS.md#d-68)). Item 4 is the only live queue item and **PR 4 is
   the startable slice** (`STATUS.md` §Current Phase).
 - Branch `main`. The plan, D-69, D-70, and their absorption landed as
-  `7ec3d36`; **slices A and B are complete** (`1c7fb15`, `dc0ee22`).
-  **A fresh session starts at slice C** (§5) — read §3 and §4 as records of what
-  was built, not as work to do.
-- Baseline is green: **427 tests**, `pytest` from the repo root, ~23 s. Slice C
-  starts from 427.
+  `7ec3d36`; **slices A, B, and C are complete** (`1c7fb15`, `dc0ee22`, and
+  slice C's commit — see `STATUS.md`).
+  **A fresh session starts at slice D** (§6) — read §3, §4, and §5 as records of
+  what was built, not as work to do.
+- Baseline is green: **433 tests**, `pytest` from the repo root, ~22 s. Slice D
+  starts from 433.
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine — the pyenv shim needs the env.
 - No entry condition blocks PR 4. It needs neither the Standards team's data
@@ -427,6 +428,19 @@ tested, `README.md` carries the coverage entry, the probe is committed and
 reproduces §4's table, 413 + n tests green including `test_baseline_parity.py`.
 
 ## 5. Slice C — Placeholder and B1-reachability verification
+
+> **Complete** (2026-08-05). 427 → 433 tests. This section is now a record of
+> what was built, not live work. No component behavior changed; `integration.py`
+> gained one comment (pointing at A-3, where bullet 2's disclaimer check is
+> decided). All six new tests are named against §7's exit-criteria table below,
+> and each was confirmed to test what it claims — the placeholder byte-identity
+> assertions run each placeholder directly rather than through the full stub
+> pipeline (stage 7 legitimately publishes a `named` key later in that same
+> pipeline, which would have made a post-pipeline `texts.named == {}` assertion
+> wrong), and the B1-unreachability test independently confirms the response
+> really would have matched a retained disclaimer pattern had stage 7 run,
+> so the test exercises the short-circuit rather than a text that was never
+> going to flag regardless.
 
 **Verify what §2 showed is built.** No new component behavior.
 

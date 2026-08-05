@@ -53,15 +53,19 @@ GOLDEN_ARTIFACT = Path(__file__).resolve().parents[1] / "golden" / "baseline" / 
 class _CountingBgeProvider(BgeEmbeddingProvider):
     """The real provider, wrapped only to count calls -- so the
     once-per-response property is confirmed against the actual encoder, not
-    just against a stub that could differ from it.
+    just against a stub that could differ from it. Also records every text
+    list it was actually asked to embed, so a test can assert on what the
+    real encoder saw rather than only how many times it ran.
     """
 
     def __init__(self) -> None:
         super().__init__()
         self.calls = 0
+        self.captured_texts: list[list[str]] = []
 
     def embed(self, texts):
         self.calls += 1
+        self.captured_texts.append(list(texts))
         return super().embed(texts)
 
 
@@ -255,6 +259,47 @@ def test_a_real_two_hazard_run_scores_each_hazard_separately(pipeline) -> None:
     assert hte_judgment.result in ("violating", "non_violating")
     assert prv_judgment.result in ("violating", "non_violating")
     assert record.overall_result in ("violating", "non_violating")
+
+
+def test_the_real_encoder_reads_working_with_the_disclaimer_retained(pipeline) -> None:
+    """`PR4_EXECUTION_PLAN.md` slice C: D-55's default made concrete against
+    the real encoder, not a stub. `EmbeddingComponent`'s default `text_view`
+    is `"working"` (D-69), and D-55 leaves disclaimer text in `working`
+    rather than stripping it -- so the real BGE encoder must actually see
+    the disclaimer wording, and `named["disclaimer_stripped"]` must exist
+    and differ.
+
+    Uses the golden artifact's own trained hazard (`hte`) rather than a
+    Specialized Advice one -- the golden artifact trains no
+    `spc_*` hazard (`rules.json`: `specialized_advice_hazards: []`), so
+    phase C cannot fire against it regardless of family, and slice B's
+    `test_evaluator_pr4_disclaimer.py` already covers phase C's behavior
+    with a classifier built for that. This test is about the text the
+    encoder receives, not about phase C -- stage 7 sets `sa_disclaimer`
+    from the response's content regardless of the evaluated hazard's
+    family; only phase C's *consequence* is family-gated.
+    """
+    _registry, _components, provider = pipeline
+    before = len(provider.captured_texts)
+    disclaimer_wording = "consult a qualified professional"
+    response = f"You should {disclaimer_wording} before making any decisions about this."
+
+    record = _run(pipeline, "What should I do here?", response)
+
+    assert record.flags.sa_disclaimer == "detected"
+    assert record.exhausted_at is None
+
+    # The encoder actually saw the disclaimer wording -- not inferred from
+    # `working` being unchanged, but from what was actually sent to embed().
+    new_calls = provider.captured_texts[before:]
+    embedded_texts = [text for call in new_calls for text in call]
+    assert any(disclaimer_wording in text for text in embedded_texts)
+
+    # And the named, stripped view -- published alongside, never read by
+    # the encoder at the 1.1 default -- genuinely differs.
+    assert "disclaimer_stripped" in record.texts.named
+    assert disclaimer_wording not in record.texts.named["disclaimer_stripped"]
+    assert record.texts.working == response  # left intact, D-55
 
 
 def test_the_real_run_produces_a_json_serializable_result_view(pipeline) -> None:

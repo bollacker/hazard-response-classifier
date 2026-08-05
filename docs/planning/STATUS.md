@@ -588,10 +588,12 @@ Detailed phased proposal:
    toward non-violating. The earlier note here that PR 4 "builds nothing new"
    is superseded by those two.
 
-   **Slices A and B landed** (2026-08-05, see Recently Completed):
-   `EmbeddingComponent` takes `text_view` as a construction argument, and
-   stage 7 now ships three of the four inherited disclaimer patterns.
-   **Slices C and D remain** — C depends on neither A nor B.
+   **Slices A, B, and C landed** (2026-08-05, see Recently Completed):
+   `EmbeddingComponent` takes `text_view` as a construction argument, stage 7
+   now ships three of the four inherited disclaimer patterns, and the
+   placeholder/B1-reachability verification named in §5 is now pinned by
+   named tests rather than left as an inference from other tests passing.
+   **Slice D — the verification sweep and PR 4 close — remains.**
 
    **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
    blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
@@ -864,6 +866,67 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 4 slice C landed: placeholder and B1-reachability
+  verification.** No new component behavior — `integration.py` gained one
+  comment, pointing `_phase_b1_terminal_state`'s `sa_disclaimer` branch at
+  `../ARCHITECTURE.md` §13's A-3. Six new tests across four files, each named
+  against §7's exit-criteria table:
+
+  - **`tests/unit/test_evaluator_pipeline.py`** — extended the existing
+    placeholder forcing function (flag half already covered; text and
+    judgment now pinned too) and added two tests: narrative/refusal run
+    directly against a hand-built record assert `working` byte-identical,
+    `TextViews.history`/`named` untouched, and `per_hazard == {}` — run
+    directly rather than through the full pipeline, since stage 7
+    legitimately publishes a `named` key later in that same pipeline and a
+    post-pipeline `texts.named == {}` assertion would have conflated the
+    two. A second new test pins B1 bullet 2's **real** unreachability
+    reason with a real `FinalIntegrator` swapped in for this file's stub:
+    a prompt-only response that would also match a disclaimer pattern
+    (confirmed directly against `DisclaimerDetector`, not assumed) shows
+    `sa_disclaimer == "not_evaluated"`, the stage-7 observation
+    `outcome == "skipped_short_circuit"`, and `decided_by == "B1"` deciding
+    on repetition, never on the disclaimer that never got to look. A third
+    new test pins "operational narrative and CSE remain available for
+    scoring" — met trivially in 1.1 because narrative/refusal touch
+    nothing, not because a real detector judged the content safe.
+  - **`tests/unit/test_evaluator_integration.py`** — two new tests. One
+    asserts `../ARCHITECTURE.md` §13's A-3 reading directly: `sa_disclaimer`
+    and `narrative` both set, parametrized over a Specialized Advice hazard
+    and a default-family one: bullet 2 wins in both (`L0/E0`), which is the
+    case that actually distinguishes A-3's reading from a family-gated
+    alternate (which would fall through to the narrative bullet for the
+    non-SA case, giving `L1/E0` — both non-violating, matching A-3's own
+    comparison). The other is PR 4's last exit criterion, **constructed at
+    the flag level** as the criterion itself specifies: `sa_disclaimer` set
+    on an otherwise-unexhausted record with real provisional L2/E2 —
+    `decided_by == "C"`, `final_l == "L0"`, `final_e ==
+    provisional_e.label` — the division of labor between the models (B2)
+    and the one fixed rule that moves L afterward (C).
+  - **`tests/integration/test_evaluator_real_bge.py`** — one new test
+    against the real, non-mocked BGE encoder (not a stub): a
+    disclaimer-bearing response run through the golden artifact's own
+    trained hazard (`hte` — the artifact trains no `spc_*` hazard, so
+    phase C cannot fire against it regardless of family; that is slice B's
+    `test_evaluator_pr4_disclaimer.py`'s job, with a classifier built for
+    it). Asserts the disclaimer wording is actually present in the text
+    the provider's `embed()` was called with — captured directly, not
+    inferred from `working` being unchanged — while
+    `named["disclaimer_stripped"]` differs and lacks it. Makes D-55's
+    default concrete against the real encoder for the first time.
+
+  433 tests total (427 + 6), zero regressions, `test_baseline_parity.py`
+  unchanged (D-48 holds — `integration.py`'s only change is a comment).
+
+  **Nothing found in passing beyond what §2 had already flagged as open**
+  (B1 bullet 2's real reachability reason, and A-3's reading) — both were
+  already corrected in `README.md`/`RELEASE_1_1_QUEUE_PROPOSAL.md` before
+  this session (verified against the current text, not redone), and this
+  slice's job was exactly to pin each with a named test rather than leave
+  it asserted only in prose. **Slice D — the verification sweep and PR 4
+  close — remains**, and per `META_PLAN.md` §6's 2026-08-05 amendment that
+  is now an Opus, high-effort pass, not a bookkeeping one.
 
 - 2026-08-05 — **`META_PLAN.md` §6 amended: a verification sweep is not
   bookkeeping.** Raised while recommending models and effort levels for PR 4's
