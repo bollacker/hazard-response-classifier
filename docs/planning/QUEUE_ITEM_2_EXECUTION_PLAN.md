@@ -276,8 +276,27 @@ highest-ranked candidate that produces a genuine distribution, and the entry
 must say plainly that the ablation found no structure that beat the incumbent
 on this data. Do not dress a null result as a positive selection.
 
+**The distribution requirement excludes far more than `R`** (found
+2026-08-05 while re-examining this slice; recorded in
+`PREREGISTRATION_LE_STRUCTURE.md` §8). It is a *structural* property, so
+every level that keeps `R`'s `L3` two-head loss inherits it: `W2`, `W3`,
+`H1`, `H2`, `B1`, `P2`, `P3`, **and `S2`** all decide by threshold and return
+a one-hot row. Only `L1` and `L2` qualify. A slice that enforces the
+worst-class floor and the separation test but forgets this will select an
+ineligible structure — the first implementation of this rule did exactly
+that, selecting `S2` for L.
+
+**Outcome, 2026-08-05.** Neither target found a structure that beat `R`.
+**L → `L1`**, selected only because it is the best qualifying structure while
+scoring *below* `R` (macro-F1 0.4336 vs 0.4840) — a null result.
+**E → the `L1+W3` composite** (0.5358 vs `R`'s 0.5199), without significant
+separation. Both figures are dev-set numbers under D-66. Full record in
+`docs/planning/item2_results/stage2.json`.
+
 **Exit:** one selected structure per target, with its rationale and its
-rejected alternatives written down.
+rejected alternatives written down. **Met** — `stage2.json` carries the
+selection, the ranking, the candidates disqualified by the floor, and those
+excluded for producing no distribution.
 
 ## 7. Slice D — Record the decision and close the item
 

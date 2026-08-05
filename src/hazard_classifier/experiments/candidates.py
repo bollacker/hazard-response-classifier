@@ -88,6 +88,27 @@ class Candidate(Protocol):
 
     name: str
 
+    # Whether this structure emits a genuine three-class multinomial, or
+    # merely a one-hot indicator of a decided label.
+    #
+    # **This is a selection constraint, not a cosmetic label.**
+    # `PREREGISTRATION_LE_STRUCTURE.md` §4's closing rule is that the
+    # selection must be "the highest-ranked candidate that produces a genuine
+    # three-class distribution", and §2.2 excludes `R` for precisely this
+    # reason: `SCIENCE.md` §Legitimization/Enablement Scoring require a
+    # three-class multinomial that two thresholded binary heads structurally
+    # cannot produce (`ARCHITECTURE.md` §4 -- the obvious derivation is
+    # unsafe because `p_high > p_nonzero` is reachable).
+    #
+    # The property is **not** unique to `R`: every two-head structure on the
+    # ladder inherits it, including the Weighting, Hazard-conditioning,
+    # Branching, Pooling and Sharing variants, which vary one axis from `R`
+    # while keeping its `L3` loss. §6's payload table is the same
+    # distinction seen from the artifact side -- `thresholds.json` is
+    # retained only for `L3`, and "every other candidate decides by `argmax`
+    # over the distribution".
+    produces_three_class_distribution: bool
+
     def fit(self, X: np.ndarray, y: np.ndarray, hazards: np.ndarray) -> None:
         """Fit on `X` (n, d), ordinal labels `y` (n,) in `{0, 1, 2}`, and
         `hazards` (n,) hazard codes. Rows must already be the correct
@@ -129,6 +150,9 @@ class MajorityClassBaseline:
     """
 
     name = "majority_class"
+    # One-hot on the majority class -- not a distribution, and not a
+    # ladder candidate either (see the class docstring).
+    produces_three_class_distribution = False
 
     def __init__(self) -> None:
         self.majority_class: int | None = None
@@ -167,6 +191,10 @@ class TwoHeadReference:
     """
 
     name = "R"
+    # Two thresholded binary heads decide a label; the returned row is a
+    # one-hot indicator, never a calibrated three-class distribution.
+    # This is exactly why §2.2 excludes R from being the final selection.
+    produces_three_class_distribution = False
 
     def __init__(self) -> None:
         self._cells: dict[str, tuple[BinaryHead, BinaryHead, float, float]] = {}
@@ -367,6 +395,12 @@ class TwoHeadFamily:
     a harness-level choice about which `X` to pass in, not a model-level one.
     """
 
+    # Every level this class spans (W2, W3, H1, H2, B1) varies one axis from
+    # R while keeping its L3 two-head loss, so all of them decide by
+    # threshold and return a one-hot row -- ineligible for selection under
+    # §4's closing rule, exactly as R is.
+    produces_three_class_distribution = False
+
     def __init__(
         self,
         name: str,
@@ -516,8 +550,8 @@ class TwoHeadFamily:
 class MultinomialSoftmax:
     """`L1` -- flat three-class softmax cross-entropy, fitted per hazard
     (Hazard-conditioning held at `R`'s own `H3` level, since this candidate
-    varies only the Loss axis). A genuinely different model from the
-    two-head family, not a `TwoHeadFamily` configuration: there is no
+    varies only the Loss axis by default). A genuinely different model from
+    the two-head family, not a `TwoHeadFamily` configuration: there is no
     nonzero/high decomposition here, so it does not belong alongside
     `W2/W3/H1/H2/B1`.
 
@@ -525,11 +559,25 @@ class MultinomialSoftmax:
     mean/std over the fit rows, scale floored so a constant column never
     divides by ~zero), so this candidate sits on the same numerical footing
     as every two-head variant it is compared against.
+
+    **`weighting` -- added for slice C's stage-2 composites, not part of
+    `L1`'s own stage-1 definition.** `L1` on the ladder proper is always
+    `weighting="W1"` (the default, uniform); `weighting="W3"` is what lets
+    this class serve as the `Loss=L1, Weighting=W3` composite stage 1's
+    `best_level_per_axis` names for the E target, reusing `TwoHeadFamily`'s
+    own `_inverse_frequency_weights` (local, per-hazard-cell) for the same
+    reason that function documents there: consistency of what `W3` means
+    everywhere it appears on the ladder, not a second, independent
+    definition.
     """
 
-    name = "L1"
+    # A genuine softmax over three classes -- one of only two structures on
+    # the ladder (with L2) that satisfies §4's closing requirement.
+    produces_three_class_distribution = True
 
-    def __init__(self) -> None:
+    def __init__(self, *, name: str = "L1", weighting: _WeightingLevel = "W1") -> None:
+        self.name = name
+        self.weighting = weighting
         self._cells: dict[str, tuple[np.ndarray, np.ndarray, LogisticRegression]] = {}
         self.unavailable_hazards: frozenset[str] = frozenset()
 
@@ -555,6 +603,12 @@ class MultinomialSoftmax:
             scale = np.where(scale < 1e-6, 1.0, scale)
             z = (x_h - mean) / scale
 
+            sample_weight = (
+                np.ones(len(y_h), dtype=np.float64)
+                if self.weighting == "W1"
+                else _inverse_frequency_weights(y_h)
+            )
+
             model = LogisticRegression(
                 C=1.0,
                 class_weight="balanced",
@@ -562,7 +616,7 @@ class MultinomialSoftmax:
                 random_state=DEFAULT_SEED,
                 max_iter=1000,
             )
-            model.fit(z, y_h)
+            model.fit(z, y_h, sample_weight=sample_weight)
             cells[hazard] = (mean, scale, model)
 
         self._cells = cells
@@ -649,6 +703,8 @@ class OrdinalCumulativeLink:
     """
 
     name = "L2"
+    # Cumulative-link MLE emits genuine per-class probabilities.
+    produces_three_class_distribution = True
 
     def __init__(self) -> None:
         self._cells: dict[str, tuple[np.ndarray, np.ndarray, PCA, np.ndarray, object, np.ndarray]] = {}
@@ -783,9 +839,18 @@ class _JointTargetView:
     is, and this raises rather than silently doing nothing.
     """
 
-    def __init__(self, name: str, predict_fn: Callable[[np.ndarray, np.ndarray], np.ndarray]) -> None:
+    def __init__(
+        self,
+        name: str,
+        predict_fn: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        *,
+        produces_three_class_distribution: bool,
+    ) -> None:
         self.name = name
         self._predict_fn = predict_fn
+        # Propagated from the joint candidate rather than defaulted: a view
+        # must never claim a distribution property its own model does not have.
+        self.produces_three_class_distribution = produces_three_class_distribution
 
     def fit(self, X: np.ndarray, y: np.ndarray, hazards: np.ndarray) -> None:
         raise RuntimeError(
@@ -829,6 +894,11 @@ class SharedTwoHeadJoint:
     """
 
     name = "S2"
+    # S2 varies only the Sharing axis from R and keeps its L3 two-head
+    # loss, so it inherits R's defect: the shared head pair still decides
+    # by threshold and still returns a one-hot row. It is a legitimate
+    # candidate to *measure* and an ineligible one to *select*.
+    produces_three_class_distribution = False
 
     def __init__(self) -> None:
         self._heads: dict[str, tuple[BinaryHead, BinaryHead]] = {}
@@ -923,7 +993,11 @@ class SharedTwoHeadJoint:
     def target_view(self, target: Literal["L", "E"]) -> "Candidate":
         if target not in ("L", "E"):
             raise ValueError(f"target must be 'L' or 'E', got {target!r}")
-        return _JointTargetView(f"S2[{target}]", lambda X, hazards: self._predict(target, X, hazards))
+        return _JointTargetView(
+            f"S2[{target}]",
+            lambda X, hazards: self._predict(target, X, hazards),
+            produces_three_class_distribution=self.produces_three_class_distribution,
+        )
 
 
 # Stage 1's ten non-reference levels (PREREGISTRATION_LE_STRUCTURE.md §2.4,

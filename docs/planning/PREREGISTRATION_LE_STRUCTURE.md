@@ -335,6 +335,32 @@ expand the budget" / "That is the whole budget") and cited from `STATUS.md`;
 silently changing a number treated as non-negotiable elsewhere is exactly what
 §8's amendment mechanism exists to make visible instead.
 
+**2026-08-05 — §4's closing rule applies to every two-head variant, not
+only to `R`; and the pool it ranks over is named.** Found while re-examining
+slice C: the first implementation of the selection rule enforced the
+worst-class floor and the separation test but **not** §4's closing
+requirement that the selection "produces a genuine three-class
+distribution". It therefore selected `S2` for the L target — a structure
+with exactly the defect §2.2 excludes `R` for.
+
+**Nothing in this document changed.** §2.2, §4's closing sentence, and §6's
+payload table (`thresholds.json` retained only for `L3`; "every other
+candidate decides by `argmax` over the distribution") already said this
+together. What was missing was the reading that ties them: the
+distribution property is **structural**, so every level that varies one axis
+from `R` while keeping its `L3` two-head loss — `W2`, `W3`, `H1`, `H2`,
+`B1`, `P2`, `P3`, and `S2` — inherits `R`'s inability to emit one. Only `L1`
+and `L2` qualify. This is recorded because the misreading was easy and
+consequential, not because the specification moved.
+
+**One genuine gap is filled.** §4 does not say which pool the closing rule
+ranks over when no *finalist* qualifies. Taken as **every candidate
+evaluated in this item, stage 1 and stage 2 together**. The alternative —
+selecting nothing — would leave PR 5 with no structure despite the ladder
+having measured qualifying ones, and §4's own wording ("the highest-ranked
+candidate that produces a genuine three-class distribution") reads
+naturally over everything ranked, not over the finalist subset alone.
+
 **2026-08-04 — the ladder's candidate list is closed (§2.3), restated.** Not a
 change; a confirmation made when the harness gained a `MajorityClassBaseline`
 diagnostic. §2.3's levels are fixed and none may be added without an

@@ -1,0 +1,154 @@
+{
+  "stage": "stage2",
+  "generated_at": "2026-08-05T03:27:42.885120+00:00",
+  "split_version": "interim-v1",
+  "split_source_sha256": "8fdbec27dbcec27b0d2df4a1e3106f98e3e72d746bd0faa939f57e6a49922ddf",
+  "reference": "R",
+  "worst_class_f1_floor": 0.25,
+  "bootstrap_resamples": 1000,
+  "hand_picked_combinations_beyond_composite": 0,
+  "hand_picked_combinations_rationale": "Pre-registration \u00a72.4 allows at most 3 hand-picked combinations 'where stage 1 suggests an interaction'. Stage 1 found no candidate significantly beating R on either target (only B1 was significant, and worse) -- no data-driven interaction to chase, and 'at most 3' already permits zero. Kurt's direction, 2026-08-05.",
+  "not_a_benchmark_result": "Every number here is a dev-set number under DECISIONS.md D-66 -- not a benchmark result, not a generalization estimate, and not reportable under SCIENCE.md \u00a7Evidence and outputs.",
+  "composites": {
+    "L": {
+      "level": "S2 (= L composite)",
+      "target": "L",
+      "axis": "Sharing",
+      "produces_three_class_distribution": false,
+      "n_scored": 200,
+      "n_total": 200,
+      "coverage": 1.0,
+      "accuracy": 0.555,
+      "per_class_f1": [
+        0.7009345794392523,
+        0.29268292682926833,
+        0.46153846153846156
+      ],
+      "macro_f1": 0.485051989268994,
+      "worst_class_f1": 0.29268292682926833,
+      "disqualified_worst_class_floor": false,
+      "unavailable_hazards": [],
+      "bootstrap_vs_r": {
+        "point_estimate": 0.0010755792056273972,
+        "ci_low": -0.04946979644222983,
+        "ci_high": 0.056712255050621746,
+        "ci_level": 0.95,
+        "excludes_zero": false,
+        "n_resamples": 1000,
+        "n_groups": 42,
+        "n_paired_rows": 200
+      },
+      "composite_definition": {
+        "Loss": "R",
+        "Weighting": "R",
+        "Hazard-conditioning": "R",
+        "Branching": "R",
+        "Pooling": "R",
+        "Sharing": "S2"
+      }
+    },
+    "E": {
+      "level": "L1+W3 (= E composite)",
+      "target": "E",
+      "produces_three_class_distribution": true,
+      "n_scored": 224,
+      "n_total": 224,
+      "coverage": 1.0,
+      "accuracy": 0.6383928571428571,
+      "per_class_f1": [
+        0.7659574468085106,
+        0.34146341463414637,
+        0.5
+      ],
+      "macro_f1": 0.5358069538142191,
+      "worst_class_f1": 0.34146341463414637,
+      "disqualified_worst_class_floor": false,
+      "unavailable_hazards": [],
+      "bootstrap_vs_r": {
+        "point_estimate": 0.01590951791678319,
+        "ci_low": -0.05072742194396379,
+        "ci_high": 0.08345639167282909,
+        "ci_level": 0.95,
+        "excludes_zero": false,
+        "n_resamples": 1000,
+        "n_groups": 48,
+        "n_paired_rows": 224
+      },
+      "composite_definition": {
+        "Loss": "L1",
+        "Weighting": "W3",
+        "Hazard-conditioning": "R",
+        "Branching": "R",
+        "Pooling": "R",
+        "Sharing": "R"
+      },
+      "axes_not_applicable_under_this_loss": {
+        "Branching": "Not applicable under Loss=L1: a flat three-class softmax has no nonzero/high head pair to branch, so B1/B2 do not describe it. best_level_per_axis names 'R' (=B2) for this axis because each axis is maximized independently; the composite realizes every other axis."
+      }
+    }
+  },
+  "selection": {
+    "L": {
+      "disqualified_worst_class_floor": [],
+      "pool_disqualified_worst_class_floor": [
+        "L2",
+        "P3"
+      ],
+      "excluded_no_three_class_distribution": [
+        "B1",
+        "H1",
+        "H2",
+        "P2",
+        "P3",
+        "R",
+        "S2",
+        "S2 (= L composite)",
+        "W2",
+        "W3"
+      ],
+      "finalists_ranked": [
+        "S2 (= L composite)",
+        "R"
+      ],
+      "eligible_ranked": [
+        "L1"
+      ],
+      "outcome": "no_structure_beat_the_incumbent",
+      "selected": "L1",
+      "separated_from_next": null,
+      "blocked_top_finalist": "S2 (= L composite)",
+      "note": "The highest-ranked finalist (S2 (= L composite)) cannot be selected: like R, it decides by threshold and returns a one-hot row rather than the genuine three-class distribution `SCIENCE.md` requires (\u00a72.2, \u00a74's closing rule). The selection is therefore the highest-ranked candidate that does produce one: L1 (macro-F1 0.4336, below R's 0.4840). **The ablation found no structure that beats the incumbent on this data** -- this is the finding, reported as such, not a positive selection."
+    },
+    "E": {
+      "disqualified_worst_class_floor": [],
+      "pool_disqualified_worst_class_floor": [
+        "H2",
+        "L2",
+        "P2"
+      ],
+      "excluded_no_three_class_distribution": [
+        "B1",
+        "H1",
+        "H2",
+        "P2",
+        "P3",
+        "R",
+        "S2",
+        "W2",
+        "W3"
+      ],
+      "finalists_ranked": [
+        "L1+W3 (= E composite)",
+        "R"
+      ],
+      "eligible_ranked": [
+        "L1+W3 (= E composite)",
+        "L1"
+      ],
+      "outcome": "selected_without_separation",
+      "selected": "L1+W3 (= E composite)",
+      "separated_from_next": false,
+      "note": "L1+W3 (= E composite) ranked first among eligible candidates but was not significantly separated from R (\u00a74 step 3 fails). It is selected because it is the highest-ranked structure that produces a genuine three-class distribution -- not because it was shown to beat the incumbent."
+    }
+  }
+}

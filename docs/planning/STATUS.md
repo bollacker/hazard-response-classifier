@@ -564,15 +564,28 @@ Detailed phased proposal:
    because the natural momentum at the end of a successful comparison is to go
    build the winner.
 
-   **Progress as of 2026-08-05: slices 0, A, and B are complete; slice C
-   (stage 2 finalists and selection) is next.** See Recently Completed below
-   for what each landed. `docs/planning/item2_results/stage1.json` holds
-   stage 1's 22 results (11 non-reference levels + `R`, per target). Headline
-   finding, stated so momentum doesn't carry past it: **no candidate
-   significantly beat `R`** by the paired bootstrap on either target; `B1` is
-   the one significant result, and it is significantly *worse*. Slice C
-   still has to run its own selection rule against this — this is not itself
-   the item's finding, only stage 1's.
+   **Progress as of 2026-08-05: slices 0, A, B, and C are complete; slice D
+   (record the decision and close the item) is next.** See Recently Completed
+   below for what each landed. `docs/planning/item2_results/stage1.json` holds
+   stage 1's 22 results; `stage2.json` holds the composites and the applied
+   selection.
+
+   **The finding, stated so slice D's entry cannot soften it: the ablation
+   found no structure that beats the incumbent `R` on this data.** No
+   candidate achieved significant separation from `R` on either target.
+   **L selects `L1`** — the best structure that produces the three-class
+   distribution `SCIENCE.md` requires, while scoring *below* `R` (macro-F1
+   0.4336 vs 0.4840). **E selects the `L1+W3` composite** (0.5358 vs 0.5199),
+   without significant separation. Every figure is a dev-set number under
+   [D-66](DECISIONS.md#d-66) — not a benchmark result.
+
+   **`R` is not the only structure barred from selection.** §4's closing rule
+   requires a genuine three-class distribution, and that is structural: every
+   level keeping `R`'s `L3` two-head loss (`W2`, `W3`, `H1`, `H2`, `B1`,
+   `P2`, `P3`, `S2`) decides by threshold and returns a one-hot row. Only
+   `L1` and `L2` qualify. A first implementation of the rule missed this and
+   selected `S2` for L; corrected, with the reading recorded in
+   `PREREGISTRATION_LE_STRUCTURE.md` §8.
 
    ~~**Entry condition:** Ask A under Awaiting User. The comparison is defined
    as running on one fixed evaluation set, so it cannot begin without it.~~
@@ -882,6 +895,52 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **Queue item 2 slice C landed: stage-2 composites, the
+  selection rule applied, and a correctness bug in it found and fixed.**
+  `QUEUE_ITEM_2_EXECUTION_PLAN.md` §6. `docs/planning/item2_results/stage2.json`
+  carries both composites, the applied selection, and the rejected
+  candidates with their numbers.
+
+  **Composites.** The L composite needed no new fit — stage 1's
+  `best_level_per_axis` keeps `R`'s level on every L axis except Sharing, so
+  the composite *is* `S2`, carried forward rather than refitted. The E
+  composite (`Loss=L1, Weighting=W3`) is the run's one new fit;
+  `MultinomialSoftmax` gained a `weighting` knob reusing `TwoHeadFamily`'s
+  own `W3` helper rather than a second definition, with its `W1` default
+  verified bit-identical to stage 1's `L1`. **Zero hand-picked combinations**
+  beyond the composites (Kurt's direction): §2.4 permits "at most 3" *where
+  stage 1 suggests an interaction*, and stage 1 suggested none. Total
+  configurations 21, against a budget of 28.
+
+  **The bug, found by re-examination rather than by a failing test.** The
+  first implementation enforced the worst-class floor and the separation test
+  but not §4's closing requirement that the selection "produces a genuine
+  three-class distribution" — and selected `S2` for L, a structure with
+  exactly the defect that makes `R` ineligible. The property is *structural*:
+  every level keeping `R`'s `L3` two-head loss (`W2`, `W3`, `H1`, `H2`, `B1`,
+  `P2`, `P3`, `S2`) decides by threshold and returns a one-hot row; only `L1`
+  and `L2` qualify. Candidates now declare
+  `produces_three_class_distribution`, every result row records it, and the
+  rule enforces it. Verified empirically (one-hot vs genuine probabilities)
+  rather than assumed, and the corrected selections were re-derived by hand
+  from `stage1.json` independently of the script. Recorded in
+  `PREREGISTRATION_LE_STRUCTURE.md` §8 along with the one genuine gap it
+  filled: which pool §4's closing rule ranks over when no finalist qualifies.
+
+  A second, smaller bug was found the same way: `_select` raised `IndexError`
+  when `R` was disqualified by the floor and a composite survived alone — an
+  unreached branch on this data, but reachable on a re-run against real
+  Standards data.
+
+  **Findings.** No structure beat `R` on either target. L → `L1`, selected
+  only as the best qualifying structure while scoring below `R` (0.4336 vs
+  0.4840). E → the `L1+W3` composite (0.5358 vs 0.5199), no significant
+  separation. `L2` was disqualified by the worst-class floor on both targets.
+  19 new tests across selection, composites, and the distribution property
+  (397 total, zero regressions); `stage1.json` regenerated to carry the new
+  field with every metric unchanged, and stage 2 confirmed reproducible
+  byte-for-byte across reruns.
 
 - 2026-08-05 — **Queue item 2 slice B landed: stage-1 ablation, all ten
   non-reference levels, swept.** `QUEUE_ITEM_2_EXECUTION_PLAN.md` §5.

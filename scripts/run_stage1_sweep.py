@@ -100,11 +100,17 @@ def _record(
     unavailable_hazards,
     bootstrap_vs_r=None,
     marginal_bootstrap=None,
+    produces_three_class_distribution=None,
 ) -> dict:
     payload = {
         "level": level,
         "target": target,
         "axis": AXIS_OF_LEVEL.get(level),  # None for R itself
+        # PREREGISTRATION_LE_STRUCTURE.md §4's closing rule: only a candidate
+        # producing a genuine three-class distribution may be *selected*.
+        # Recorded per result so slice C enforces it from data rather than
+        # re-deriving which structures qualify.
+        "produces_three_class_distribution": produces_three_class_distribution,
         "n_scored": metrics.n_scored,
         "n_total": metrics.n_total,
         "coverage": metrics.coverage,
@@ -153,7 +159,13 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
         marginal = cluster_bootstrap_interval(
             dev_y[target], predictions, dev_groups[target], n_resamples=n_resamples
         )
-        results.append(_record("R", target, metrics, r.unavailable_hazards, marginal_bootstrap=marginal))
+        results.append(
+            _record(
+                "R", target, metrics, r.unavailable_hazards,
+                marginal_bootstrap=marginal,
+                produces_three_class_distribution=r.produces_three_class_distribution,
+            )
+        )
         print(f"  R  {target}: macro_f1={metrics.macro_f1:.4f} worst={metrics.worst_class_f1:.4f}")
 
     print("Fitting per-target stage-1 candidates ...")
@@ -169,7 +181,10 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
                 n_resamples=n_resamples,
             )
             results.append(
-                _record(level, target, metrics, candidate.unavailable_hazards, bootstrap_vs_r=diff)
+                _record(
+                    level, target, metrics, candidate.unavailable_hazards, bootstrap_vs_r=diff,
+                    produces_three_class_distribution=candidate.produces_three_class_distribution,
+                )
             )
             print(
                 f"  {level:3s} {target}: macro_f1={metrics.macro_f1:.4f} worst={metrics.worst_class_f1:.4f} "
@@ -190,7 +205,10 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
                 n_resamples=n_resamples,
             )
             results.append(
-                _record(level, target, metrics, candidate.unavailable_hazards, bootstrap_vs_r=diff)
+                _record(
+                    level, target, metrics, candidate.unavailable_hazards, bootstrap_vs_r=diff,
+                    produces_three_class_distribution=candidate.produces_three_class_distribution,
+                )
             )
             print(
                 f"  {level:3s} {target}: macro_f1={metrics.macro_f1:.4f} worst={metrics.worst_class_f1:.4f} "
@@ -209,7 +227,12 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
             dev_y[target], predictions, r_predictions[target], dev_groups[target],
             n_resamples=n_resamples,
         )
-        results.append(_record("S2", target, metrics, s2.unavailable_hazards, bootstrap_vs_r=diff))
+        results.append(
+            _record(
+                "S2", target, metrics, s2.unavailable_hazards, bootstrap_vs_r=diff,
+                produces_three_class_distribution=view.produces_three_class_distribution,
+            )
+        )
         print(
             f"  S2  {target}: macro_f1={metrics.macro_f1:.4f} worst={metrics.worst_class_f1:.4f} "
             f"vs_R_excludes_zero={diff.excludes_zero}"
