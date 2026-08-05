@@ -11,6 +11,12 @@ fit-once, frozen-artifact package with three command-line tools:
 - `hrc-evaluate` — measure a trained artifact's accuracy against a labeled CSV.
 - `hrc-predict` — score new, unlabeled responses with a trained artifact.
 
+A fourth CLI, **`hrc-run`**, belongs to the Release 1.1 evaluator rather than
+to this baseline — it runs the ten-stage 1.1 pipeline over an unlabeled CSV.
+The three above are unchanged by it (`DECISIONS.md` D-48). See
+[§Release 1.1 evaluator status](#release-11-evaluator-status) before reading
+anything it produces.
+
 This package is the current working baseline, not the Release 1.1 target. See
 [`docs/SCIENCE.md`](docs/SCIENCE.md) for the proposed 1.1 scientific standard
 and [`PLAN.md`](docs/planning/PLAN.md) for the specification of the baseline
@@ -20,10 +26,14 @@ does not override the Release 1.1 target in `SCIENCE.md`.
 ## Status
 
 The working baseline completed phases 0–5 of `PLAN.md`: all three CLIs are
-installed console scripts, backed by 151 tests (unit, integration, and
-science), and verified against synthetic fixtures and real, non-mocked BGE
-model runs. It has not reached staging and is expected to be replaced by the
-Release 1.1 design.
+installed console scripts, verified against synthetic fixtures and real,
+non-mocked BGE model runs. It has not reached staging and is expected to be
+replaced by the Release 1.1 design.
+
+The Release 1.1 evaluator is being built alongside it and became **runnable**
+on 2026-08-05 (`hrc-run`). The whole repository is backed by 525 tests — unit,
+integration, and science — with the baseline's own outputs held byte-identical
+throughout by `tests/integration/test_baseline_parity.py` (D-48).
 
 The active work is a science-to-decision review before any 1.1 architecture
 or implementation change. [`STATUS.md`](docs/planning/STATUS.md) is the live
@@ -54,17 +64,19 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | [`docs/howto/hrc-train.md`](docs/howto/hrc-train.md) | Training a new artifact |
 | [`docs/howto/hrc-evaluate.md`](docs/howto/hrc-evaluate.md) | Measuring a trained artifact |
 | [`docs/howto/hrc-predict.md`](docs/howto/hrc-predict.md) | Scoring new, unlabeled responses |
+| [`docs/howto/hrc-run.md`](docs/howto/hrc-run.md) | Running the **Release 1.1** evaluator over an unlabeled CSV |
 | [`docs/examples/end_to_end_riki_eval.md`](docs/examples/end_to_end_riki_eval.md) | Full train → evaluate → predict walkthrough on a real 859-row dataset |
 
 ## Manifest
 
 | Path | What it is |
 |---|---|
-| `src/hazard_classifier/` | The package: `schema.py` (input validation), `preprocess/` (deobfuscation, segmentation, flags), `embed.py` (BGE embedding + pooling), `heads.py` (per-cell logistic heads), `rules.py` (business rules + ordinal combination), `metrics.py` (evaluation metrics), `model.py` (fit/save/load/score orchestration), `cli/` (the three command-line tools) |
-| `tests/` | 151 tests: `unit/`, `integration/` (needs the real BGE model, cached after first run), `science/` (statistical/metric correctness) |
+| `src/hazard_classifier/` | The baseline package: `schema.py` (input validation), `preprocess/` (deobfuscation, segmentation, flags), `embed.py` (BGE embedding + pooling), `heads.py` (per-cell logistic heads), `rules.py` (business rules + ordinal combination), `metrics.py` (evaluation metrics), `model.py` (fit/save/load/score orchestration), `cli/` (the command-line tools) |
+| `src/hazard_classifier/evaluator/` | The Release 1.1 pipeline, alongside the baseline rather than replacing it — see `ARCHITECTURE.md` §3.2 for its module layout and §Release 1.1 evaluator status below for what it does and does not yet do |
+| `tests/` | `unit/`, `integration/` (needs the real BGE model, cached after first run), `science/` (statistical/metric correctness) |
 | `examples/sample_input.csv` | 12-row synthetic fixture used in every doc's smoke-test example |
 | `data/` | Real labeled datasets, not synthetic fixtures — see that directory's own note below |
-| `scripts/` | One-off real-data validation script (`run_real_data_is9.py`) and its captured output (`is9_real_data_metrics.json`) |
+| `scripts/` | Reproducible probes and one-off validation runs — each is the quotable source for a number quoted in a planning document, so a figure can be re-derived rather than trusted (`run_real_data_is9.py` + `is9_real_data_metrics.json`, `probe_disclaimer_scope.py`, `probe_working_text_delta.py`, `probe_runner_throughput.py`, the interim-split and sweep scripts) |
 | `docs/` | This documentation set |
 | `docs/planning/` | The process apparatus this project runs on: |
 | `docs/planning/PLAN.md` | The implemented baseline specification, binding until amended |
@@ -118,8 +130,18 @@ which components those are and why**, not restated here: it changes as PR 3
 through PR 5 land, and a hand-copied list in a second file is one more place
 that can fall out of sync with it — the same kind of gap `DECISIONS.md`
 D-47's own narrowing-2 correction records and fixes for a different
-document. `DECISIONS.md` D-50, D-51, and D-70 record the reasoning behind the
-three components currently shipping `partial` specifically.
+document. **Four** components currently ship `partial`; `DECISIONS.md` D-50, D-51,
+and D-70 record the reasoning behind three of them (prompt repetition,
+decoding, disclaimer detection). The fourth is **L/E scoring**, which has
+no entry of its own: it is PR 1's wrapped baseline reporting
+`distribution=None` because two binary heads cannot produce the three-class
+multinomial `docs/SCIENCE.md` requires (`ARCHITECTURE.md` §4, §7 row 9), and
+it is the one item here with a scheduled end — it leaves the list when PR 5
+lands the real three-class model. *(Corrected 2026-08-05 by PR 7's closing
+sweep. This paragraph said "three", and dropped stage 9 — the same
+undercount, dropping the same item, that PR 4's sweep corrected in
+`ARCHITECTURE.md` §7's own prose. Take the list from §7's table, never from
+a prose count.)*
 
 **Five limitations are stated here directly** rather than left to
 `ARCHITECTURE.md` §7's table (added 2026-08-04; `DECISIONS.md` D-54 through

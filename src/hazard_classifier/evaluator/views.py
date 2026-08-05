@@ -5,18 +5,28 @@ record itself, and each view is a **named, versioned flattening contract**
 rather than an implicit one -- one of the two counterarguments recorded
 against the canonical-record proposal, answered here explicitly.
 
-Two views are built in slice 1C:
+Three of §11's four views are built here:
 
 - `result_view` -- the lossless `results.jsonl` record (§11 row 1).
 - `prediction_rows` -- the per-`(response, hazard)` `predictions.csv`
   flattening (§11 row 2).
+- `failure_rows` -- the `failures.csv` flattening (§11 row 4), added by PR 7
+  slice C alongside the batch runner that produces the records it reads
+  (`docs/planning/PR7_EXECUTION_PLAN.md` §6).
 
-`metrics.json` and `failures.csv` are not built here: `metrics.json` needs
-the per-outcome metrics and uncertainty estimates `SCIENCE.md`
-§Estimability requires (blocked on PR 5's real three-class model and the
-Standards team's approved criteria), and `failures.csv` needs the
-batch-level runner that does not exist yet. Naming them as unbuilt is the
-point -- §11 lists four views, and two of them have real prerequisites.
+`metrics.json` is still not built: it needs the per-outcome metrics and
+uncertainty estimates `SCIENCE.md` §Estimability requires, which are blocked
+on PR 5's real three-class model *and* on the Standards team's approved
+criteria -- and only the first of those clears with PR 5, so whether the view
+ships at all is PR 6's call. Naming it as unbuilt is the point.
+
+**Run rejections are not in `failures.csv`** (§11 row 4, §2). A rejection
+aborts the run before any row is scored, so it produces no record for a view
+to derive from and no output files at all. `failures.csv` carries only
+*failed rows* -- a per-hazard failure decided by phase D, or a row the
+pipeline could not complete. Keeping the two apart is the distinction PR 7's
+plan calls the subtlest thing in the PR: rejections are about the run's
+configuration and input contract, failures are about a row's content.
 
 **Sensitive-data retention (§11's other recorded counterargument) is bounded
 here, not at the record.** The record carries every text version;
@@ -34,6 +44,11 @@ from .record import EvaluationRecord
 
 RESULT_VIEW_VERSION = "1"
 PREDICTION_ROWS_VERSION = "1"
+# §11: "every view is versioned separately". This one starts at 1
+# independently of the other two rather than inheriting their number --
+# `failures.csv` is a new contract as of PR 7, and a shared version would
+# make a future change to one view look like a change to all three.
+FAILURES_VERSION = "1"
 
 PREDICTION_COLUMNS = (
     "request_id",
@@ -50,6 +65,15 @@ PREDICTION_COLUMNS = (
     "result",
     "failure_reason",
     "overall_result",
+)
+
+FAILURE_COLUMNS = (
+    "request_id",
+    "prompt_uid",
+    "response_id",
+    "hazard",
+    "stage",
+    "failure_reason",
 )
 
 
@@ -196,4 +220,105 @@ def prediction_rows(record: EvaluationRecord) -> list[dict[str, Any]]:
                 "overall_result": record.overall_result,
             }
         )
+    return rows
+
+
+def _first_component_error(record: EvaluationRecord, hazard: str):
+    """The earliest `ComponentError` in execution order scoped to `hazard`,
+    or `None`. Earliest rather than latest: the first stage that could not
+    do its job for this hazard is the cause, and anything after it is a
+    consequence.
+
+    **A recorded limitation of stage 9, not of this view.**
+    `components/scoring.py` stores only `errors[0]` on its single
+    observation, so when both Legitimization and Enablement are unavailable
+    for one hazard only the first is visible here.
+
+    *(Sharpened 2026-08-05 by PR 7's closing sweep, which found the sentence
+    above understated its own scope.* `scoring.py` collects errors across
+    **every evaluated hazard** into one list and keeps `errors[0]`, so in a
+    multi-hazard record only the *first failing hazard's* error survives at
+    all. A second failing hazard's row therefore reports
+    `stage="final_integration"` -- the honest fallback for "no component
+    reported a problem for this hazard" -- rather than `scoring`. Routed to
+    PR 5's work list, which replaces this component.*)*
+
+    Either way it understates the *detail* available, never the fact of the
+    failure: the authoritative text in the row is
+    `HazardJudgment.failure_reason`, which phase D writes per component, and
+    the row itself is emitted from `judgment.result == "failure"`, not from
+    the observation. Changing `scoring.py` to record every error would be a
+    component change, which PR 7 does not make
+    (`PR7_EXECUTION_PLAN.md` §10); this is the finding, recorded where a
+    reader of the view will meet it.
+    """
+    for observation in record.observations:
+        error = observation.error
+        if error is not None and error.hazard == hazard:
+            return error
+    return None
+
+
+def failure_rows(record: EvaluationRecord) -> list[dict[str, Any]]:
+    """The `failures.csv` view (§11 row 4): one row per **failed** hazard,
+    with `FAILURE_COLUMNS`'s exact keys and order. Carries no text, matching
+    `prediction_rows`' sensitive-data bound.
+
+    Rows are emitted in `record.evaluated_hazards` order -- never dict
+    iteration order -- so the same record always renders the same bytes.
+
+    A record with no failures returns `[]`. **A record that failed still
+    appears in `results.jsonl` as well**: the record is canonical and
+    lossless, this is the narrow view, and the two are deliberately not
+    exclusive (`PR7_EXECUTION_PLAN.md` §6).
+
+    Two shapes of failure are covered:
+
+    - **Per-hazard**, the normal case: a `HazardJudgment` whose `result` is
+      `"failure"`, which is phase D's verdict (`SCIENCE.md` §Per-hazard
+      finalization). `stage` names the component whose `ComponentError`
+      caused it when there is one, and `final_integration` otherwise --
+      phase D itself decided, with no upstream component having reported a
+      problem.
+    - **Record-level**, when the record carries no per-hazard verdict at all
+      but is nonetheless a failure. That is a record final integration never
+      reached: in 1.1 the only route there is a component raising at run
+      time, which `ARCHITECTURE.md` §5 says no component does
+      (`ComponentError` is a record field, not an exception), so this is a
+      backstop against a genuine bug rather than an expected path. `hazard`
+      falls back to the supplied hazard, since that is the one hazard such a
+      record is always known to have been evaluated against, and `stage` is
+      `None` -- the partial record is lost when an exception unwinds
+      `run_pipeline`, so the stage genuinely is not knowable here.
+    """
+    rows: list[dict[str, Any]] = []
+    for hazard in record.evaluated_hazards:
+        judgment = record.per_hazard.get(hazard)
+        if judgment is None or judgment.result != "failure":
+            continue
+        error = _first_component_error(record, hazard)
+        rows.append(
+            {
+                "request_id": record.request_id,
+                "prompt_uid": record.prompt_uid,
+                "response_id": record.response_id,
+                "hazard": hazard,
+                "stage": error.stage if error is not None else "final_integration",
+                "failure_reason": judgment.failure_reason
+                or (error.message if error is not None else None),
+            }
+        )
+
+    if not rows and record.overall_result == "failure":
+        rows.append(
+            {
+                "request_id": record.request_id,
+                "prompt_uid": record.prompt_uid,
+                "response_id": record.response_id,
+                "hazard": record.supplied_hazard,
+                "stage": None,
+                "failure_reason": record.overall_failure_reason,
+            }
+        )
+
     return rows

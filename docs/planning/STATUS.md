@@ -1,6 +1,34 @@
 # Status
 
-Last updated: 2026-08-05 — **PR 4 is complete and closed; PR 7 is the next
+Last updated: 2026-08-05 — **PR 7 is complete and closed: the Release 1.1
+evaluator is runnable**, and the one design concern its close raised is
+decided as [D-75](DECISIONS.md#d-75) — §2's all-or-nothing rejection stands,
+but it now names **every** offending row and `hrc-run --check-input` reports
+them without scoring. **525 tests, zero regressions.** D-75 also corrects a
+claim this file made yesterday: a bad hazard code does *not* discard a long
+run's work, because pass 1 runs before any scoring — a 10,000-row file is
+rejected in about two seconds.
+
+All five slices landed (A input schema, B run
+profile, C batch runner and `failures.csv`, D the two entry points, E the
+real run and the sweep); `hrc-run` is a fourth CLI and the three baseline
+ones are untouched (D-48). **510 tests at PR 7's close**,
+`test_baseline_parity.py` unchanged. A real, non-mocked run costs **4.77
+rows/second** in steady state on CPU (`scripts/probe_runner_throughput.py`
+is the quotable source), so `data/`'s 859 rows take about three minutes and
+10,000 rows about thirty-five — the cost is the encoder's one call per
+record, which `../ARCHITECTURE.md` §8 fixes and PR 7 was forbidden to
+redesign. **That is scoring cost only**; a rejected run pays none of it. Its closing sweep found six things, five of them documentation;
+the sharpest is that `README.md` said three components ship `partial` while
+`../ARCHITECTURE.md` §7's table says four — **the same undercount, dropping
+the same item (stage 9), that PR 4's sweep corrected in §7's own prose one
+PR earlier**, and the fifth consecutive sweep to find D-47 inventory
+staleness. **Nothing is committed.** **Item 4 stays open; PR 5 is next,
+then PR 6.**
+[`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md) is now a record of what was
+built rather than live work.
+
+Prior update, 2026-08-05 — **PR 4 is complete and closed; PR 7 is the next
 slice of item 4, and the remaining order is PR 7 → PR 5 → PR 6**
 ([D-56](DECISIONS.md#d-56) places PR 7; [D-71](DECISIONS.md#d-71) moved PR 5
 ahead of PR 6, since PR 6 must round-trip an artifact format D-49 makes PR 5's).
@@ -554,10 +582,10 @@ one item or advance past an Awaiting User item on its own. See
 [D-68](DECISIONS.md#d-68)) are both complete, so what remains is
 implementation.
 
-PRs 1, 2, 3 and 4 are landed. **PR 7 is next**, then PR 5 → PR 6
-([D-56](DECISIONS.md#d-56), [D-71](DECISIONS.md#d-71)). PR 5 now has a
-selected structure to build, a written execution plan, and waits on nothing
-external.
+PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**. **PR 5 is
+next**, then PR 6 ([D-71](DECISIONS.md#d-71)). PR 5 has a selected structure
+to build, a written execution plan whose slice 0 has already run, and waits
+on nothing external; a session starts at its slice A.
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -612,30 +640,42 @@ Detailed phased proposal:
    what was built rather than live work. 433 tests, zero regressions,
    `test_baseline_parity.py` unchanged.
 
-   **PR 7 (evaluator runner) is next** — input schema, run profile, batch
-   runner, CLI, and `failures.csv` — **then PR 5, then PR 6**
-   ([D-56](DECISIONS.md#d-56), [D-71](DECISIONS.md#d-71)). **Item 4 stays
-   open**; three PRs remain.
+   **PR 7 (evaluator runner) is complete** (2026-08-05) — input schema, run
+   profile, batch runner, CLI, and `failures.csv`, all five slices. **PR 5
+   is next, then PR 6** ([D-71](DECISIONS.md#d-71)). **Item 4 stays open**;
+   two PRs remain.
 
    **PR 7 has a written plan:
    [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
    slices — A input schema and record construction, B run profile and artifact
    resolution, C batch runner and `failures.csv`, D the two entry points, E a
    real run plus the sweep and close. Everything it drives is built; what is
-   missing is the shell. **One gate question, blocking slice B only:** whether
-   the run profile carries the model-input text view — D-69's deferred half,
-   which `../ARCHITECTURE.md` §5 assigns to PR 7 by name. The plan recommends
-   yes, conditional on a test that flips it to a non-default value. Three
-   things it found by reading the code: `evaluated_hazards` is set at record
-   construction and **nothing ever updates it**; `hazard_scope` has **no
-   default anywhere**, which is D-57's half that becomes real here; and
-   `schema.py`'s columns are the baseline's and carry neither `request_id` nor
-   `response_id`. **Its one gate is answered** —
-   [D-74](DECISIONS.md#d-74) (2026-08-05): the profile carries `text_view` as
-   a construction parameter, conditional on an end-to-end test that flips it. It also flags, without blocking, that §2's classification of
-   a bad supplied hazard as a *run rejection* forces an all-or-nothing
-   two-pass runner — correct per the specification, and harsher than a
-   benchmark harness would normally be.
+   missing was the shell. **All five slices are complete** (see Recently
+   Completed) — `evaluator/input_schema.py`, `evaluator/profile.py`,
+   `evaluator/runner.py`, `views.py`'s third view, `evaluator/entrypoint.py`,
+   `cli/run.py`, the new `hrc-run` script entry,
+   `tests/integration/test_evaluator_runner_real_bge.py`,
+   `scripts/probe_runner_throughput.py`, and `docs/howto/hrc-run.md`;
+   **none yet committed**. Its plan,
+   [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md), is now a record of what
+   was built rather than live work. The plan's one gate question — whether
+   the run profile carries the model-input text view — was answered before
+   slice B started and is built, not merely decided:
+   [D-74](DECISIONS.md#d-74) (2026-08-05), the profile carries `text_view`
+   as a construction parameter flowing profile -> `build_registry` ->
+   `EmbeddingComponent(...)`, and the end-to-end test at
+   `text_view: "disclaimer_stripped"` is the conditional test D-74 required
+   before the field could ship — extended at the close to read the resolved
+   view back out of a written `results.jsonl`.
+
+   **The one design concern PR 7's close raised is now decided**
+   ([D-75](DECISIONS.md#d-75), 2026-08-05, see Recently Completed). §2's
+   all-or-nothing rejection **stands** — Kurt took the mitigation, not the
+   amendment: a rejection now names every offending row rather than the
+   first, and `hrc-run --check-input` reports them without scoring. The
+   close's claim that a bad code discards a long run's work was **wrong** and
+   is corrected there; pass 1 runs before any scoring, so a 10,000-row file
+   is rejected in about two seconds. **Nothing in PR 7 is open.**
 
    **PR 5 has a written plan:
    [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md)** (2026-08-05). Six
@@ -873,6 +913,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **Text view is selected at component construction** (2026-08-05): stage 8 takes the view as an argument, default `working`, resolved view recorded in the result; no `RunConfig` field, no second registered implementation until the comparison runs; §5's "selected by configuration" claim corrected. Locked as **[D-69](DECISIONS.md#d-69)** | In force | `../ARCHITECTURE.md` §5; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 work list and exit criteria; `PR4_EXECUTION_PLAN.md` §3 and slice A; `evaluator/components/embedding.py`. **Reverting leaves D-55's stated rationale unbacked** — that decision was made on the premise that the deferred comparison is a configuration change, which was not true of the code. Dissent costs ~20 lines and pushes the seam to PR 7, not the comparison |
 | **Stage 7 ships three of four disclaimer patterns** (2026-08-05): `safety_warning` excluded as bare risk-word matching, not a disclaimer form. Locked as **[D-70](DECISIONS.md#d-70)** | In force | `../ARCHITECTURE.md` §7 row 7 and new §7.2; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4; `evaluator/components/disclaimer.py`; `README.md`'s inventory. **This is an identified scoring change and the row Riki is most likely to want to argue with.** Reverting re-flags 42 of 217 Specialized Advice rows and moves ~5% of the family back toward non-violating on evidence that showed no enrichment over the unflagged base rate and was false-positive on all eleven rows where it changed a result. The baseline is untouched either way; the counter-argument is that `SCIENCE.md` does list "warn about risks" as qualifying, so 1.1 now has two unimplemented forms rather than one |
 | **The run profile carries the model-input text view** (2026-08-05): optional `text_view`, default `working`, passed to `EmbeddingComponent`'s constructor by PR 7's component factory — **not** a `RunConfig`/`RunContext` field and **not** a registry key. Ships only with an end-to-end test at a non-default value. Locked as **[D-74](DECISIONS.md#d-74)** | In force | `../ARCHITECTURE.md` §5's profile bullet; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 7's run-profile work item; `PR7_EXECUTION_PLAN.md` §3 and slice B. **Closes the half [D-69](DECISIONS.md#d-69) deferred to PR 7.** Reverting costs a profile field and one test, and returns D-55's deferred comparison to being a configuration change only in the sense of a Python constructor call — which is the gap D-69 was raised to close one level down. The structural half of D-69's objection is answered rather than overridden: a construction parameter is not an implementation selection, so §6's registry keying is untouched |
+| **A rejection names every offending row; `--check-input` added** (2026-08-05): §2's condition (1) is unchanged — still run-level, still aborts before any row is scored, still writes nothing — but the message now names **every** offending row and its resolved scope, and `hrc-run --check-input` reports the same list without scoring. Locked as **[D-75](DECISIONS.md#d-75)** | In force | `../ARCHITECTURE.md` §2's enforcement paragraph; `../howto/hrc-run.md`; `evaluator/runner.py`, `evaluator/entrypoint.py`, `cli/run.py`; `PR7_EXECUTION_PLAN.md`'s Open Questions. **Ergonomics only, and the cheapest row here to reverse** — no rejection condition changes, so dissent costs one CLI flag, one entry point, and a fuller error message; `hrc-run` with no flag behaves as it did. The row worth Riki's eye is the *rejected* alternative recorded inside it: routing a bad supplied hazard to `failures.csv` and continuing, which is what most benchmark harnesses do and what §2 forbids. Choosing that instead means amending §2, which would make the supplied hazard a per-row data condition rather than part of the run's input contract, and would let a run silently score a subset of what it was handed |
 | **PR 5's two fitting calls** (2026-08-05): **[D-72](DECISIONS.md#d-72)** the models are fitted on pipeline **working text**, not the raw `response_text` D-68's selection used, and the selection is **not** re-run; **[D-73](DECISIONS.md#d-73)** the shipped artifact is fitted on the **fit split only**. Grouped: decided together, on one footing, each with its own reversal scope | In force | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5, §7, §8; `PR5_EXECUTION_PLAN.md` §3, slices A/B/D. **D-72 closes a `SCIENCE.md` training shortfall and opens a stated assumption in its place** — that D-68's ranking survives the change of input view, which the procedure did not test; reverting means either re-running the selection (spending a budget §2.4 fixed) or accepting that 285 of 859 rows are scored in a form the model never saw. `scripts/probe_working_text_delta.py` is the evidence and reproduces it. **D-73 costs ~35% of the rows** for a per-hazard fit already at ~42 rows/cell; reverting it buys them back and makes every reported number describe a model that is not the one shipped |
 | **PR 5 sequenced before PR 6** (2026-08-05): the remaining order is PR 7 → PR 5 → PR 6. Locked as **[D-71](DECISIONS.md#d-71)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6 sequencing notes; this file's queue item 4 and §Current Phase; `PR5_EXECUTION_PLAN.md` §1. **Ordering only — no PR's scope changes**, so reverting costs the order and nothing built. What reverting re-creates is the inversion D-71 fixed: PR 6's "artifact round trips" exit criterion depends on the artifact format [D-49](DECISIONS.md#d-49) assigns to PR 5, and PR 6's promotion call (D-58) and limitations document (D-47) would describe a release whose L/E models PR 5 has not yet replaced. Note that D-56 never decided PR 5's position — the old "PR 7 → PR 6 → PR 5 (D-56)" formula over-attributed |
 | **`META_PLAN.md` §6 amended again** (2026-08-05): a **plan authoring** row added — Opus at high effort, on the evidence that PR 4's, PR 5's and PR 7's plans each found defects by reading modules against the specifications describing them (six findings, four of them now locked decisions). Without the row the nearest match was fix-proposal → Sonnet 5 | In force | `META_PLAN.md` §6. Process bookkeeping, not science — same footing as the §5, §1.2 and sweep amendments. Recorded here rather than as a ledger entry per §1.1's rule against restating a specification's content. Reverting routes plan authoring to the cheapest matching row, which is what the six findings argue against |
@@ -966,6 +1007,329 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **The pre-flight check, [D-75](DECISIONS.md#d-75) — and a
+  correction to what PR 7's close claimed the problem was.** Kurt directed
+  that the mitigation named in PR 7's Open Questions be built. **525 tests,
+  zero regressions**, `test_baseline_parity.py` unchanged.
+
+  **The correction first, because it changed what got built.** PR 7's close
+  said an all-or-nothing rejection "discards the entire run's work" on a
+  35-minute input. **That was wrong.** The two-pass loop validates every row
+  *before* any scoring, so a bad hazard code rejects a 10,000-row file in
+  about **two seconds**, with nothing embedded and nothing thrown away —
+  measured, not reasoned. The genuine cost was narrower: the rejection named
+  only the **first** offending row, so cleaning a file with *k* bad codes
+  took *k* rounds of fix-and-rerun, and there was no way to ask "would this
+  be rejected?" without starting a run and interrupting it. This is
+  `QUEUE_ITEM_2_EXECUTION_PLAN.md` §10 lesson 2 — verify every number before
+  it goes into a document — failing in a claim about *time*, which is why
+  D-75's own figures are measured ones.
+
+  **What was built**, both halves reading one rule:
+  `runner.find_supplied_hazard_problems` is now the single implementation of
+  §2's condition (1) over a batch. `run_batch` turns a non-empty result into
+  the `RunRejectedError` — which now names every offending row, its
+  `response_id`, its reason, and the resolved `hazard_scope` they were
+  checked against, capped at ten listed with the rest counted.
+  `entrypoint.check_input` reports the same list, scoring nothing and writing
+  nothing, behind `hrc-run --check-input` (exit 0 with an all-clear, exit 1
+  with the full uncapped list; `--output-dir` becomes required only without
+  it). **A pre-flight check that re-implemented the rule could drift out of
+  agreement with the run it predicts, which would be worse than no check at
+  all** — so there is one rule and two renderings, and the agreement is
+  pinned by tests at three levels rather than argued from the shared
+  function: `runner`, `entrypoint`, and end to end through the CLI.
+
+  **§2 is unchanged and was deliberately not amended.** Condition (1) is
+  still run-level, still aborts before any row is scored, still writes no
+  output file. The alternative most benchmark harnesses take — route the bad
+  row to `failures.csv` and continue — is recorded as the rejected
+  alternative in D-75 rather than left unstated: it would make the supplied
+  hazard a per-row data condition rather than part of the run's input
+  contract, which is the distinction §2 draws and `../ARCHITECTURE.md` §6's
+  no-fallback rule depends on, and it would let a run silently score a subset
+  of what it was handed. The ergonomic complaint turned out not to require
+  that trade.
+
+  15 new tests (4 in `test_evaluator_runner.py`, 6 in
+  `test_evaluator_entrypoint.py`, 5 in `test_cli_run.py`), plus the installed
+  `hrc-run --check-input` driven by hand against a 10,000-row file with three
+  bad codes at rows 37, 4021, and 9999 — all three reported in one pass, in
+  under two seconds (1.99 s cold, 1.46 s warm; quoted as "about two seconds"
+  everywhere rather than to three figures, since it is two runs on one
+  machine). **Not committed.**
+
+- 2026-08-05 — **PR 7 slice E landed, and PR 7 is closed: the Release 1.1
+  evaluator is runnable.** A real, non-mocked end-to-end run, the wall-clock
+  measurement, and the closing sweep (`PR7_EXECUTION_PLAN.md` §8). **510
+  tests, zero regressions**, `test_baseline_parity.py` unchanged. **This
+  slice changed no source file except two docstrings** — `views.py`'s and
+  `evaluator/__init__.py`'s — because a sweep is a critique pass
+  (`META_PLAN.md` §6), expected to alter specifications rather than
+  behavior.
+
+  **The real run** is `tests/integration/test_evaluator_runner_real_bge.py`
+  (8 tests), beside `test_evaluator_real_bge.py` as PRs 2–4 each did.
+  **Nothing is injected**: no `provider`, no `pooling`, so
+  `profile.build_registry`'s own default — the real `BgeEmbeddingProvider` —
+  is what runs, which is the point. A 4-row CSV on disk, a profile, the
+  golden baseline artifact, all three views written to a temp directory and
+  read back; two hazard families (`hte`, and enablement-only `prv`, whose
+  final L must stay `N/A`), both exhaustion routes, the CLI compared
+  **byte-for-byte** with the in-process run on the real path, a second-row
+  rejection asserting the output directory does not exist at all, and D-74's
+  non-default `text_view` read back out of a written `results.jsonl` rather
+  than asserted in memory. Separately the installed `hrc-run` console script
+  was driven by hand end to end — not only `--help` — and its three files
+  inspected.
+
+  **The real run immediately corrected one of its own assertions**, which is
+  what a real run is for. It first asserted that an exhausted row has *no*
+  stage-8 observation; `../ARCHITECTURE.md` §3.1 in fact records a
+  `skipped_short_circuit` observation for every skipped stage, so the record
+  *states* that the encoder did not run instead of leaving a reader to infer
+  it from a gap. The test now asserts the stronger, true property. A
+  stub-backed test would have been written the same wrong way and passed.
+
+  **Measured cost, reported not tuned** (`PR7_EXECUTION_PLAN.md` §9 forbids
+  redesigning the embedding boundary here). `scripts/probe_runner_throughput.py`
+  is the quotable source, in the same role as the disclaimer and working-text
+  probes: 177 real rows from `data/` (every row whose hazard the golden
+  artifact supports), mean response ~2.5k characters, CPU-only. **41.4 s
+  total, 4.77 rows/s steady state**; the first row costs 4.49 s while the
+  encoder's weights load, median row 0.129 s, slowest 1.70 s. Startup, input
+  validation and writing all three views together are 0.044 s — **the cost is
+  entirely the encoder**, one call per record as `../ARCHITECTURE.md` §8
+  fixes. Extrapolated: `data/`'s full 859 rows ≈ 3 minutes, 10,000 rows ≈ 35
+  minutes. No decision is requested; the number exists so the first person to
+  run a large batch is not surprised.
+
+  **The sweep found six things, five of them documentation.** In descending
+  order of what they cost a reader:
+
+  1. **`README.md` said three components ship `partial`; `../ARCHITECTURE.md`
+     §7's table says four.** The dropped item is **stage 9, L/E scoring** —
+     *the same undercount, dropping the same item*, that PR 4's sweep
+     corrected in §7's own prose one PR earlier. It survived in the sibling
+     document because the README enumerates by ledger entry (D-50, D-51,
+     D-70) and stage 9 has none of its own. **Fifth consecutive sweep to find
+     D-47 inventory staleness, second to lose this specific item.**
+     Corrected, with the rule restated where it is read: take the list from
+     §7's table, never from a prose count.
+  2. **`../ARCHITECTURE.md` §2 attributed all three rejection conditions to
+     `open_run`, under a signature the code has never had.** It is
+     `open_run(config, registry, supported_hazards) -> RunContext`, and it
+     checks conditions (2) and (3) only; condition (1) is a property of an
+     *input row*, which no run-entry call can see. Not cosmetic: that split
+     is **why** the two-pass runner is required rather than merely preferred,
+     and §2 is the section that was supposed to say so. Corrected, with the
+     requirement stated and the test that pins it named.
+  3. **§3.2's module layout never gained PR 7's four files.** It described
+     the package as of PR 1. `input_schema.py`, `profile.py`, `runner.py`,
+     and `entrypoint.py` added, with `profile.py` marked as the single
+     dependency-rule exemption and the parsed-source test that enforces it
+     named.
+  4. **§6's parallelism bullet still said "where PR 7's runner needs it"** —
+     a sentence about the future PR 7 has now answered: it needs none, builds
+     none, and has a measured number instead (D-61's absorption, re-checked).
+  5. **`README.md` described a three-CLI package**, a `scripts/` directory
+     holding one script, and a stale test count — all three false as of
+     PR 7. Corrected, plus a new [`docs/howto/hrc-run.md`](../howto/hrc-run.md)
+     and its documentation-table row: every other CLI has one, and the queue
+     proposal's rules for every PR require documentation. The howto opens by
+     pointing at `README.md` §Release 1.1 evaluator status, which is D-47's
+     pre-staging disclosure floor and is exactly what a reader arriving at a
+     newly runnable evaluator needs first.
+
+  **One finding recorded and deliberately not fixed**, because fixing it is a
+  component change and PR 7 makes none (§10). `components/scoring.py`
+  accumulates `ComponentError`s across **every** evaluated hazard into one
+  list and stores only `errors[0]` on its single observation, so in a
+  multi-hazard record only the first failing hazard's error survives, and
+  `failures.csv` attributes the rest to `final_integration`. It understates
+  detail and never the fact of a failure — `HazardJudgment.failure_reason` is
+  the authoritative text and the row is emitted from phase D's verdict, not
+  from the observation. Slice C had recorded the narrower "both L and E for
+  one hazard" version of this in `views.py`; the sweep found it was broader,
+  sharpened the note, and **routed it to
+  [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md) PR 5's
+  work list**, which replaces that component — so it lives in two places
+  rather than one, which is PR 4's own sweep finding 5 applied.
+
+  **What was checked and was clean.** Every PR 7 exit criterion now maps to a
+  named test in the plan's §11 table, filled in at the close. **D-57's
+  default is real for the first time** and matches §2 exactly:
+  `frozenset(classifier.trained_hazards)`, resolved in the profile layer and
+  not in `open_run`, so `RunContext` always carries a concrete scope and
+  condition (2) is unreachable by default. **D-69's and D-74's absorption
+  match what shipped** — `text_view` flows profile → `build_registry` →
+  `EmbeddingComponent(...)` and appears in no `RunConfig`/`RunContext` field
+  and no registry key, so §6's registry keying is untouched. §11's
+  `failures.csv` row and `views.py`'s docstring, both corrected in slice C,
+  still describe the code. The D-47 inventory's other ten items are each
+  still true of §7 and `README.md`. **No new ledger entry is owed and no new
+  assumed-concurrence row is added**: no PR 7 exit criterion was met by
+  scoping rather than by building, and the only decision PR 7 needed (D-74)
+  was locked before slice B and already has its row. The three baseline CLIs
+  are untouched (D-48).
+
+  **Not committed** — this session's scope was to execute slice E and pause.
+  **Item 4 is not closed**: PR 5 and PR 6 remain, in that order.
+
+- 2026-08-05 — **PR 7 slice D landed (the two entry points).** New
+  `evaluator/entrypoint.py` and `cli/run.py`, plus a `hrc-run` entry in
+  `pyproject.toml`'s `[project.scripts]` — **a fourth CLI, not a
+  modification of the three baseline ones** (D-48); `hrc-evaluate` was
+  already taken by the baseline and means something different (labelled
+  rows against ground truth, not an unlabeled scoring run).
+
+  **The in-process entry point was built first, and the CLI is a genuinely
+  thin wrapper over it** — `cli/run.py::main` calls
+  `evaluator.entrypoint.run` directly, so "the CLI and the in-process
+  interface produce identical records for identical input" is true by
+  construction. **Confirmed by sabotage, not by reading the code**: made the
+  CLI silently override `text_view` to `"disclaimer_stripped"` after loading
+  the profile, re-ran the identity test, and it failed on the parsed
+  `results.jsonl` diff, as expected. Reverted; the identity test
+  (`test_cli_and_in_process_produce_identical_records_for_identical_input`)
+  compares both the parsed and the byte-for-byte `results.jsonl`,
+  `predictions.csv`, and `failures.csv`, matching the plan's own
+  instruction: "run both, compare the parsed `results.jsonl`", not an
+  assertion that one calls the other.
+
+  **`entrypoint.run` composes what slices A–C already built**, in the one
+  order that matters: `profile.resolve` -> `input_schema.load_csv` ->
+  `runner.run_batch`/`write_outputs`. It stays inside the registry-import
+  boundary without a new exemption — untyped `provider`/`pooling`
+  parameters, matching `record.py`'s own loose-typing convention for the
+  same reason — and the slice-B import-boundary test picked it up
+  automatically, with no edit.
+
+  **`--model-dir` overrides the profile's `artifact_id` when given**, so one
+  checked-in profile file can be reused across machines without a
+  hard-coded path — the CLI is where a caller supplies the machine-specific
+  piece, matching slice B's own "CLI flags able to override" note.
+  `add_allow_download_flag`/`fatal()` are reused from `cli/_common.py`
+  rather than a fourth error path.
+
+  **Confirmed `hrc-run --help` actually works from the installed console
+  script**, not merely that `main(["--help"])` exits 0 in-process — the
+  package was reinstalled editable (`pip install -e . --no-deps`, metadata
+  regeneration only, no repo files touched) so the new `[project.scripts]`
+  entry registers, and `hrc-run --help` was run directly and its usage text
+  inspected.
+
+  12 new tests (`tests/unit/test_evaluator_entrypoint.py`,
+  `tests/unit/test_cli_run.py`) plus one auto-added import-boundary case,
+  502 total, zero regressions, `test_baseline_parity.py` unchanged. **Not
+  committed** — this session's scope was to execute slice D and pause; only
+  slice E (the real run, the sweep, and the close) remains.
+
+- 2026-08-05 — **PR 7 slice C landed (batch runner + `failures.csv`).**
+  New `evaluator/runner.py` and a third view in `evaluator/views.py`, per
+  `PR7_EXECUTION_PLAN.md` §6.
+
+  **The two-pass loop is built as specified, and the test that proves it was
+  confirmed by sabotage rather than by reading the code.** `run_batch`
+  validates *every* row's supplied hazard before scoring *any*
+  (`../ARCHITECTURE.md` §2 makes a bad supplied hazard a run-level
+  rejection, so it must abort before anything is scored). The plan's named
+  test — a two-row input whose **second** row is out of scope — asserts the
+  encoder was never called and that no output file exists. Folding
+  validation into the scoring loop was tried deliberately: the test goes red
+  with `provider.calls == 1`, i.e. row 0 already scored. The assertions were
+  reordered so the load-bearing one (nothing scored) fires before the
+  message check, which had been short-circuiting it.
+
+  **Rejections and failures stay apart.** A `ComponentError`, a phase D
+  per-hazard failure, and an unexpected exception from a component each
+  become a `failures.csv` row and the batch continues; `RunRejectedError` is
+  explicitly *not* caught by the per-row handler, pinned by its own test.
+  `failures.csv` is a derived view (`views.failure_rows`, its own
+  `FAILURES_VERSION`, no text carried — `prediction_rows`' sensitive-data
+  bound), never a second bookkeeping structure the runner maintains; a
+  failed row still appears in `results.jsonl` too. All three files are
+  always written, `failures.csv` with a header even when empty (the
+  baseline's own D-25 convention). Determinism is asserted on **bytes**, not
+  parsed content.
+
+  **Two things found in passing.** (1) `../ARCHITECTURE.md` §11's
+  `failures.csv` row described it as carrying "Rejected and failed rows"
+  while the same row's own note says rejections are not in it — a
+  self-contradiction that only becomes visible when the view is built.
+  Corrected to "Failed rows", with the not-exclusive-with-`results.jsonl`
+  contract stated, and the future-tense "**Built by PR 7**" demoted to
+  provenance (`PR7_EXECUTION_PLAN.md` §12 lesson 2). `views.py`'s docstring,
+  the third sentence that lesson names, is corrected too. (2)
+  `components/scoring.py` records only `errors[0]` on its single
+  observation, so when both L and E are unavailable for one hazard only the
+  first `ComponentError` is visible to the view. **Recorded as a finding,
+  not fixed** — it is a component change, which PR 7 does not make (§10) —
+  and noted in `views.py` where a reader meets it. It understates detail,
+  never the fact of the failure.
+
+  The slice-B import-boundary test picked up `runner.py` automatically (it
+  globs at collection time), so PR 7's exit criterion "the runner selects
+  components only through the registry and never imports a concrete
+  component" is verified by a parsed-source assertion with no edit needed.
+  16 new tests (`tests/unit/test_evaluator_runner.py`) plus that one
+  auto-added case, 489 total, zero regressions, `test_baseline_parity.py`
+  unchanged. **Not committed** — this session's scope was to execute slice C
+  and pause; slices D and E remain.
+
+- 2026-08-05 — **PR 7 slice B landed (run profile + artifact resolution).**
+  New `evaluator/profile.py`, per `PR7_EXECUTION_PLAN.md` §5: `RunProfile`
+  (`artifact_id`, optional `hazard_scope`, optional `component_selection`,
+  `text_view` defaulting to `working`) and `load_profile` for the JSON form;
+  `resolve_artifact` (baseline-only in PR 7 — D-49 — with a docstring naming
+  itself as PR 5's extension point); `build_registry`, **the only PR 7 module
+  that imports `evaluator.components`**, registering all ten stages and
+  returning the default `(stage -> implementation)` selection plus the
+  `rule_version` the constructed `RuleSet` actually carries (never a literal
+  the profile could type out of sync with it — the plan's own trap);
+  `resolve`, which loads the artifact, builds the registry, defaults
+  `hazard_scope` to the artifact's frozen supported set when the profile
+  didn't supply one (D-57, resolved in the profile layer, not `open_run`),
+  and calls `open_run`. **`text_view` flows exactly one path** — profile ->
+  `build_registry` -> `EmbeddingComponent(..., text_view=...)` — never a
+  `RunConfig`/`RunContext` field and never a registry key (D-69, D-74).
+  **D-74's conditional test is built**: an end-to-end run through
+  `profile.resolve` with `text_view="disclaimer_stripped"` asserts the
+  encoder actually received the stripped text (not `working`) and that the
+  stage-8 observation records `"disclaimer_stripped"` in `views.result_view`
+  — the profile-level seam D-74 decided, distinct from
+  `test_evaluator_pr4_text_view.py`'s existing component-level coverage.
+  **The registry-import boundary is a real, parsed-source assertion**, in the
+  shape of `experiments/candidates.py::_assert_no_fixed_rule_import`: a
+  parametrized test walks every other `.py` file directly under `evaluator/`
+  and fails if any imports `components` — written to glob at collection
+  time, so it will automatically cover slice C's runner module once it
+  exists, with no edit needed here. 25 new tests
+  (`tests/unit/test_evaluator_profile.py`), 472 total, zero regressions,
+  `test_baseline_parity.py` unchanged. **Not committed** — this session's
+  scope was to execute slice B and pause; slices C through E remain.
+
+- 2026-08-05 — **PR 7 slice A landed (input schema + record construction).**
+  New `evaluator/input_schema.py`, per `PR7_EXECUTION_PLAN.md` §4: `REQUIRED_COLUMNS`
+  (`request_id, prompt_uid, response_id, prompt_text, response_text,
+  supplied_hazard` — named to match the record, not the baseline's `hazard`);
+  `InputRow`, `load_csv`/`parse_rows` (structural validation only — missing
+  columns, blank identity values, duplicate `response_id`; a blank
+  `response_id` is rejected rather than synthesized); `build_record`, the
+  named function building the pre-integration `EvaluationRecord` to the
+  plan's exact field-by-field contract. **Hazard validity is deliberately not
+  checked here** — only D-27's normalization — leaving membership to
+  `run.validate_supplied_hazard` against a scope this module never sees, per
+  the plan's "keep them apart" instruction. `evaluated_hazards =
+  (supplied_hazard,)` is pinned by a named test carrying the comment that this
+  is correct *because* stage 3 is a placeholder, not because the merge is
+  unnecessary in general — the merge belongs to stage 3 when it becomes real.
+  Also fixed `evaluator/__init__.py`'s stale docstring, found in passing by the
+  plan (still described slice 1A, four PRs out of date). 14 new tests
+  (`tests/unit/test_evaluator_input_schema.py`), 447 total, zero regressions,
+  `test_baseline_parity.py` unchanged. **Not committed** — this session's
+  scope was to execute slice A and pause; slices B through E remain.
 
 - 2026-08-05 — **`META_PLAN.md` §6 gains a plan-authoring row: Opus, high
   effort.** Raised while recommending models and effort levels for PR 5's and

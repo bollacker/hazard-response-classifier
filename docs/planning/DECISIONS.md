@@ -308,6 +308,7 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-72](#d-72) | 1.1's L/E models are fitted on pipeline **working text**; D-68's selection (raw text) is not re-run | `PREREGISTRATION_LE_STRUCTURE.md` §1, §7, §8 | carried; closes a `SCIENCE.md` training shortfall, adds a recorded assumption |
 | [D-73](#d-73) | The shipped artifact is fitted on the **fit split only**; the dev slice stays held out | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5 | carried; makes PR 5's reported numbers describe the shipped model |
 | [D-74](#d-74) | The run profile carries `text_view` as a **construction parameter**, not a selection field | `../ARCHITECTURE.md` §5 | carried; closes D-69's deferred half, conditional on an end-to-end test |
+| [D-75](#d-75) | A run rejection names **every** offending row, and `hrc-run --check-input` reports them without scoring | `../ARCHITECTURE.md` §2; `howto/hrc-run.md` | carried; ergonomics only — §2's all-or-nothing rejection is unchanged |
 
 ### Absorption gaps
 
@@ -4749,3 +4750,81 @@ right** — [D-55](#d-55)'s deferred comparison is untouched, its default stays
 `working`, and nothing here runs, prejudges, or reschedules it. It also does not
 give any other stage a profile-level construction parameter; stage 8 is the only
 stage that reads a text view (§5).
+
+
+<a id="d-75"></a>
+## D-75: A run rejection names every offending row, and `hrc-run --check-input` reports them without scoring
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05, on the open design concern PR 7's close left
+under Open Questions. **Riki's concurrence assumed on Kurt's direction, not
+confirmed on record.**
+
+Decision: `ARCHITECTURE.md` §2's condition-(1) rejection is unchanged in
+substance — a bad supplied hazard on *any* input row still rejects the whole
+run before anything is scored. Two ergonomic changes are made around it:
+
+1. The rejection **names every offending row**, not the first one it meets.
+   The batch runner's first pass scans to the end and reports the count, the
+   resolved `hazard_scope`, and each offending row's position, `response_id`,
+   and reason.
+2. `hrc-run` gains **`--check-input`**, and `evaluator.entrypoint` gains
+   `check_input`: run exactly §2's three rejection conditions against a
+   profile and an input file, report every per-row problem, score nothing,
+   and write nothing.
+
+**Both read one rule.** `runner.find_supplied_hazard_problems` is the single
+implementation of condition (1) over a batch; `run_batch` turns its result
+into the `RunRejectedError`, and `check_input` reports it. There is no second
+copy to drift.
+
+Rationale: PR 7's plan raised the all-or-nothing rejection as a non-blocking
+concern, and PR 7's close mis-stated what it costs — the claim was that a bad
+code late in a large file discards the run's work, when in fact the two-pass
+loop rejects before any scoring, in about two seconds on a 10,000-row input.
+Nothing is discarded. **The real cost is narrower and is what this entry
+addresses:** the rejection named only the first offender, so cleaning a file
+with *k* bad codes took *k* rounds of fix-and-rerun; and a caller could not
+ask "would this be rejected?" without starting a run they would have to
+interrupt.
+
+**Why this rather than amending §2.** The alternative — routing a bad
+supplied hazard to `failures.csv` and continuing, as most benchmark
+harnesses would — is a real option and was rejected here, not overlooked. It
+would make the supplied hazard a per-row data condition rather than part of
+the run's input contract, which is the distinction §2 draws and which
+`ARCHITECTURE.md` §6's no-fallback rule depends on: a component with no
+operation for a hazard records a `ComponentError`, whereas an input the run
+was never configured to accept is not the pipeline's to interpret. It would
+also mean a run could silently score a subset of what it was handed. The
+ergonomic complaint turned out not to require that trade: the cost was
+*discovering* the offending rows, not the strictness itself.
+
+Rejected alternatives: (1) amending §2 to make condition (1) a per-row
+failure — above; (2) a bounded rejection message listing only the first *k*
+offenders, with no way to see the rest — rejected because it re-creates the
+fix-and-rerun loop for a file with more than *k* problems, which is exactly
+the defect being fixed (the message does cap at ten for terminal
+readability, and `--check-input` is the uncapped view, so nothing is
+unreachable); (3) having the run *trust* a prior check — rejected, and
+`check_input`'s docstring says so: the input file can change between the two
+calls, so `run_batch` still performs its own pass 1 and the check is a
+convenience over the same rule, never a gate.
+
+Touches: `../ARCHITECTURE.md` §2 (**absorbed** — the enforcement paragraph
+now states that the rejection names every offending row);
+`howto/hrc-run.md` (**absorbed** — documents `--check-input`);
+`src/hazard_classifier/evaluator/runner.py`
+(`find_supplied_hazard_problems`, `describe_supplied_hazard_problems`),
+`src/hazard_classifier/evaluator/entrypoint.py` (`check_input`,
+`CheckReport`), `src/hazard_classifier/cli/run.py` (`--check-input`, and
+`--output-dir` becoming conditionally required);
+`PR7_EXECUTION_PLAN.md`'s Open Questions, which this closes and whose
+overstatement of the cost it corrects.
+
+Boundary: this decides **how a rejection is reported and how a caller can
+ask about one in advance**. It does not change *what* is rejected — §2's
+three conditions are untouched, condition (1) is still run-level, and a
+rejection still aborts before any row is scored and still writes no output
+file. It also does not make `--check-input` a precondition of running:
+`hrc-run` with no flag behaves exactly as before, only with a fuller message.

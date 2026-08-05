@@ -30,6 +30,7 @@ experiments = [
 hrc-train = "hazard_classifier.cli.train:main"
 hrc-evaluate = "hazard_classifier.cli.evaluate:main"
 hrc-predict = "hazard_classifier.cli.predict:main"
+hrc-run = "hazard_classifier.cli.run:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -54,7 +54,7 @@ The accepted cost: the active set becomes a property of the training data
 rather than a declared policy, so a hazard absent from training is silently
 absent from scope. The recorded resolved set is what keeps that auditable.
 
-`open_run(config, artifact) -> Run` rejects when:
+A run is rejected when:
 
 1. the supplied hazard of any input row is missing, unrecognized, or outside
    `hazard_scope`;
@@ -66,6 +66,36 @@ absent from scope. The recorded resolved set is what keeps that auditable.
 names the offending value and the reason.** This is the "clear, human-readable
 error" the parked no-fallback proposal noted was unstated anywhere. It is not a
 per-hazard failure and never reaches the integrator: nothing has been scored.
+
+**Where each condition is enforced** (corrected 2026-08-05 by PR 7's closing
+sweep; this section previously read `open_run(config, artifact) -> Run` and
+attributed all three conditions to it, which was never true of the code and
+matters here because the split is what makes condition (1) a *run*-level
+rejection at all):
+
+- Conditions (2) and (3) are checked once, for the whole run, by
+  `open_run(config, registry, supported_hazards) -> RunContext`.
+- Condition (1) is a property of an **input row**, so no run-entry call can
+  see it. `validate_supplied_hazard(hazard, run_context)` checks one row, and
+  the batch runner (§3.2's `runner.py`) applies it to **every** row in a first
+  pass, before scoring any. A runner that instead validated each row as it
+  reached it would abort mid-batch with results already written for earlier
+  rows — which is precisely what "nothing has been scored" forbids. The
+  two-pass loop is therefore this section's requirement, not an implementation
+  preference, and `tests/unit/test_evaluator_runner.py` pins it with a two-row
+  input whose *second* row is the bad one.
+
+**A condition-(1) rejection names every offending row, not the first**
+(`planning/DECISIONS.md` [D-75](planning/DECISIONS.md#d-75), 2026-08-05), along
+with the resolved `hazard_scope` they were checked against — "not in scope" is
+unactionable without it. The first pass therefore scans to the end rather than
+stopping, so cleaning a file with *k* bad hazard codes is one round rather than
+*k*. The same pass is available as a query, which is what `hrc-run
+--check-input` reports without scoring anything; **one rule, two renderings**,
+so a pre-flight check cannot disagree with the run it predicts. This changes
+what a rejection *says*, not what is rejected: condition (1) is still
+run-level, still aborts before any row is scored, and still writes no output
+file.
 
 `hazard_scope` constrains which *additional* hazards detection may return. It
 does not enter the rollup on its own — only the supplied hazard and hazards
@@ -148,6 +178,17 @@ src/hazard_classifier/
     run.py                   RunConfig, RunContext, open_run, RunRejectedError.
     pipeline.py              Stage order and the exhaustion short-circuit.
                              No scientific decision logic (§3).
+    input_schema.py          The 1.1 input CSV contract (§4's identity
+                             fields) and record construction. Never an
+                             extension of the baseline's schema.py.
+    profile.py               The run profile: RunProfile/load_profile,
+                             artifact resolution, build_registry, and
+                             resolve (profile -> RunContext). **The only
+                             module here that imports components/** (§6).
+    runner.py                The batch runner: §2's two-pass loop and the
+                             three output files. Never imports a component.
+    entrypoint.py            The in-process entry point (run). cli/run.py
+                             (`hrc-run`) is a thin wrapper over it.
     components/
       empty.py               stage 1
       decoding.py            stage 2   — wraps preprocess/decode.py
@@ -165,7 +206,18 @@ src/hazard_classifier/
 Dependency rule, enforced by the layout: `record.py` imports nothing from this
 package; `components/*` import `record` and `contract` only, never each other
 (§6); `pipeline.py` imports `contract` and `registry`, never a concrete
-component.
+component. **`profile.py` is the single exemption** — building the registry
+means naming the implementations, and confining those imports to one file is
+what makes "the runner selects components only through the registry" checkable
+rather than asserted. It is checked: `tests/unit/test_evaluator_profile.py`
+parses every other module in the package and fails if one imports
+`components`, and fails equally if `profile.py` stops importing them (so the
+check cannot pass vacuously).
+
+*(The four modules above `components/` and this paragraph were added
+2026-08-05 by PR 7's closing sweep. §3.2 had listed the layout as of PR 1 and
+never gained PR 7's four files, which is the same specification-goes-stale
+failure `planning/PR7_EXECUTION_PLAN.md` §12 lesson 2 describes.)*
 
 `Result` and the 1.1 result vocabulary, replacing the baseline's
 `safe`/`unsafe` (sub-review 1.1):
@@ -439,8 +491,12 @@ Rules that make replaceability real:
 - **The evaluator's contract is single-threaded per process** (D-61). Release
   1.1 makes no thread-safety claim; components are stateless and the record is
   immutable, but the embedding provider's backend is unverified under
-  concurrency and nothing here should be relied on across threads.
-  Parallelism, where PR 7's runner needs it, is at the process level.
+  concurrency and nothing here should be relied on across threads. Parallelism,
+  where a caller needs it, is at the process level. **1.1 builds none**
+  (recorded 2026-08-05, PR 7's close): `runner.run_batch` is a single-threaded
+  loop, nothing in the release has demonstrated a need, and an unexercised
+  parallel path is untested surface. The measured cost of a real run is in
+  `planning/STATUS.md`, reproducible via `scripts/probe_runner_throughput.py`.
 
 ## 7. Component inventory for 1.1
 
@@ -663,7 +719,7 @@ record itself, and every view is versioned separately.
 | `results.jsonl` | The full record | One record per response; the only lossless output |
 | `predictions.csv` | Per-hazard tabular results | Explicit, versioned flattening rule; one row per (response, hazard) |
 | `metrics.json` | Evaluation | Per-outcome metrics with an uncertainty estimate and its method (`SCIENCE.md` Estimability) |
-| `failures.csv` | Rejected and failed rows | Run rejections are not in here — they abort the run (§2). **Built by PR 7** (D-56), which supplies the batch runner it needs |
+| `failures.csv` | Failed rows | Run rejections are **not** in here — they abort the run before anything is scored (§2). Built by PR 7 (D-56), which supplies the batch runner it needs. A failed row still appears in `results.jsonl`: the record is canonical, this is the narrow view, and the two are not exclusive |
 
 This answers two of proposal 3's recorded counterarguments directly.
 **Flattening** is a named, versioned contract per view rather than an implicit

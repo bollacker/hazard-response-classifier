@@ -387,6 +387,18 @@ replaces.
   **not evaluated** — approved per-outcome criteria still do not exist.
 - Train and version models separately from scoring.
 - Lock the model version used by each run.
+- **Record every per-hazard `ComponentError` the scoring stage produces, not
+  just the first.** Inherited from PR 7's closing sweep (2026-08-05), which
+  met it while building `failures.csv`. `components/scoring.py` accumulates
+  errors across every evaluated hazard into one list and writes `errors[0]`
+  onto its single observation, so a multi-hazard record loses every failing
+  hazard's error but the first — and `views.failure_rows` then attributes
+  those rows to `final_integration` rather than to `scoring`. It understates
+  detail and never the fact of a failure (`HazardJudgment.failure_reason` is
+  the authoritative text), so it is an auditability gap rather than a wrong
+  result. Routed here because PR 5 replaces this component; PR 7 does not
+  change components. Recorded in `evaluator/views.py::_first_component_error`
+  where a reader of the view meets it.
 - Return a provisional L judgment and a three-class multinomial distribution
   over L0, L1, and L2 when Legitimization applies.
 - Return a provisional E judgment and a three-class multinomial distribution
