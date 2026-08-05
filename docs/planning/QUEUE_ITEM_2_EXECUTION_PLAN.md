@@ -292,6 +292,15 @@ because macro-F1 produced the ranking. Applying §4.1 in order (worst-class F1
 → fewer fitted parameters → closer to `R`) can overturn the macro-F1 leader,
 and on the E target it does.
 
+**And steps 3–4 rank the *eligible* candidates, wherever the
+never-selectable structures sit** (found 2026-08-05 by the second
+independent review; recorded in `PREREGISTRATION_LE_STRUCTURE.md` §8). The
+first tie-break implementation applied §4.1 only when the eligible leader
+also topped the finalist ranking — so a strong-enough `R` would have
+silently selected the unseparated macro leader by rank alone. The tie-break
+now fires whenever separation between the top two eligible candidates
+fails, in every outcome, including the null-result one.
+
 **Outcome, 2026-08-05 (corrected). Both targets select `L1`, and neither
 found a structure that beat `R`.**
 **L → `L1`**, the only structure that both survives the floor and produces a

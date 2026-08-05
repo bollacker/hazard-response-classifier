@@ -935,11 +935,19 @@ class SharedTwoHeadJoint:
     that *same* shared head's `predict_proba_centered` output, restricted to
     that target's own rows.
 
-    This is a genuinely cheaper structure than `R`, not just a differently
-    labeled one: 15 hazards' worth of heads fit **once**, instead of `R`'s
-    15 x 2 = 30 (a full set per target) -- directly exercising §4.1's
-    fewer-fitted-parameters tie-break criterion, not only the Sharing axis's
-    name.
+    **Sharing's economy, stated precisely so the parameter counts cannot be
+    misread.** 15 hazards' worth of heads are fit **once** across both
+    targets, instead of `R`'s 15 x 2 = 30 (a full set per target) -- so the
+    **joint** total (`fitted_parameter_count`) is roughly half of R's
+    two-target sum. **Per target, the decision function is the same size as
+    `R`'s**: each target still decides through a full head pair per hazard
+    plus its own threshold pair; the shared head is reused, not smaller.
+    Each `target_view` therefore reports the per-target count
+    (`_target_parameter_count`), so a ladder row for one target is
+    comparable under §4.1 criterion 2 with every other candidate's
+    per-target rows -- a joint count on a per-target row would silently
+    overstate S2 against them (it did, once: 23126 recorded on the L row
+    against R's 20020, reading as *more* complex per target).
 
     A hazard with no rows at all for one target (Privacy and Sexual Content
     have none for L -- `interim_data.legitimization_rows` excludes them
@@ -1023,13 +1031,33 @@ class SharedTwoHeadJoint:
         self.unavailable_hazards = frozenset(unavailable)
 
     def fitted_parameter_count(self) -> int:
-        """§4.1 criterion 2. One shared head pair per hazard -- counted
-        **once**, not once per target, which is the whole point of the
-        Sharing axis -- plus each target's own threshold pair.
+        """The **joint** total across both targets: one shared head pair per
+        hazard, counted once, plus each target's own threshold pairs. This
+        is where sharing's saving is visible (roughly half of R's two-target
+        sum). It is **not** what a per-target ladder row records -- that is
+        `_target_parameter_count`, via `target_view` -- because §4.1
+        criterion 2 compares per-target rows, and a joint count there would
+        not be comparable with any other candidate's.
         """
         heads = sum(2 * (len(nonzero.coef) + 1) for nonzero, _high in self._heads.values())
         thresholds = 2 * sum(len(per_target) for per_target in self._thresholds.values())
         return heads + thresholds
+
+    def _target_parameter_count(self, target: str) -> int:
+        """§4.1 criterion 2's per-target value: the decision-function
+        parameters actually serving `target`'s own predictions -- the shared
+        head pairs for hazards this target has a threshold pair for, plus
+        that target's own threshold pairs. Equals R's count for the same
+        hazard set: the shared head is reused, not smaller. Sharing's saving
+        appears only in the joint total (`fitted_parameter_count`).
+        """
+        thresholds = self._thresholds[target]
+        heads = sum(
+            2 * (len(nonzero.coef) + 1)
+            for hazard, (nonzero, _high) in self._heads.items()
+            if hazard in thresholds
+        )
+        return heads + 2 * len(thresholds)
 
     def _predict(self, target: str, X: np.ndarray, hazards: np.ndarray) -> np.ndarray:
         X = np.asarray(X, dtype=np.float64)
@@ -1061,7 +1089,10 @@ class SharedTwoHeadJoint:
             f"S2[{target}]",
             lambda X, hazards: self._predict(target, X, hazards),
             produces_three_class_distribution=self.produces_three_class_distribution,
-            fitted_parameter_count=self.fitted_parameter_count(),
+            # Per-target, not the joint total -- see _target_parameter_count:
+            # this is the value a ladder row records, and §4.1 criterion 2
+            # compares per-target rows.
+            fitted_parameter_count=self._target_parameter_count(target),
         )
 
 

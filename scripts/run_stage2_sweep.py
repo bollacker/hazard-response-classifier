@@ -38,9 +38,12 @@ cannot be selected -- see `PREREGISTRATION_LE_STRUCTURE.md` §8's 2026-08-05
 amendment, which records both this reading and the pool the rule ranks over.
 
 What the run finds, so it is not mistaken for a positive result: **no
-structure significantly beat `R` on either target.** L selects `L1` purely as
-the best qualifying structure while scoring *below* `R`; E selects the
-`L1+W3` composite without significant separation from `R`.
+structure significantly beat `R` on either target, and both targets select
+`L1`.** L selects `L1` purely as the best qualifying structure while scoring
+*below* `R`. On E the `L1+W3` composite led on macro-F1 but §4 step 3's
+paired interval against the next-ranked *eligible* candidate (`L1` -- the
+comparator is never `R`) did not exclude zero, so §4 step 4 applies and
+§4.1 criterion 1 (higher worst-class F1, 0.3500 vs 0.3415) selects `L1`.
 
 Run:  python scripts/run_stage2_sweep.py
 """
@@ -63,6 +66,7 @@ from run_stage1_sweep import TARGETS, _features_for, _target_frames  # noqa: E40
 
 from hazard_classifier.experiments.candidates import (  # noqa: E402
     STAGE1_BUILDERS,
+    STAGE1_LEVELS,
     MultinomialSoftmax,
 )
 from hazard_classifier.experiments.comparison_metrics import (  # noqa: E402
@@ -87,10 +91,15 @@ def _record(
     bootstrap_vs_r=None,
     produces_three_class_distribution=None,
     fitted_parameter_count=None,
+    axis=None,
 ) -> dict:
     return {
         "level": level,
         "target": target,
+        # A stage-1 ladder concept: the single §2.3 axis this level varies.
+        # `None` for a composite that varies more than one (the E composite);
+        # the L composite inherits "Sharing" because it *is* stage 1's S2.
+        "axis": axis,
         # Must be carried on stage-2 rows too: §4's closing rule reads it,
         # and a missing value is treated as "does not qualify", which would
         # silently exclude a composite that does.
@@ -126,13 +135,33 @@ def _axes_varied_from_r(level: str) -> int:
     how many of §2.3's axes this structure moves off R's own level. Every
     stage-1 level varies exactly one by construction; a stage-2 composite
     varies as many as its definition names.
+
+    **Raises on any level it does not recognize** rather than guessing. A
+    silent default of 1 was the trap here: a future composite missing from
+    `_COMPOSITE_AXES_VARIED` would be scored as varying a single axis and
+    could wrongly win criterion 3 against a candidate that genuinely does.
     """
     if level == "R":
         return 0
     composite = _COMPOSITE_AXES_VARIED.get(level)
     if composite is not None:
         return composite
-    return 1  # every stage-1 ladder level varies exactly one axis from R
+    if level in STAGE1_LEVELS:
+        return 1  # every stage-1 ladder level varies exactly one axis from R
+    raise ValueError(
+        f"unknown level {level!r}: not R, not a stage-1 ladder level, and not in "
+        "_COMPOSITE_AXES_VARIED. Add any new composite to that table explicitly -- "
+        "a silent default here could decide §4.1 criterion 3 wrongly."
+    )
+
+
+# §4.1 criterion 1 compares two floats produced by the same metrics pipeline.
+# Exact `!=` would let a difference on the order of float rounding (~1e-16)
+# "decide" the tie-break; any difference at or below this tolerance is treated
+# as a genuine tie and falls through to criterion 2. Far below any difference
+# that could be meaningful on a ≤224-row dev slice (where one row moves an F1
+# by ~1e-3), and far above accumulated float noise.
+_WORST_F1_TIE_TOLERANCE = 1e-9
 
 
 def _apply_tie_break(top: dict, runner_up: dict, r_row: dict) -> dict:
@@ -141,27 +170,50 @@ def _apply_tie_break(top: dict, runner_up: dict, r_row: dict) -> dict:
 
     Returns the winner and a record of which criterion decided, so the
     result is auditable rather than asserted. Criteria are consulted in
-    order and stop at the first that separates them.
+    order and stop at the first that separates them. A criterion that cannot
+    be evaluated (a missing parameter count) is recorded as not evaluable
+    rather than silently skipped.
     """
     criteria = []
 
     a, b = top["worst_class_f1"], runner_up["worst_class_f1"]
-    criteria.append({"criterion": "higher_worst_class_f1", "top": a, "runner_up": b})
-    if a != b:
+    decided = abs(a - b) > _WORST_F1_TIE_TOLERANCE
+    criteria.append(
+        {
+            "criterion": "higher_worst_class_f1",
+            "top": a,
+            "runner_up": b,
+            "tolerance": _WORST_F1_TIE_TOLERANCE,
+            "decided": decided,
+        }
+    )
+    if decided:
         winner = top if a > b else runner_up
         return {
             "winner": winner,
             "record": {"decided_by": "higher_worst_class_f1", "criteria": criteria},
             "note": (
                 f"§4.1 criterion 1 (higher worst-class F1) decides: "
-                f"{runner_up['level'] if b > a else top['level']} has "
-                f"{max(a, b):.4f} against {min(a, b):.4f}."
+                f"{winner['level']} has {max(a, b):.4f} against {min(a, b):.4f}."
             ),
         }
 
     a, b = top.get("fitted_parameter_count"), runner_up.get("fitted_parameter_count")
-    criteria.append({"criterion": "fewer_fitted_parameters", "top": a, "runner_up": b})
-    if a is not None and b is not None and a != b:
+    evaluable = a is not None and b is not None
+    entry = {
+        "criterion": "fewer_fitted_parameters",
+        "top": a,
+        "runner_up": b,
+        "evaluable": evaluable,
+        "decided": bool(evaluable and a != b),
+    }
+    if not evaluable:
+        entry["note"] = (
+            "not evaluable: at least one candidate has no recorded "
+            "fitted_parameter_count -- criterion skipped, not decided"
+        )
+    criteria.append(entry)
+    if evaluable and a != b:
         winner = top if a < b else runner_up
         return {
             "winner": winner,
@@ -173,7 +225,7 @@ def _apply_tie_break(top: dict, runner_up: dict, r_row: dict) -> dict:
         }
 
     a, b = _axes_varied_from_r(top["level"]), _axes_varied_from_r(runner_up["level"])
-    criteria.append({"criterion": "closer_to_r", "top": a, "runner_up": b})
+    criteria.append({"criterion": "closer_to_r", "top": a, "runner_up": b, "decided": a != b})
     if a != b:
         winner = top if a < b else runner_up
         return {
@@ -269,12 +321,37 @@ def _select(
     # both targets) would otherwise be invisible in the selection record.
     pool_disqualified = sorted({row["level"] for row in eligible_pool if _disqualified(row)})
 
+    # The numbers themselves, per pool candidate, so this record is
+    # self-sufficient for the ledger entry ("the rejected candidates with
+    # their numbers") without a reader having to join stage1.json by hand.
+    pool_records = [
+        {
+            "level": row["level"],
+            "macro_f1": row["macro_f1"],
+            "per_class_f1": row.get("per_class_f1"),
+            "worst_class_f1": row["worst_class_f1"],
+            "fitted_parameter_count": row.get("fitted_parameter_count"),
+            "produces_three_class_distribution": row.get("produces_three_class_distribution"),
+            "disqualified_worst_class_floor": bool(row["disqualified_worst_class_floor"]),
+            "disqualified_by_other_target_floor": (
+                row["level"] in cross_target_disqualified
+                and not row["disqualified_worst_class_floor"]
+            ),
+            "eligible": (
+                not _disqualified(row)
+                and row.get("produces_three_class_distribution") is True
+            ),
+        }
+        for row in sorted(eligible_pool, key=lambda r: r["macro_f1"], reverse=True)
+    ]
+
     base = {
         "disqualified_worst_class_floor": disqualified,
         "pool_disqualified_worst_class_floor": pool_disqualified,
         "excluded_no_three_class_distribution": excluded_no_distribution,
         "finalists_ranked": [row["level"] for row in ranked_finalists],
         "eligible_ranked": [row["level"] for row in eligible],
+        "pool": pool_records,
     }
 
     if not eligible:
@@ -291,10 +368,6 @@ def _select(
             ),
         }
 
-    selected = eligible[0]
-    top_finalist = ranked_finalists[0] if ranked_finalists else None
-    finalist_won = top_finalist is not None and top_finalist["level"] == selected["level"]
-
     # §4 step 3: separation of the top candidate against **the next-ranked
     # candidate**. The comparator must be the next-ranked *eligible*
     # candidate, not R.
@@ -309,18 +382,52 @@ def _select(
     # `separation` is supplied by the caller because computing it needs
     # row-level predictions for both candidates, which this pure function
     # does not have. `None` means "not applicable" -- there was no second
-    # eligible candidate to separate from.
+    # eligible candidate to separate from -- and is therefore refused when a
+    # second eligible candidate exists, so steps 3-4 can never be silently
+    # skipped by an incomplete caller.
+    if len(eligible) > 1 and separation is None:
+        raise ValueError(
+            "more than one eligible candidate exists, so §4 step 3 needs the paired "
+            "separation interval between the top two -- the caller must supply "
+            "`separation`; omitting it would silently skip steps 3-4"
+        )
+
     separated = None if separation is None else bool(separation["excludes_zero"])
     separation_comparator = None if separation is None else separation.get("comparator")
+
+    # §4 steps 2-4 operate on the *eligible* ranking, wherever the
+    # never-selectable structures happen to rank (`PREREGISTRATION_LE_STRUCTURE.md`
+    # §8, 2026-08-05: "an unseparated lead on macro-F1 is not evidence", and
+    # the runner-up is whatever would have been selected instead -- both
+    # statements are indifferent to where R or a two-head composite ranks).
+    # So the tie-break fires whenever separation between the top two
+    # eligible candidates fails, in *every* branch below -- an earlier
+    # version applied it only when the eligible leader also topped the
+    # finalist ranking, which made §4.1's applicability depend on the rank
+    # of a structure that can never be selected.
+    tie_break = None
+    selected = eligible[0]
+    if separated is False and len(eligible) > 1:
+        tie_break = _apply_tie_break(eligible[0], eligible[1], r_row)
+        selected = tie_break["winner"]
+
+    top_finalist = ranked_finalists[0] if ranked_finalists else None
+    finalist_won = top_finalist is not None and top_finalist["level"] == eligible[0]["level"]
+
+    common = {
+        "separated_from_next": separated,
+        "separation_comparator": separation_comparator,
+        "separation_interval": separation,
+    }
+    if tie_break is not None:
+        common["tie_break"] = tie_break["record"]
 
     if finalist_won and separated:
         return {
             **base,
             "outcome": "selected_outright",
             "selected": selected["level"],
-            "separated_from_next": True,
-            "separation_comparator": separation_comparator,
-            "separation_interval": separation,
+            **common,
             "note": (
                 f"{selected['level']} ranked first among eligible candidates and its "
                 f"paired bootstrap interval against the next-ranked eligible candidate "
@@ -334,22 +441,17 @@ def _select(
         # produced the ranking, and step 4 exists precisely because an
         # unseparated lead on that metric is not evidence. Applying §4.1's
         # criteria in order can, and here does, overturn the macro-F1 leader.
-        if separated is False and len(eligible) > 1:
-            tie_break = _apply_tie_break(eligible[0], eligible[1], r_row)
-            winner = tie_break["winner"]
+        if tie_break is not None:
             return {
                 **base,
                 "outcome": "selected_by_tiebreak",
-                "selected": winner["level"],
-                "separated_from_next": False,
-                "separation_comparator": separation_comparator,
-                "separation_interval": separation,
-                "tie_break": tie_break["record"],
+                "selected": selected["level"],
+                **common,
                 "note": (
                     f"{eligible[0]['level']} led on macro-F1 but was not significantly "
                     f"separated from {separation_comparator} (§4 step 3 fails), so the two "
                     f"are tied and §4.1 decides. {tie_break['note']} Selected: "
-                    f"{winner['level']}."
+                    f"{selected['level']}."
                 ),
             }
 
@@ -357,9 +459,7 @@ def _select(
             **base,
             "outcome": "selected_without_separation",
             "selected": selected["level"],
-            "separated_from_next": separated,
-            "separation_comparator": separation_comparator,
-            "separation_interval": separation,
+            **common,
             "note": (
                 f"{selected['level']} is the only eligible candidate, so §4 step 3 has no "
                 f"runner-up to test separation against and step 4's tie-break has nothing "
@@ -371,22 +471,34 @@ def _select(
 
     # The candidate that topped the finalists could not be selected -- it
     # does not emit a distribution. This is the null result §4 describes.
+    # §4 steps 3-4 still applied among the eligible candidates above, so
+    # `selected` may be §4.1's winner rather than the eligible macro leader.
     blocked = top_finalist["level"] if top_finalist is not None else "(none)"
+    if tie_break is not None:
+        chosen_clause = (
+            f"Among the candidates that do produce one, {eligible[0]['level']} led on "
+            f"macro-F1 but was not significantly separated from {separation_comparator} "
+            f"(§4 step 3 fails), so §4.1 decides. {tie_break['note']} Selected: "
+            f"{selected['level']} (macro-F1 {selected['macro_f1']:.4f} vs R's "
+            f"{r_row['macro_f1']:.4f})."
+        )
+    else:
+        chosen_clause = (
+            f"The selection is therefore the highest-ranked candidate that does produce "
+            f"one: {selected['level']} (macro-F1 {selected['macro_f1']:.4f} vs R's "
+            f"{r_row['macro_f1']:.4f})."
+        )
     return {
         **base,
         "outcome": "no_structure_beat_the_incumbent",
         "selected": selected["level"],
-        "separated_from_next": separated,
-        "separation_comparator": separation_comparator,
-        "separation_interval": separation,
+        **common,
         "blocked_top_finalist": blocked,
         "note": (
             f"The highest-ranked finalist ({blocked}) cannot be selected: like R, it "
             f"decides by threshold and returns a one-hot row rather than the genuine "
             f"three-class distribution `SCIENCE.md` requires (§2.2, §4's closing rule). "
-            f"The selection is therefore the highest-ranked candidate that does produce "
-            f"one: {selected['level']} (macro-F1 {selected['macro_f1']:.4f}, below R's "
-            f"{r_row['macro_f1']:.4f}). **The ablation found no structure that beats the "
+            f"{chosen_clause} **The ablation found no structure that beats the "
             f"incumbent on this data** -- this is the finding, reported as such, not a "
             f"positive selection."
         ),

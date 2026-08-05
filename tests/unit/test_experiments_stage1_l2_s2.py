@@ -289,9 +289,11 @@ def test_s2_head_is_genuinely_shared_not_independently_coincidental():
 
 
 def test_s2_fits_strictly_fewer_head_pairs_than_r_fits_per_target():
-    """§4.1's fewer-fitted-parameters tie-break, made concrete: S2 fits one
+    """Sharing's economy, made concrete on the *joint* total: S2 fits one
     head pair per hazard across both targets; R fits one per hazard *per
     target*. On the same hazard set, S2 must use at most half as many.
+    (Per target the decision function is the same size as R's -- see the
+    parameter-count test below -- so this saving is visible only jointly.)
     """
     rng = np.random.default_rng(30)
     X_l, y_l, hazards_l, X_e, y_e, hazards_e = _joint_data(rng, l_hazards=("hte", "spc_fin"), e_hazards=("hte", "spc_fin"))
@@ -307,6 +309,40 @@ def test_s2_fits_strictly_fewer_head_pairs_than_r_fits_per_target():
     s2_head_pairs = len(s2._heads)
     r_head_pairs = len(r_l._cells) + len(r_e._cells)
     assert s2_head_pairs * 2 == r_head_pairs
+
+
+def test_s2_target_view_reports_a_per_target_parameter_count_equal_to_rs():
+    """§4.1 criterion 2 compares per-target ladder rows, so each S2
+    `target_view` must report the parameters serving *that target only* --
+    the shared head pairs it decides through plus its own thresholds --
+    which equals R's count for the same hazard set (the shared head is
+    reused, not smaller). The *joint* total is where sharing's saving
+    shows: strictly less than R's two-target sum whenever a hazard is
+    shared. A joint count on a per-target row (the original defect) would
+    overstate S2 against every other candidate's per-target rows.
+    """
+    rng = np.random.default_rng(31)
+    X_l, y_l, hazards_l, X_e, y_e, hazards_e = _joint_data(rng)  # prv is E-only
+
+    s2 = SharedTwoHeadJoint()
+    s2.fit(X_l, y_l, hazards_l, X_e, y_e, hazards_e)
+
+    r_l = TwoHeadReference()
+    r_l.fit(X_l, y_l, hazards_l)
+    r_e = TwoHeadReference()
+    r_e.fit(X_e, y_e, hazards_e)
+
+    l_count = s2.target_view("L").fitted_parameter_count()
+    e_count = s2.target_view("E").fitted_parameter_count()
+    assert l_count == r_l.fitted_parameter_count()
+    assert e_count == r_e.fitted_parameter_count()
+
+    joint = s2.fitted_parameter_count()
+    assert joint < l_count + e_count  # heads counted once, not per target
+    # Exactly: both targets' thresholds, but each shared head only once.
+    shared_heads = sum(2 * (len(nz.coef) + 1) for nz, _ in s2._heads.values())
+    thresholds = 2 * (len(s2._thresholds["L"]) + len(s2._thresholds["E"]))
+    assert joint == shared_heads + thresholds
 
 
 # --------------------------------------------------------------------------

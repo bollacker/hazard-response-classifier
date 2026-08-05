@@ -21,7 +21,9 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
 
-from run_stage2_sweep import _apply_tie_break, _select  # noqa: E402
+import pytest  # noqa: E402
+
+from run_stage2_sweep import _apply_tie_break, _axes_varied_from_r, _select  # noqa: E402
 
 
 def _row(
@@ -181,6 +183,139 @@ def test_tiebreak_criterion_order_worst_class_then_params_then_closeness():
     out = _apply_tie_break(a, b, r)
     assert out["winner"]["level"] == "L1"
     assert out["record"]["decided_by"] == "closer_to_r"
+
+
+def test_tiebreak_fires_even_when_an_ineligible_structure_tops_the_finalists():
+    """Forcing function for the §8 2026-08-05 amendment: §4 steps 3-4
+    operate on the *eligible* ranking, wherever the never-selectable
+    structures rank. Here R tops the finalist ranking (so the outcome is the
+    null finding), the two eligible candidates are unseparated, and the
+    runner-up has the higher worst-class F1 -- §4.1 must still decide, and
+    must overturn the eligible macro-F1 leader.
+
+    The previous implementation only applied §4.1 when the eligible leader
+    also topped the finalists; with a strong-enough R it silently selected
+    the unseparated macro leader by rank alone.
+    """
+    r = _r(macro_f1=0.60, worst=0.35)
+    composite = _row("L1+W3 (= E composite)", 0.50, 0.28, distribution=True)
+    l1 = _row("L1", 0.49, 0.34, distribution=True)
+
+    result = _select(
+        "E",
+        r,
+        [r, composite],
+        [r, composite, l1],
+        separation={"excludes_zero": False, "comparator": "L1"},
+    )
+
+    assert result["outcome"] == "no_structure_beat_the_incumbent"
+    assert result["blocked_top_finalist"] == "R"
+    assert result["selected"] == "L1", "§4.1 must decide regardless of where R ranks"
+    assert result["tie_break"]["decided_by"] == "higher_worst_class_f1"
+    assert result["separated_from_next"] is False
+
+
+def test_two_eligible_candidates_without_a_separation_interval_is_refused():
+    """§4 step 3 cannot be silently skipped: a caller that has two eligible
+    candidates must supply the paired interval between them.
+    """
+    r = _r()
+    a = _row("L1+W3 (= E composite)", 0.55, 0.34, distribution=True)
+    b = _row("L1", 0.50, 0.31, distribution=True)
+
+    with pytest.raises(ValueError, match="separation"):
+        _select("E", r, [r, a], [r, a, b], separation=None)
+
+
+def test_tiebreak_worst_class_f1_uses_a_tolerance_not_exact_float_equality():
+    """A float-rounding difference (~1e-16) must not 'decide' criterion 1;
+    it falls through to criterion 2, and the record says criterion 1 did
+    not decide.
+    """
+    r = _r()
+    a = _row("A", 0.60, 0.35, params=900)
+    b = _row("B", 0.55, 0.35 + 1e-16, params=10)
+    out = _apply_tie_break(a, b, r)
+    assert out["record"]["decided_by"] == "fewer_fitted_parameters"
+    assert out["winner"]["level"] == "B"
+    assert out["record"]["criteria"][0]["decided"] is False
+
+    # A genuinely meaningful difference still decides.
+    a = _row("A", 0.60, 0.34)
+    b = _row("B", 0.55, 0.35)
+    out = _apply_tie_break(a, b, r)
+    assert out["record"]["decided_by"] == "higher_worst_class_f1"
+    assert out["winner"]["level"] == "B"
+
+
+def test_tiebreak_records_a_missing_parameter_count_as_not_evaluable():
+    """A `None` parameter count must not silently vanish: criterion 2 is
+    recorded as not evaluable, and the decision falls to criterion 3.
+    """
+    r = _r()
+    a = _row("L1+W3 (= E composite)", 0.60, 0.30, params=None)
+    b = _row("L1", 0.55, 0.30, params=50)
+    out = _apply_tie_break(a, b, r)
+    criterion_2 = out["record"]["criteria"][1]
+    assert criterion_2["criterion"] == "fewer_fitted_parameters"
+    assert criterion_2["evaluable"] is False
+    assert "not evaluable" in criterion_2["note"]
+    # Falls through to criterion 3: L1 varies one axis, the composite two.
+    assert out["record"]["decided_by"] == "closer_to_r"
+    assert out["winner"]["level"] == "L1"
+
+
+def test_axes_varied_from_r_raises_on_an_unknown_level():
+    """A composite missing from `_COMPOSITE_AXES_VARIED` must fail loudly
+    rather than silently counting as one axis (which could decide §4.1
+    criterion 3 wrongly).
+    """
+    assert _axes_varied_from_r("R") == 0
+    assert _axes_varied_from_r("L1") == 1
+    assert _axes_varied_from_r("S2 (= L composite)") == 1
+    assert _axes_varied_from_r("L1+W3 (= E composite)") == 2
+    with pytest.raises(ValueError, match="unknown level"):
+        _axes_varied_from_r("L1+W2+H1 (= future composite)")
+
+
+def test_selection_record_carries_the_pool_with_its_numbers():
+    """The ledger owes 'the rejected candidates with their numbers'; the
+    selection record must be self-sufficient rather than a list of names to
+    be joined against stage1.json by hand.
+    """
+    r = _r(macro_f1=0.4840, worst=0.3182)
+    s2 = _row("S2", 0.4851, 0.2927, distribution=False)
+    l1 = _row("L1", 0.4336, 0.2667, distribution=True)
+    l2 = _row("L2", 0.4199, 0.2162, disqualified=True, distribution=True)
+
+    result = _select("L", r, [r, s2], [r, s2, l1, l2])
+
+    pool = {entry["level"]: entry for entry in result["pool"]}
+    assert set(pool) == {"R", "S2", "L1", "L2"}
+    assert pool["L2"]["disqualified_worst_class_floor"] is True
+    assert pool["L2"]["eligible"] is False
+    assert pool["S2"]["produces_three_class_distribution"] is False
+    assert pool["L1"]["eligible"] is True
+    assert pool["L1"]["macro_f1"] == 0.4336
+    assert pool["L1"]["worst_class_f1"] == 0.2667
+    # Ranked by macro-F1, descending.
+    assert [e["level"] for e in result["pool"]] == ["S2", "R", "L1", "L2"]
+
+
+def test_cross_target_floor_failure_is_distinguished_in_the_pool():
+    r = _r()
+    ok_here = _row("P3", 0.52, 0.30, distribution=False)  # passes floor on this target
+    l1 = _row("L1", 0.50, 0.31, distribution=True)
+
+    result = _select(
+        "E", r, [r], [r, ok_here, l1], cross_target_disqualified=frozenset({"P3"})
+    )
+
+    pool = {entry["level"]: entry for entry in result["pool"]}
+    assert pool["P3"]["disqualified_worst_class_floor"] is False
+    assert pool["P3"]["disqualified_by_other_target_floor"] is True
+    assert pool["P3"]["eligible"] is False
 
 
 def test_tiebreak_exhausted_is_recorded_as_unresolved_not_as_a_decision():

@@ -1,6 +1,6 @@
 {
   "stage": "stage2",
-  "generated_at": "2026-08-05T03:53:58.234285+00:00",
+  "generated_at": "2026-08-05T04:20:30.736454+00:00",
   "split_version": "interim-v1",
   "split_source_sha256": "8fdbec27dbcec27b0d2df4a1e3106f98e3e72d746bd0faa939f57e6a49922ddf",
   "reference": "R",
@@ -17,7 +17,7 @@
       "target": "L",
       "axis": "Sharing",
       "produces_three_class_distribution": false,
-      "fitted_parameter_count": 23126,
+      "fitted_parameter_count": 20020,
       "n_scored": 200,
       "n_total": 200,
       "coverage": 1.0,
@@ -53,6 +53,7 @@
     "E": {
       "level": "L1+W3 (= E composite)",
       "target": "E",
+      "axis": null,
       "produces_three_class_distribution": true,
       "fitted_parameter_count": 34605,
       "n_scored": 224,
@@ -119,13 +120,195 @@
       "eligible_ranked": [
         "L1"
       ],
+      "pool": [
+        {
+          "level": "S2",
+          "macro_f1": 0.485051989268994,
+          "per_class_f1": [
+            0.7009345794392523,
+            0.29268292682926833,
+            0.46153846153846156
+          ],
+          "worst_class_f1": 0.29268292682926833,
+          "fitted_parameter_count": 20020,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "S2 (= L composite)",
+          "macro_f1": 0.485051989268994,
+          "per_class_f1": [
+            0.7009345794392523,
+            0.29268292682926833,
+            0.46153846153846156
+          ],
+          "worst_class_f1": 0.29268292682926833,
+          "fitted_parameter_count": 20020,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "R",
+          "macro_f1": 0.4839764100633666,
+          "per_class_f1": [
+            0.6956521739130436,
+            0.3181818181818182,
+            0.4380952380952381
+          ],
+          "worst_class_f1": 0.3181818181818182,
+          "fitted_parameter_count": 20020,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "W3",
+          "macro_f1": 0.46823126178644925,
+          "per_class_f1": [
+            0.7248908296943232,
+            0.29885057471264365,
+            0.38095238095238093
+          ],
+          "worst_class_f1": 0.29885057471264365,
+          "fitted_parameter_count": 20020,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "P2",
+          "macro_f1": 0.4661985710766198,
+          "per_class_f1": [
+            0.6969696969696969,
+            0.2682926829268293,
+            0.4333333333333333
+          ],
+          "worst_class_f1": 0.2682926829268293,
+          "fitted_parameter_count": 20020,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": true,
+          "eligible": false
+        },
+        {
+          "level": "H1",
+          "macro_f1": 0.4652618135376756,
+          "per_class_f1": [
+            0.7068965517241379,
+            0.3555555555555555,
+            0.3333333333333333
+          ],
+          "worst_class_f1": 0.3333333333333333,
+          "fitted_parameter_count": 1540,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "P3",
+          "macro_f1": 0.4475891924167786,
+          "per_class_f1": [
+            0.6995073891625616,
+            0.20689655172413793,
+            0.43636363636363634
+          ],
+          "worst_class_f1": 0.20689655172413793,
+          "fitted_parameter_count": 39988,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": true,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "B1",
+          "macro_f1": 0.44079182985016,
+          "per_class_f1": [
+            0.6010928961748634,
+            0.3181818181818182,
+            0.40310077519379844
+          ],
+          "worst_class_f1": 0.3181818181818182,
+          "fitted_parameter_count": 20020,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "H2",
+          "macro_f1": 0.4338557028589725,
+          "per_class_f1": [
+            0.703862660944206,
+            0.2682926829268293,
+            0.32941176470588235
+          ],
+          "worst_class_f1": 0.2682926829268293,
+          "fitted_parameter_count": 1566,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": true,
+          "eligible": false
+        },
+        {
+          "level": "L1",
+          "macro_f1": 0.43361003726013164,
+          "per_class_f1": [
+            0.6872246696035241,
+            0.3469387755102041,
+            0.26666666666666666
+          ],
+          "worst_class_f1": 0.26666666666666666,
+          "fitted_parameter_count": 29991,
+          "produces_three_class_distribution": true,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": true
+        },
+        {
+          "level": "L2",
+          "macro_f1": 0.41988619919654396,
+          "per_class_f1": [
+            0.7049808429118773,
+            0.21621621621621623,
+            0.3384615384615384
+          ],
+          "worst_class_f1": 0.21621621621621623,
+          "fitted_parameter_count": 76,
+          "produces_three_class_distribution": true,
+          "disqualified_worst_class_floor": true,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "W2",
+          "macro_f1": 0.41986450592413527,
+          "per_class_f1": [
+            0.7111111111111111,
+            0.27450980392156865,
+            0.27397260273972607
+          ],
+          "worst_class_f1": 0.27397260273972607,
+          "fitted_parameter_count": 20020,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        }
+      ],
       "outcome": "no_structure_beat_the_incumbent",
       "selected": "L1",
       "separated_from_next": null,
       "separation_comparator": null,
       "separation_interval": null,
       "blocked_top_finalist": "S2 (= L composite)",
-      "note": "The highest-ranked finalist (S2 (= L composite)) cannot be selected: like R, it decides by threshold and returns a one-hot row rather than the genuine three-class distribution `SCIENCE.md` requires (\u00a72.2, \u00a74's closing rule). The selection is therefore the highest-ranked candidate that does produce one: L1 (macro-F1 0.4336, below R's 0.4840). **The ablation found no structure that beats the incumbent on this data** -- this is the finding, reported as such, not a positive selection."
+      "note": "The highest-ranked finalist (S2 (= L composite)) cannot be selected: like R, it decides by threshold and returns a one-hot row rather than the genuine three-class distribution `SCIENCE.md` requires (\u00a72.2, \u00a74's closing rule). The selection is therefore the highest-ranked candidate that does produce one: L1 (macro-F1 0.4336 vs R's 0.4840). **The ablation found no structure that beats the incumbent on this data** -- this is the finding, reported as such, not a positive selection."
     },
     "E": {
       "disqualified_worst_class_floor": [],
@@ -154,6 +337,188 @@
         "L1+W3 (= E composite)",
         "L1"
       ],
+      "pool": [
+        {
+          "level": "L1+W3 (= E composite)",
+          "macro_f1": 0.5358069538142191,
+          "per_class_f1": [
+            0.7659574468085106,
+            0.34146341463414637,
+            0.5
+          ],
+          "worst_class_f1": 0.34146341463414637,
+          "fitted_parameter_count": 34605,
+          "produces_three_class_distribution": true,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": true
+        },
+        {
+          "level": "W3",
+          "macro_f1": 0.5355533632581924,
+          "per_class_f1": [
+            0.7490909090909091,
+            0.34210526315789475,
+            0.5154639175257731
+          ],
+          "worst_class_f1": 0.34210526315789475,
+          "fitted_parameter_count": 23100,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "L1",
+          "macro_f1": 0.5289262312407524,
+          "per_class_f1": [
+            0.7789473684210526,
+            0.35000000000000003,
+            0.4578313253012048
+          ],
+          "worst_class_f1": 0.35000000000000003,
+          "fitted_parameter_count": 34605,
+          "produces_three_class_distribution": true,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": true
+        },
+        {
+          "level": "W2",
+          "macro_f1": 0.5210459442387153,
+          "per_class_f1": [
+            0.7638888888888888,
+            0.3896103896103896,
+            0.40963855421686746
+          ],
+          "worst_class_f1": 0.3896103896103896,
+          "fitted_parameter_count": 23100,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "R",
+          "macro_f1": 0.5198974358974359,
+          "per_class_f1": [
+            0.752,
+            0.30769230769230765,
+            0.5
+          ],
+          "worst_class_f1": 0.30769230769230765,
+          "fitted_parameter_count": 23100,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "P3",
+          "macro_f1": 0.5029993496010801,
+          "per_class_f1": [
+            0.7226890756302521,
+            0.28985507246376807,
+            0.4964539007092199
+          ],
+          "worst_class_f1": 0.28985507246376807,
+          "fitted_parameter_count": 46140,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": true,
+          "eligible": false
+        },
+        {
+          "level": "S2",
+          "macro_f1": 0.5021184006369225,
+          "per_class_f1": [
+            0.7245283018867924,
+            0.3488372093023256,
+            0.43298969072164956
+          ],
+          "worst_class_f1": 0.3488372093023256,
+          "fitted_parameter_count": 23100,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "P2",
+          "macro_f1": 0.4929953413633152,
+          "per_class_f1": [
+            0.7288135593220338,
+            0.2465753424657534,
+            0.5035971223021583
+          ],
+          "worst_class_f1": 0.2465753424657534,
+          "fitted_parameter_count": 23100,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": true,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "B1",
+          "macro_f1": 0.4853999911606734,
+          "per_class_f1": [
+            0.684931506849315,
+            0.30769230769230765,
+            0.4635761589403974
+          ],
+          "worst_class_f1": 0.30769230769230765,
+          "fitted_parameter_count": 23100,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "H2",
+          "macro_f1": 0.46348821548821545,
+          "per_class_f1": [
+            0.7439999999999999,
+            0.24242424242424243,
+            0.40404040404040403
+          ],
+          "worst_class_f1": 0.24242424242424243,
+          "fitted_parameter_count": 1570,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": true,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "H1",
+          "macro_f1": 0.4632808097202498,
+          "per_class_f1": [
+            0.7547169811320754,
+            0.27956989247311825,
+            0.3555555555555555
+          ],
+          "worst_class_f1": 0.27956989247311825,
+          "fitted_parameter_count": 1540,
+          "produces_three_class_distribution": false,
+          "disqualified_worst_class_floor": false,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        },
+        {
+          "level": "L2",
+          "macro_f1": 0.4438198894895755,
+          "per_class_f1": [
+            0.7735849056603774,
+            0.23529411764705882,
+            0.3225806451612903
+          ],
+          "worst_class_f1": 0.23529411764705882,
+          "fitted_parameter_count": 86,
+          "produces_three_class_distribution": true,
+          "disqualified_worst_class_floor": true,
+          "disqualified_by_other_target_floor": false,
+          "eligible": false
+        }
+      ],
       "outcome": "selected_by_tiebreak",
       "selected": "L1",
       "separated_from_next": false,
@@ -176,7 +541,9 @@
           {
             "criterion": "higher_worst_class_f1",
             "top": 0.34146341463414637,
-            "runner_up": 0.35000000000000003
+            "runner_up": 0.35000000000000003,
+            "tolerance": 1e-09,
+            "decided": true
           }
         ]
       },

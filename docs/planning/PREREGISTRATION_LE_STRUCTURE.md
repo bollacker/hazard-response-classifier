@@ -413,3 +413,58 @@ amendment, so that baseline is **not** a ladder candidate, is not eligible for
 selection, and does not appear in `stage1.json`'s candidate list. It exists
 only as a known-answer anchor for the harness (§3's majority-class figures)
 and may be reported as a reference line, clearly marked as not a candidate.
+
+**2026-08-05 — §4 steps 3–4 operate on the *eligible* ranking, wherever the
+never-selectable structures happen to rank.** Found by the second independent
+adversarial review of slice C. The first tie-break implementation applied
+§4.1 only when the macro-F1 leader among stage 2's finalists was itself the
+eligible leader. When a never-selectable two-head structure (`R`, or a
+two-head composite) topped the finalist ranking instead, the code fell
+through to §4's closing rule and selected the eligible macro-F1 leader **by
+rank alone** — even where step 3's separation against the next-ranked
+eligible candidate had been computed and had failed. That made §4.1's
+applicability depend on where a structure that can never be selected happens
+to rank — the same defect class as the step-4 omission recorded above.
+
+**Reading fixed, from this document's own reasoning:** "an unseparated lead
+on macro-F1 is not evidence", and step 3's runner-up is "whatever would have
+been selected instead" — both statements are indifferent to the positions of
+ineligible structures. So steps 2–4 rank the *eligible* candidates (those
+surviving §3's floor on both targets **and** producing a genuine three-class
+distribution); step 3 compares the top two; and when separation fails, §4.1
+decides between them — in every outcome, including the closing-rule
+("no structure beat the incumbent") case. On the current data this changes
+nothing: L has a single eligible candidate, and E's eligible leader also
+topped the finalists, so §4.1 already fired there. What the fix removes is
+the path where a *stronger `R`* would have silently flipped E's selection
+back to the unseparated composite — a selection that must not depend on the
+incumbent's own score.
+
+**Also applied to stage 1's per-axis triage:** `best_level_per_axis` now
+excludes a level failing §3's floor on *either* target (the cross-target
+scope recorded above) from being best-of-axis, matching the
+disqualification the selection itself applies — otherwise a composite could
+be built from a level the selection rule has already thrown out. No axis
+winner changes on the current data.
+
+**2026-08-05 — two ambiguities recorded as known and deliberately
+unresolved.** Raised by the same review. Neither can affect selection on the
+current data, and resolving either now would be writing a rule with results
+visible, so both are recorded rather than decided:
+
+1. **§4.1 consults only the top two eligible candidates.** With three or
+   more mutually-unseparated eligible candidates, a third candidate with the
+   best worst-class F1 is never consulted — §4's "the candidates are tied"
+   does not say whether the tie is pairwise or set-wide. The current data
+   has at most two eligible candidates per target, so the case cannot
+   arise. To be settled in the re-issued pre-registration (§5) if it can.
+2. **`L2`'s fitted-parameter count excludes its PCA basis.**
+   `OrdinalCumulativeLink` reduces to ≤10 principal components before
+   fitting, and only the cumulative-link coefficients and cutpoints are
+   counted — while the PCA basis itself is fitted from data (~768×k values
+   per cell). A §4.1 criterion-2 comparison between `L1` and `L2` would
+   therefore compare counting conventions as much as structures. Documented
+   in `candidates.py`; it cannot bite in 1.1 because `L2` fails §3's floor
+   on both targets. To be settled (count the basis, or define criterion 2
+   as decision-function-only explicitly) before any selection in which
+   `L2` is eligible.

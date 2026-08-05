@@ -72,6 +72,52 @@ AXIS_OF_LEVEL = {
 }
 
 
+def best_level_per_axis(results: list[dict], targets: tuple[str, ...] = TARGETS) -> dict[str, dict[str, str]]:
+    """Informational triage feeding slice C's composite (§6) -- not a
+    selection. R has no axis of its own (its row is `axis: null`); it is
+    included as the baseline every real axis's level(s) must beat, not as
+    a pseudo-axis in its own right.
+
+    A level disqualified by §3's worst-class floor cannot be the "best" of
+    its axis -- §4 step 1 removes it before anything is ranked, so letting
+    it win here would build the stage-2 composite out of a structure the
+    selection rule has already thrown out. **The floor carries its §3
+    cross-target scope** ("below 0.25 on either target", see
+    `PREREGISTRATION_LE_STRUCTURE.md` §8's 2026-08-05 amendment): a level
+    failing on *either* target is excluded on *both*, matching exactly the
+    disqualification stage 2's selection applies. No level's axis win is
+    affected on the current data (every cross-target-failing level also
+    loses its axis to R on macro-F1); this guards a re-run.
+
+    R stays as each axis's fallback even in the (hypothetical) case where R
+    itself failed the floor somewhere: this mapping names the composite's
+    per-axis *construction levels*, and "keep R's level" is the only
+    coherent construction when an axis has no surviving level -- R's own
+    eligibility as a candidate is §4's concern, not this triage's.
+    """
+    floor_failures_any_target = {
+        row["level"] for row in results if row["disqualified_worst_class_floor"]
+    }
+    out: dict[str, dict[str, str]] = {t: {} for t in targets}
+    for target in targets:
+        by_axis: dict[str, list[dict]] = {}
+        for row in results:
+            if row["target"] != target or row["axis"] is None:
+                continue
+            by_axis.setdefault(row["axis"], []).append(row)
+        r_row = next(r for r in results if r["target"] == target and r["level"] == "R")
+        for axis, level_rows in by_axis.items():
+            eligible_levels = [
+                r
+                for r in level_rows
+                if not r["disqualified_worst_class_floor"]
+                and r["level"] not in floor_failures_any_target
+            ]
+            best = max(eligible_levels + [r_row], key=lambda r: r["macro_f1"])
+            out[target][axis] = best["level"]
+    return out
+
+
 def _target_frames() -> dict[str, dict[str, object]]:
     train = load_interim(split="train")
     dev = load_interim(split="eval")
@@ -245,29 +291,6 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
             f"vs_R_excludes_zero={diff.excludes_zero}"
         )
 
-    # Informational triage feeding slice C's composite (§6) -- not a
-    # selection. R has no axis of its own (its row is `axis: null`); it is
-    # included as the baseline every real axis's level(s) must beat, not as
-    # a pseudo-axis in its own right.
-    best_level_per_axis: dict[str, dict[str, str]] = {t: {} for t in TARGETS}
-    for target in TARGETS:
-        by_axis: dict[str, list[dict]] = {}
-        for row in results:
-            if row["target"] != target or row["axis"] is None:
-                continue
-            by_axis.setdefault(row["axis"], []).append(row)
-        r_row = next(r for r in results if r["target"] == target and r["level"] == "R")
-        for axis, level_rows in by_axis.items():
-            # A level disqualified by §3's worst-class floor cannot be the
-            # "best" of its axis -- §4 step 1 removes it before anything is
-            # ranked, so letting it win here would build the stage-2
-            # composite out of a structure the selection rule has already
-            # thrown out. No level is affected on the current data; this
-            # guards a re-run against different data.
-            eligible_levels = [r for r in level_rows if not r["disqualified_worst_class_floor"]]
-            best = max(eligible_levels + [r_row], key=lambda r: r["macro_f1"])
-            best_level_per_axis[target][axis] = best["level"]
-
     split_manifest = json.loads(INTERIM_SPLIT.read_text())
 
     return {
@@ -283,7 +306,7 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
             "not a benchmark result, not a generalization estimate, and not "
             "reportable under SCIENCE.md §Evidence and outputs."
         ),
-        "best_level_per_axis": best_level_per_axis,
+        "best_level_per_axis": best_level_per_axis(results),
         "results": results,
     }
 
