@@ -296,6 +296,7 @@ whole process exists to prevent), so spend the strongest reasoning there.
 | Integration check | Opus | Checking a fix against the *whole* ledger for second-order conflicts is the other place interference hides. |
 | Fix-proposal | Sonnet 5 | Scope is one issue against an already-locked ledger — constrained generative work. |
 | Implementation-slice | Sonnet 5 | Standard coding + test writing for a small, scoped slice. |
+| **Plan authoring** (an execution plan for a PR or queue item) | **Opus, high effort** | Added 2026-08-05 — see below. A plan is written by reading modules against the specifications that describe them, which is where the defects are. |
 | **Verification sweep / PR close** | **Opus, high effort** | Added 2026-08-05 — see below. Not bookkeeping: it is a critique pass aimed at the work just finished. |
 | STATUS.md/DECISIONS.md bookkeeping | Haiku 4.5 | Pure mechanical file updates — no judgment required. Applies to *recording* a decided outcome, not to deciding whether the outcome is right. |
 
@@ -327,6 +328,40 @@ practical, run the sweep as a separate session given the diff and the
 specifications but not the plan's reasoning, and ask whether they match. This is
 a model-selection concern rather than a new mechanism: the scarce resource being
 allocated is attention that has not already committed to an answer.
+
+**Writing an execution plan is a critique pass, not drafting** (added
+2026-08-05, Kurt; Riki's concurrence assumed, not confirmed on record). The
+table had no row for plan authoring, so the nearest match was **fix-proposal →
+Sonnet 5** — "constrained generative work" against an already-locked ledger.
+Three plans say that is the wrong reading of what the work actually is:
+
+- **`PR4_EXECUTION_PLAN.md`** was written against a queue item that said PR 4
+  "builds nothing new". Reading the modules found two real code changes — the
+  model-input text view was a literal attribute access while `ARCHITECTURE.md`
+  §5 claimed it was configuration-selected, and stage 7's broadest disclaimer
+  pattern was firing on bare risk vocabulary in the one direction phase C can
+  only move toward non-violating. Both became locked decisions
+  ([D-69](DECISIONS.md#d-69), [D-70](DECISIONS.md#d-70)) before any code.
+- **`PR5_EXECUTION_PLAN.md`** found that the structure selection behind D-68
+  was fitted on raw `response_text` while `SCIENCE.md` §Legitimization Training
+  requires working text — a gap no planning document mentioned and the
+  pre-registration never addressed. It became [D-72](DECISIONS.md#d-72).
+- **`PR7_EXECUTION_PLAN.md`** found three things invisible from the queue
+  proposal: `evaluated_hazards` is set at record construction and never
+  updated, `hazard_scope` has no default anywhere, and `schema.py`'s columns
+  are the baseline's and carry neither 1.1 identity field.
+
+The common shape is the same one the Critique and sweep rows already spend
+strong reasoning on: **reading modules against the sentences that claim to
+describe them.** A plan written without that check is a restatement of the
+work list, which is precisely the failure this document opens by describing —
+and every one of the six findings above would have been missed by a pass that
+took the queue proposal at its word.
+
+The same fresh-context preference does *not* apply here, and for the opposite
+reason: plan authoring benefits from having read the surrounding code and
+decisions in the same session, because the findings come from holding a
+specification and a module in view at once.
 
 ---
 
