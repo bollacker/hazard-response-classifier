@@ -4,9 +4,11 @@ Last updated: 2026-08-05 — **PR 4 is complete and closed; PR 7 is the next
 slice of item 4, and the remaining order is PR 7 → PR 5 → PR 6**
 ([D-56](DECISIONS.md#d-56) places PR 7; [D-71](DECISIONS.md#d-71) moved PR 5
 ahead of PR 6, since PR 6 must round-trip an artifact format D-49 makes PR 5's).
-**PR 5 now has an execution plan**
-([`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md)) whose slice 0 has already
-run; two of its three gate questions are open for Kurt.
+**Both remaining unstarted PRs now have execution plans** —
+[`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md) (one open gate: does the run
+profile carry the model-input text view?) and
+[`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md) (slice 0 run, G-1 and G-2
+decided, only G-3 left, at the close).
 [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md) is now a record of what was
 built. PR 4 carried two real code changes rather than none —
 [D-69](DECISIONS.md#d-69)'s text-view seam and [D-70](DECISIONS.md#d-70)'s
@@ -612,10 +614,26 @@ Detailed phased proposal:
 
    **PR 7 (evaluator runner) is next** — input schema, run profile, batch
    runner, CLI, and `failures.csv` — **then PR 5, then PR 6**
-   ([D-56](DECISIONS.md#d-56), [D-71](DECISIONS.md#d-71)). PR 7 inherits
-   D-69's run-profile half: whether a profile carries the model-input text
-   view is its call, not PR 4's (`../ARCHITECTURE.md` §5). **Item 4 stays
+   ([D-56](DECISIONS.md#d-56), [D-71](DECISIONS.md#d-71)). **Item 4 stays
    open**; three PRs remain.
+
+   **PR 7 has a written plan:
+   [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
+   slices — A input schema and record construction, B run profile and artifact
+   resolution, C batch runner and `failures.csv`, D the two entry points, E a
+   real run plus the sweep and close. Everything it drives is built; what is
+   missing is the shell. **One gate question, blocking slice B only:** whether
+   the run profile carries the model-input text view — D-69's deferred half,
+   which `../ARCHITECTURE.md` §5 assigns to PR 7 by name. The plan recommends
+   yes, conditional on a test that flips it to a non-default value. Three
+   things it found by reading the code: `evaluated_hazards` is set at record
+   construction and **nothing ever updates it**; `hazard_scope` has **no
+   default anywhere**, which is D-57's half that becomes real here; and
+   `schema.py`'s columns are the baseline's and carry neither `request_id` nor
+   `response_id`. It also flags, without blocking, that §2's classification of
+   a bad supplied hazard as a *run rejection* forces an all-or-nothing
+   two-pass runner — correct per the specification, and harsher than a
+   benchmark harness would normally be.
 
    **PR 5 has a written plan:
    [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md)** (2026-08-05). Six
@@ -944,6 +962,43 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 7 planned.**
+  [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md), five slices. PR 7 is
+  plumbing — every piece it composes (`open_run`, `validate_supplied_hazard`,
+  `run_pipeline`, the registry, two of four views) is built and tested — so its
+  risk sits in edge cases rather than in science. **One gate question**,
+  blocking slice B only: whether the run profile carries the model-input text
+  view, which [D-69](DECISIONS.md#d-69) deferred to PR 7 by name and
+  `../ARCHITECTURE.md` §5 states as a fact about the future. Recommended yes,
+  *conditional on* a test that flips it to a non-default value — otherwise it
+  is the unexercised surface D-69 rejected in PR 4.
+
+  **Three gaps found by reading the code against the work list**, none
+  visible from the planning documents:
+
+  - **`evaluated_hazards` is set at record construction and nothing ever
+    updates it.** Correct in 1.1 only because stage 3 is a placeholder that
+    returns no additional hazards. PR 7 owns the construction contract and
+    pins the reason with a comment; the merge belongs to stage 3 when it
+    becomes real, since `../ARCHITECTURE.md` §2 has `hazard_scope` constrain
+    which *additional* hazards detection may return.
+  - **`hazard_scope` has no default anywhere.** [D-57](DECISIONS.md#d-57)
+    predicted this would surface as a PR 7 blocker, and it does; the default
+    belongs in the profile layer, not `open_run`, so `RunContext` always
+    carries a resolved scope.
+  - **`schema.py`'s columns are the baseline's** — no `request_id`, no
+    `response_id` — so the 1.1 input schema is a new module, not an extension
+    (D-48).
+
+  **Raised without blocking:** `../ARCHITECTURE.md` §2 classifies a bad
+  supplied hazard as a **run rejection**, covering "any input row", so a
+  conforming runner must validate every row *before scoring any* and abort
+  all-or-nothing. That is what the plan implements and what PR 7's own exit
+  criterion requires — but it is harsher than a benchmark harness would
+  normally be, where a bad row would go to `failures.csv` and the batch would
+  continue. The ergonomics only become visible once a runner exists, and
+  changing it later means amending §2 rather than adjusting code.
 
 - 2026-08-05 — **PR 5 planned, resequenced ahead of PR 6, and its first gate
   question measured.** Three things, in one session, none of them PR 5
