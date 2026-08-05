@@ -163,6 +163,9 @@ class MajorityClassBaseline:
             raise ValueError("cannot fit a majority class on zero rows")
         self.majority_class = int(np.bincount(y, minlength=3).argmax())
 
+    def fitted_parameter_count(self) -> int:
+        return 1  # the majority class index, and nothing else
+
     def predict_proba(self, X: np.ndarray, hazards: np.ndarray) -> np.ndarray:
         if self.majority_class is None:
             raise RuntimeError("fit must be called before predict_proba")
@@ -231,6 +234,23 @@ class TwoHeadReference:
 
         self._cells = cells
         self.unavailable_hazards = frozenset(unavailable)
+
+    def fitted_parameter_count(self) -> int:
+        """§4.1's second tie-break criterion. Counts the **decision
+        function's** free parameters: per fitted cell, two heads'
+        coefficients and intercepts plus the two thresholds.
+
+        Standardization statistics (`mean`/`scale`) are deliberately
+        excluded. They are fitted from data, but every candidate on the
+        ladder computes them in the same way and in the same quantity per
+        cell, so including them would add a constant that shifts every count
+        without changing any comparison -- while swamping the structural
+        differences the criterion exists to detect.
+        """
+        return sum(
+            2 * (len(nonzero.coef) + 1) + 2
+            for nonzero, _high, _t1, _t2 in self._cells.values()
+        )
 
     def predict_proba(self, X: np.ndarray, hazards: np.ndarray) -> np.ndarray:
         X = np.asarray(X, dtype=np.float64)
@@ -502,6 +522,13 @@ class TwoHeadFamily:
         self._cells = cells
         self.unavailable_hazards = frozenset(unavailable)
 
+    def fitted_parameter_count(self) -> int:
+        """§4.1 criterion 2 -- same convention as `TwoHeadReference`."""
+        return sum(
+            2 * (len(nonzero.coef) + 1) + 2
+            for nonzero, _high, _t1, _t2 in self._cells.values()
+        )
+
     def predict_proba(self, X: np.ndarray, hazards: np.ndarray) -> np.ndarray:
         X = np.asarray(X, dtype=np.float64)
         hazards = np.asarray(hazards)
@@ -621,6 +648,16 @@ class MultinomialSoftmax:
 
         self._cells = cells
         self.unavailable_hazards = frozenset(unavailable)
+
+    def fitted_parameter_count(self) -> int:
+        """§4.1 criterion 2: per fitted cell, the softmax coefficient matrix
+        plus its intercepts. Standardization statistics excluded, per
+        `TwoHeadReference.fitted_parameter_count`'s convention.
+        """
+        return sum(
+            int(model.coef_.size + model.intercept_.size)
+            for _mean, _scale, model in self._cells.values()
+        )
 
     def predict_proba(self, X: np.ndarray, hazards: np.ndarray) -> np.ndarray:
         X = np.asarray(X, dtype=np.float64)
@@ -769,6 +806,19 @@ class OrdinalCumulativeLink:
         self._cells = cells
         self.unavailable_hazards = frozenset(unavailable)
 
+    def fitted_parameter_count(self) -> int:
+        """§4.1 criterion 2: per fitted cell, the cumulative-link
+        coefficients plus its ordered cutpoints (`result.params` holds both).
+        The PCA basis is a fitted transform rather than a decision-function
+        parameter and is excluded, matching the exclusion of standardization
+        statistics elsewhere -- noted because it makes this candidate's count
+        look smaller than its true fitting cost.
+        """
+        return sum(
+            int(np.asarray(result.params).size)
+            for _mean, _scale, _pca, _cs, result, _labels in self._cells.values()
+        )
+
     def predict_proba(self, X: np.ndarray, hazards: np.ndarray) -> np.ndarray:
         X = np.asarray(X, dtype=np.float64)
         hazards = np.asarray(hazards)
@@ -845,12 +895,17 @@ class _JointTargetView:
         predict_fn: Callable[[np.ndarray, np.ndarray], np.ndarray],
         *,
         produces_three_class_distribution: bool,
+        fitted_parameter_count: int,
     ) -> None:
         self.name = name
         self._predict_fn = predict_fn
         # Propagated from the joint candidate rather than defaulted: a view
         # must never claim a distribution property its own model does not have.
         self.produces_three_class_distribution = produces_three_class_distribution
+        self._fitted_parameter_count = fitted_parameter_count
+
+    def fitted_parameter_count(self) -> int:
+        return self._fitted_parameter_count
 
     def fit(self, X: np.ndarray, y: np.ndarray, hazards: np.ndarray) -> None:
         raise RuntimeError(
@@ -967,6 +1022,15 @@ class SharedTwoHeadJoint:
         self._thresholds = thresholds
         self.unavailable_hazards = frozenset(unavailable)
 
+    def fitted_parameter_count(self) -> int:
+        """§4.1 criterion 2. One shared head pair per hazard -- counted
+        **once**, not once per target, which is the whole point of the
+        Sharing axis -- plus each target's own threshold pair.
+        """
+        heads = sum(2 * (len(nonzero.coef) + 1) for nonzero, _high in self._heads.values())
+        thresholds = 2 * sum(len(per_target) for per_target in self._thresholds.values())
+        return heads + thresholds
+
     def _predict(self, target: str, X: np.ndarray, hazards: np.ndarray) -> np.ndarray:
         X = np.asarray(X, dtype=np.float64)
         hazards = np.asarray(hazards)
@@ -997,6 +1061,7 @@ class SharedTwoHeadJoint:
             f"S2[{target}]",
             lambda X, hazards: self._predict(target, X, hazards),
             produces_three_class_distribution=self.produces_three_class_distribution,
+            fitted_parameter_count=self.fitted_parameter_count(),
         )
 
 

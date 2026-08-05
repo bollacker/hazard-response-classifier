@@ -64,7 +64,10 @@ thing to re-examine when real data arrives.
 - The **E model** uses all 859 rows.
 - The **L model** excludes the enablement-only hazards `prv` and `sxc_prn`
   (96 rows), because `SCIENCE.md` phase A makes final L `N/A` for them. Their
-  L labels exist in the source but are unused. L therefore fits on 763 rows.
+  L labels exist in the source but are unused. L is therefore eligible on
+  **763 rows total**, which the frozen split divides into **563 fit / 200
+  dev** (corrected 2026-08-05: 763 is the eligible population, not the fit
+  slice). E's 859 divide into 635 / 224.
 
 ---
 
@@ -374,6 +377,34 @@ a 95% interval of (−0.0233, +0.0393) — comfortably not separated, the same
 verdict the wrong comparator happened to give, on the right basis. Where a
 target has only one eligible candidate (L), step 3 is **not applicable**
 rather than passed or failed, and is recorded as such.
+
+**2026-08-05 — §4 step 4's tie-break was not implemented, and applying it
+changes the E selection.** Found by an independent adversarial review of the
+slice. `_select` enforced steps 1–3 and then returned the macro-F1 leader —
+but step 4 says plainly: "**If separation fails**, the candidates are tied
+and §4.1 decides." Ranking first on macro-F1 does not settle a tie; macro-F1
+*produced* the ranking, and step 4 exists precisely because an unseparated
+lead on it is not evidence.
+
+On the E target separation failed, so §4.1 applies. Criterion 1, higher
+worst-class F1, selects **`L1` (0.3500)** over the `L1+W3` composite
+(0.3415), reversing the recorded selection. Criteria 2 and 3 point the same
+way (identical parameter counts; `L1` varies one axis from `R`, the composite
+two). **E's selection is therefore `L1`, not the composite** — which makes
+both targets select `L1`.
+
+The omission had propagated: a unit test pinned the wrong behaviour using
+these exact numbers, and the plan and `STATUS.md` both recorded the composite
+as E's selection. §4.1 is now implemented in full, in order, with the
+deciding criterion recorded in `stage2.json`.
+
+**Also settled here: §3's floor is applied across targets.** §3 says "below
+0.25 **on either target**", while §4 is otherwise applied per target. The
+literal §3 wording is taken — a level failing the floor on one target is
+disqualified on both — because it is what the document says and it is the
+conservative reading. On this data it changes nothing: the only
+floor-failing structure that produces a distribution (`L2`) fails on both
+targets anyway.
 
 **2026-08-04 — the ladder's candidate list is closed (§2.3), restated.** Not a
 change; a confirmation made when the harness gained a `MajorityClassBaseline`

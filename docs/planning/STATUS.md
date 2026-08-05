@@ -573,11 +573,13 @@ Detailed phased proposal:
    **The finding, stated so slice D's entry cannot soften it: the ablation
    found no structure that beats the incumbent `R` on this data.** No
    candidate achieved significant separation from `R` on either target.
-   **L selects `L1`** — the best structure that produces the three-class
-   distribution `SCIENCE.md` requires, while scoring *below* `R` (macro-F1
-   0.4336 vs 0.4840). **E selects the `L1+W3` composite** (0.5358 vs 0.5199),
-   without significant separation. Every figure is a dev-set number under
-   [D-66](DECISIONS.md#d-66) — not a benchmark result.
+   **Both targets select `L1`.** On L it is the only structure that both
+   survives the floor and produces the three-class distribution `SCIENCE.md`
+   requires, and it scores *below* `R` (macro-F1 0.4336 vs 0.4840). On E the
+   `L1+W3` composite led on macro-F1 (0.5358 vs 0.5289) but was not
+   significantly separated from `L1`, so §4 step 4's tie-break decided it on
+   worst-class F1 (`L1` 0.3500 vs 0.3415). Every figure is a dev-set number
+   under [D-66](DECISIONS.md#d-66) — not a benchmark result.
 
    **`R` is not the only structure barred from selection.** §4's closing rule
    requires a genuine three-class distribution, and that is structural: every
@@ -933,10 +935,12 @@ further concurrence — Riki directed it.
   unreached branch on this data, but reachable on a re-run against real
   Standards data.
 
-  **Findings.** No structure beat `R` on either target. L → `L1`, selected
-  only as the best qualifying structure while scoring below `R` (0.4336 vs
-  0.4840). E → the `L1+W3` composite (0.5358 vs 0.5199), no significant
-  separation. `L2` was disqualified by the worst-class floor on both targets.
+  **Findings.** No structure beat `R` on either target, and **both select
+  `L1`**. L → `L1` as the only qualifying structure, scoring below `R`
+  (0.4336 vs 0.4840). E → `L1` on §4.1's tie-break: the `L1+W3` composite led
+  on macro-F1 but was not separated from `L1`, which has the higher
+  worst-class F1 (0.3500 vs 0.3415). `L2` was disqualified by the worst-class
+  floor on both targets.
   19 new tests across selection, composites, and the distribution property
   (397 total, zero regressions); `stage1.json` regenerated to carry the new
   field with every metric unchanged, and stage 2 confirmed reproducible
@@ -1105,7 +1109,8 @@ further concurrence — Riki directed it.
 
   **The pre-registration's design choices worth knowing:** an ablation ladder
   from a declared reference rather than a grid (the full cross product is 324
-  configurations against 224 dev rows), capped at 32 fits total with no
+  configurations against 224 dev rows), capped at 28 fits total (corrected
+  2026-08-04, `PREREGISTRATION_LE_STRUCTURE.md` §8 — was 32) with no
   adaptive expansion; macro-F1 as the primary metric because it is the direct
   encoding of the equal-importance requirement, with a worst-class floor to
   reject candidates that solve two classes by abandoning the third; a **paired

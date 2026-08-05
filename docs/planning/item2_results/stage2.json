@@ -1,11 +1,13 @@
 {
   "stage": "stage2",
-  "generated_at": "2026-08-05T03:34:27.827405+00:00",
+  "generated_at": "2026-08-05T03:53:58.234285+00:00",
   "split_version": "interim-v1",
   "split_source_sha256": "8fdbec27dbcec27b0d2df4a1e3106f98e3e72d746bd0faa939f57e6a49922ddf",
   "reference": "R",
   "worst_class_f1_floor": 0.25,
   "bootstrap_resamples": 1000,
+  "worst_class_floor_applied_across_targets": true,
+  "worst_class_floor_scope_note": "\u00a73's floor is written 'below 0.25 on either target', so a level failing it on one target is disqualified on both, even though \u00a74 is otherwise applied per target. The literal (and more conservative) reading is used; see PREREGISTRATION_LE_STRUCTURE.md \u00a78. On this data it changes nothing -- the only floor-failing distribution-producer (L2) fails on both targets.",
   "hand_picked_combinations_beyond_composite": 0,
   "hand_picked_combinations_rationale": "Pre-registration \u00a72.4 allows at most 3 hand-picked combinations 'where stage 1 suggests an interaction'. Stage 1 found no candidate significantly beating R on either target (only B1 was significant, and worse) -- no data-driven interaction to chase, and 'at most 3' already permits zero. Kurt's direction, 2026-08-05.",
   "not_a_benchmark_result": "Every number here is a dev-set number under DECISIONS.md D-66 -- not a benchmark result, not a generalization estimate, and not reportable under SCIENCE.md \u00a7Evidence and outputs.",
@@ -15,6 +17,7 @@
       "target": "L",
       "axis": "Sharing",
       "produces_three_class_distribution": false,
+      "fitted_parameter_count": 23126,
       "n_scored": 200,
       "n_total": 200,
       "coverage": 1.0,
@@ -51,6 +54,7 @@
       "level": "L1+W3 (= E composite)",
       "target": "E",
       "produces_three_class_distribution": true,
+      "fitted_parameter_count": 34605,
       "n_scored": 224,
       "n_total": 224,
       "coverage": 1.0,
@@ -91,7 +95,9 @@
     "L": {
       "disqualified_worst_class_floor": [],
       "pool_disqualified_worst_class_floor": [
+        "H2",
         "L2",
+        "P2",
         "P3"
       ],
       "excluded_no_three_class_distribution": [
@@ -126,7 +132,8 @@
       "pool_disqualified_worst_class_floor": [
         "H2",
         "L2",
-        "P2"
+        "P2",
+        "P3"
       ],
       "excluded_no_three_class_distribution": [
         "B1",
@@ -147,8 +154,8 @@
         "L1+W3 (= E composite)",
         "L1"
       ],
-      "outcome": "selected_without_separation",
-      "selected": "L1+W3 (= E composite)",
+      "outcome": "selected_by_tiebreak",
+      "selected": "L1",
       "separated_from_next": false,
       "separation_comparator": "L1",
       "separation_interval": {
@@ -163,7 +170,17 @@
         "comparator": "L1",
         "top": "L1+W3 (= E composite)"
       },
-      "note": "L1+W3 (= E composite) ranked first among eligible candidates but was not significantly separated from L1 (\u00a74 step 3 fails). It is selected because it is the highest-ranked structure that produces a genuine three-class distribution -- not because it was shown to beat the incumbent."
+      "tie_break": {
+        "decided_by": "higher_worst_class_f1",
+        "criteria": [
+          {
+            "criterion": "higher_worst_class_f1",
+            "top": 0.34146341463414637,
+            "runner_up": 0.35000000000000003
+          }
+        ]
+      },
+      "note": "L1+W3 (= E composite) led on macro-F1 but was not significantly separated from L1 (\u00a74 step 3 fails), so the two are tied and \u00a74.1 decides. \u00a74.1 criterion 1 (higher worst-class F1) decides: L1 has 0.3500 against 0.3415. Selected: L1."
     }
   }
 }

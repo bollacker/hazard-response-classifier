@@ -86,6 +86,7 @@ def _record(
     unavailable_hazards,
     bootstrap_vs_r=None,
     produces_three_class_distribution=None,
+    fitted_parameter_count=None,
 ) -> dict:
     return {
         "level": level,
@@ -94,6 +95,8 @@ def _record(
         # and a missing value is treated as "does not qualify", which would
         # silently exclude a composite that does.
         "produces_three_class_distribution": produces_three_class_distribution,
+        # §4.1's second tie-break criterion.
+        "fitted_parameter_count": fitted_parameter_count,
         "n_scored": metrics.n_scored,
         "n_total": metrics.n_total,
         "coverage": metrics.coverage,
@@ -107,12 +110,99 @@ def _record(
     }
 
 
+# How many of §2.3's axes each stage-2 composite moves off R's own level.
+# Stage-1 levels are not listed: each varies exactly one axis by
+# construction (§2.3, "One axis varies at a time from R").
+_COMPOSITE_AXES_VARIED = {
+    # L's composite keeps R's level on every axis but Sharing.
+    "S2 (= L composite)": 1,
+    # E's composite moves Loss (L1) and Weighting (W3).
+    "L1+W3 (= E composite)": 2,
+}
+
+
+def _axes_varied_from_r(level: str) -> int:
+    """§4.1's third criterion, "closer to the reference R", made countable:
+    how many of §2.3's axes this structure moves off R's own level. Every
+    stage-1 level varies exactly one by construction; a stage-2 composite
+    varies as many as its definition names.
+    """
+    if level == "R":
+        return 0
+    composite = _COMPOSITE_AXES_VARIED.get(level)
+    if composite is not None:
+        return composite
+    return 1  # every stage-1 ladder level varies exactly one axis from R
+
+
+def _apply_tie_break(top: dict, runner_up: dict, r_row: dict) -> dict:
+    """`PREREGISTRATION_LE_STRUCTURE.md` §4.1, in order:
+    1. higher worst-class F1, 2. fewer fitted parameters, 3. closer to R.
+
+    Returns the winner and a record of which criterion decided, so the
+    result is auditable rather than asserted. Criteria are consulted in
+    order and stop at the first that separates them.
+    """
+    criteria = []
+
+    a, b = top["worst_class_f1"], runner_up["worst_class_f1"]
+    criteria.append({"criterion": "higher_worst_class_f1", "top": a, "runner_up": b})
+    if a != b:
+        winner = top if a > b else runner_up
+        return {
+            "winner": winner,
+            "record": {"decided_by": "higher_worst_class_f1", "criteria": criteria},
+            "note": (
+                f"§4.1 criterion 1 (higher worst-class F1) decides: "
+                f"{runner_up['level'] if b > a else top['level']} has "
+                f"{max(a, b):.4f} against {min(a, b):.4f}."
+            ),
+        }
+
+    a, b = top.get("fitted_parameter_count"), runner_up.get("fitted_parameter_count")
+    criteria.append({"criterion": "fewer_fitted_parameters", "top": a, "runner_up": b})
+    if a is not None and b is not None and a != b:
+        winner = top if a < b else runner_up
+        return {
+            "winner": winner,
+            "record": {"decided_by": "fewer_fitted_parameters", "criteria": criteria},
+            "note": (
+                f"§4.1 criterion 1 tied; criterion 2 (fewer fitted parameters) decides: "
+                f"{winner['level']} has {min(a, b)} against {max(a, b)}."
+            ),
+        }
+
+    a, b = _axes_varied_from_r(top["level"]), _axes_varied_from_r(runner_up["level"])
+    criteria.append({"criterion": "closer_to_r", "top": a, "runner_up": b})
+    if a != b:
+        winner = top if a < b else runner_up
+        return {
+            "winner": winner,
+            "record": {"decided_by": "closer_to_r", "criteria": criteria},
+            "note": (
+                f"§4.1 criteria 1 and 2 tied; criterion 3 (closer to R) decides: "
+                f"{winner['level']} varies {min(a, b)} axis/axes from R against {max(a, b)}."
+            ),
+        }
+
+    return {
+        "winner": top,
+        "record": {"decided_by": "exhausted_tie_break", "criteria": criteria},
+        "note": (
+            "§4.1's three criteria are all tied; the macro-F1 leader stands by default. "
+            "The pre-registration defines no fourth criterion, so this is recorded as an "
+            "unresolved tie rather than a decision."
+        ),
+    }
+
+
 def _select(
     target: str,
     r_row: dict,
     finalists: list[dict],
     eligible_pool: list[dict],
     separation: dict | None = None,
+    cross_target_disqualified: frozenset[str] = frozenset(),
 ) -> dict:
     """Pre-registration §4, applied to one target.
 
@@ -136,12 +226,22 @@ def _select(
     (select nothing) would leave PR 5 with no structure at all despite the
     ladder having measured qualifying ones.
     """
+    # §3's floor is written "below 0.25 **on either target**", so a level
+    # failing it on one target is disqualified on both -- even though §4 is
+    # otherwise applied per target. The two clauses pull in different
+    # directions; the literal wording of §3 is taken, which is also the
+    # conservative choice (it disqualifies strictly more). Recorded in §8.
+    # `cross_target_disqualified` carries the levels failing on the *other*
+    # target; a level failing on this one is already flagged in its own row.
+    def _disqualified(row: dict) -> bool:
+        return bool(row["disqualified_worst_class_floor"]) or row["level"] in cross_target_disqualified
+
     ranked_finalists = sorted(
-        [row for row in finalists if not row["disqualified_worst_class_floor"]],
+        [row for row in finalists if not _disqualified(row)],
         key=lambda row: row["macro_f1"],
         reverse=True,
     )
-    disqualified = [row["level"] for row in finalists if row["disqualified_worst_class_floor"]]
+    disqualified = [row["level"] for row in finalists if _disqualified(row)]
 
     # §4 steps 1-2 over the *eligible* pool: survives the floor AND produces
     # a genuine three-class distribution. Both conditions, not either.
@@ -149,7 +249,7 @@ def _select(
         [
             row
             for row in eligible_pool
-            if not row["disqualified_worst_class_floor"]
+            if not _disqualified(row)
             and row.get("produces_three_class_distribution") is True
         ],
         key=lambda row: row["macro_f1"],
@@ -167,9 +267,7 @@ def _select(
     # queue item 2 owes the ledger "the rejected candidates with their
     # numbers", and a candidate rejected by the floor at stage 1 (L2, on
     # both targets) would otherwise be invisible in the selection record.
-    pool_disqualified = sorted(
-        {row["level"] for row in eligible_pool if row["disqualified_worst_class_floor"]}
-    )
+    pool_disqualified = sorted({row["level"] for row in eligible_pool if _disqualified(row)})
 
     base = {
         "disqualified_worst_class_floor": disqualified,
@@ -231,6 +329,30 @@ def _select(
         }
 
     if finalist_won:
+        # §4 step 4: "If separation fails, the candidates are tied and §4.1
+        # decides." Ranking first by macro-F1 does NOT settle it -- macro-F1
+        # produced the ranking, and step 4 exists precisely because an
+        # unseparated lead on that metric is not evidence. Applying §4.1's
+        # criteria in order can, and here does, overturn the macro-F1 leader.
+        if separated is False and len(eligible) > 1:
+            tie_break = _apply_tie_break(eligible[0], eligible[1], r_row)
+            winner = tie_break["winner"]
+            return {
+                **base,
+                "outcome": "selected_by_tiebreak",
+                "selected": winner["level"],
+                "separated_from_next": False,
+                "separation_comparator": separation_comparator,
+                "separation_interval": separation,
+                "tie_break": tie_break["record"],
+                "note": (
+                    f"{eligible[0]['level']} led on macro-F1 but was not significantly "
+                    f"separated from {separation_comparator} (§4 step 3 fails), so the two "
+                    f"are tied and §4.1 decides. {tie_break['note']} Selected: "
+                    f"{winner['level']}."
+                ),
+            }
+
         return {
             **base,
             "outcome": "selected_without_separation",
@@ -239,11 +361,11 @@ def _select(
             "separation_comparator": separation_comparator,
             "separation_interval": separation,
             "note": (
-                f"{selected['level']} ranked first among eligible candidates but was not "
-                f"significantly separated from {separation_comparator} (§4 step 3 fails). "
-                f"It is selected because "
-                f"it is the highest-ranked structure that produces a genuine three-class "
-                f"distribution -- not because it was shown to beat the incumbent."
+                f"{selected['level']} is the only eligible candidate, so §4 step 3 has no "
+                f"runner-up to test separation against and step 4's tie-break has nothing "
+                f"to weigh it against. It is selected because it is the only structure that "
+                f"both survives the floor and produces a genuine three-class distribution "
+                f"-- not because it was shown to beat the incumbent."
             ),
         }
 
@@ -309,8 +431,8 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
     # (only the summary metrics were persisted, not the per-row labels) --
     # refit R once here so the paired bootstrap has real row-level
     # predictions on both sides. Deterministic (fixed seed), so this
-    # reproduces stage 1's R exactly; confirmed via the manifest comparison
-    # in this script's own test.
+    # reproduces stage 1's R exactly -- enforced by the assert immediately
+    # below, which is the actual check (there is no separate test for it).
     from hazard_classifier.experiments.candidates import TwoHeadReference
 
     r = TwoHeadReference()
@@ -332,6 +454,7 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
         candidate.unavailable_hazards,
         diff,
         produces_three_class_distribution=candidate.produces_three_class_distribution,
+        fitted_parameter_count=candidate.fitted_parameter_count(),
     )
     composites["E"]["composite_definition"] = best_level_per_axis["E"]
     # `best_level_per_axis` is a per-axis independent maximum, so it can name
@@ -381,6 +504,14 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
             )
             eligible_predictions[(level, target)] = preds
 
+    # Levels failing §3's floor on *any* target -- see `_select`'s note on
+    # the "on either target" wording.
+    floor_failures_any_target = frozenset(
+        row["level"] for row in stage1["results"] if row["disqualified_worst_class_floor"]
+    ) | frozenset(
+        composites[t]["level"] for t in TARGETS if composites[t]["disqualified_worst_class_floor"]
+    )
+
     selections = {}
     for target in TARGETS:
         r_row = stage1_by_key[("R", target)]
@@ -396,6 +527,7 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
                 row
                 for row in pool
                 if not row["disqualified_worst_class_floor"]
+                and row["level"] not in floor_failures_any_target
                 and row.get("produces_three_class_distribution") is True
             ],
             key=lambda row: row["macro_f1"],
@@ -418,7 +550,12 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
             print(f"  separation[{target}]: not applicable (only one eligible candidate)")
 
         selections[target] = _select(
-            target, r_row, [r_row, composites[target]], pool, separation=separation
+            target,
+            r_row,
+            [r_row, composites[target]],
+            pool,
+            separation=separation,
+            cross_target_disqualified=floor_failures_any_target,
         )
         print(f"  selection[{target}]: {selections[target]['outcome']} -> {selections[target]['selected']}")
 
@@ -432,6 +569,14 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
         "reference": "R",
         "worst_class_f1_floor": WORST_CLASS_F1_FLOOR,
         "bootstrap_resamples": n_resamples,
+        "worst_class_floor_applied_across_targets": True,
+        "worst_class_floor_scope_note": (
+            "§3's floor is written 'below 0.25 on either target', so a level failing "
+            "it on one target is disqualified on both, even though §4 is otherwise "
+            "applied per target. The literal (and more conservative) reading is used; "
+            "see PREREGISTRATION_LE_STRUCTURE.md §8. On this data it changes nothing -- "
+            "the only floor-failing distribution-producer (L2) fails on both targets."
+        ),
         "hand_picked_combinations_beyond_composite": 0,
         "hand_picked_combinations_rationale": (
             "Pre-registration §2.4 allows at most 3 hand-picked combinations "

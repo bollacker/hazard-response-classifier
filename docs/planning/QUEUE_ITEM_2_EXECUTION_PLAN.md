@@ -286,12 +286,20 @@ worst-class floor and the separation test but forgets this will select an
 ineligible structure — the first implementation of this rule did exactly
 that, selecting `S2` for L.
 
-**Outcome, 2026-08-05.** Neither target found a structure that beat `R`.
-**L → `L1`**, selected only because it is the best qualifying structure while
-scoring *below* `R` (macro-F1 0.4336 vs 0.4840) — a null result.
-**E → the `L1+W3` composite** (0.5358 vs `R`'s 0.5199), without significant
-separation. Both figures are dev-set numbers under D-66. Full record in
-`docs/planning/item2_results/stage2.json`.
+**§4 step 4 is not optional either.** "If separation fails, the candidates
+are tied and §4.1 decides" — ranking first on macro-F1 does *not* settle it,
+because macro-F1 produced the ranking. Applying §4.1 in order (worst-class F1
+→ fewer fitted parameters → closer to `R`) can overturn the macro-F1 leader,
+and on the E target it does.
+
+**Outcome, 2026-08-05 (corrected). Both targets select `L1`, and neither
+found a structure that beat `R`.**
+**L → `L1`**, the only structure that both survives the floor and produces a
+distribution, scoring *below* `R` (macro-F1 0.4336 vs 0.4840) — a null result.
+**E → `L1`** on §4.1's first criterion: the `L1+W3` composite led on macro-F1
+(0.5358 vs 0.5289) but was not separated from `L1`, and `L1` has the higher
+worst-class F1 (0.3500 vs 0.3415). Both figures are dev-set numbers under
+D-66. Full record in `docs/planning/item2_results/stage2.json`.
 
 **Exit:** one selected structure per target, with its rationale and its
 rejected alternatives written down. **Met** — `stage2.json` carries the

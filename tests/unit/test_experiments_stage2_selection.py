@@ -21,7 +21,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
 
-from run_stage2_sweep import _select  # noqa: E402
+from run_stage2_sweep import _apply_tie_break, _select  # noqa: E402
 
 
 def _row(
@@ -32,6 +32,7 @@ def _row(
     disqualified=False,
     excludes_zero=None,
     distribution=True,
+    params=100,
 ):
     return {
         "level": level,
@@ -39,6 +40,7 @@ def _row(
         "worst_class_f1": worst_class_f1,
         "disqualified_worst_class_floor": disqualified,
         "produces_three_class_distribution": distribution,
+        "fitted_parameter_count": params,
         "bootstrap_vs_r": None if excludes_zero is None else {"excludes_zero": excludes_zero},
     }
 
@@ -128,10 +130,14 @@ def test_composite_ranked_first_with_separation_is_selected_outright():
     assert result["separation_comparator"] == "L1"
 
 
-def test_composite_ranked_first_without_separation_says_so_plainly():
-    """The real E-target shape: the composite tops the eligible ranking but
-    its interval against R includes zero. Selected, but the report must not
-    imply it was shown to beat R.
+def test_failed_separation_hands_the_decision_to_the_tiebreak_and_can_overturn_the_leader():
+    """The real E-target shape, and §4 step 4's whole point: the composite
+    leads on macro-F1 but is not separated from `L1`, so the two are tied
+    and §4.1 decides. `L1` has the higher worst-class F1 (0.3500 vs 0.3415),
+    so it wins -- the macro-F1 leader does **not** get selected by default.
+
+    An earlier version returned the macro leader here, which pinned a
+    violation of §4 step 4 with these exact numbers.
     """
     r = _r(macro_f1=0.5199, worst=0.3077)
     composite = _row("L1+W3", 0.5356, 0.3415, distribution=True)
@@ -145,13 +151,45 @@ def test_composite_ranked_first_without_separation_says_so_plainly():
         separation={"excludes_zero": False, "comparator": "L1"},
     )
 
-    assert result["outcome"] == "selected_without_separation"
-    assert result["selected"] == "L1+W3"
+    assert result["outcome"] == "selected_by_tiebreak"
+    assert result["selected"] == "L1", "§4.1 criterion 1 must overturn the macro-F1 leader"
     assert result["separated_from_next"] is False
-    # The comparator must be the next-ranked *eligible* candidate, never R:
-    # R can never be selected, so separating from it decides nothing.
+    # The comparator must be the next-ranked *eligible* candidate, never R.
     assert result["separation_comparator"] == "L1"
-    assert "not because it was shown to beat the incumbent" in result["note"]
+    assert result["tie_break"]["decided_by"] == "higher_worst_class_f1"
+
+
+def test_tiebreak_criterion_order_worst_class_then_params_then_closeness():
+    r = _r()
+    # 1: worst-class F1 decides.
+    a = _row("A", 0.60, 0.30, params=10)
+    b = _row("B", 0.55, 0.40, params=10)
+    assert _apply_tie_break(a, b, r)["winner"]["level"] == "B"
+    assert _apply_tie_break(a, b, r)["record"]["decided_by"] == "higher_worst_class_f1"
+
+    # 2: worst-class tied -> fewer fitted parameters decides.
+    a = _row("A", 0.60, 0.30, params=900)
+    b = _row("B", 0.55, 0.30, params=10)
+    out = _apply_tie_break(a, b, r)
+    assert out["winner"]["level"] == "B"
+    assert out["record"]["decided_by"] == "fewer_fitted_parameters"
+
+    # 3: both tied -> closer to R decides (a stage-1 level varies 1 axis,
+    #    the E composite varies 2).
+    a = _row("L1+W3 (= E composite)", 0.60, 0.30, params=10)
+    b = _row("L1", 0.55, 0.30, params=10)
+    out = _apply_tie_break(a, b, r)
+    assert out["winner"]["level"] == "L1"
+    assert out["record"]["decided_by"] == "closer_to_r"
+
+
+def test_tiebreak_exhausted_is_recorded_as_unresolved_not_as_a_decision():
+    r = _r()
+    a = _row("W2", 0.60, 0.30, params=10)
+    b = _row("W3", 0.55, 0.30, params=10)  # both stage-1 levels: 1 axis each
+    out = _apply_tie_break(a, b, r)
+    assert out["record"]["decided_by"] == "exhausted_tie_break"
+    assert "unresolved tie" in out["note"]
 
 
 def test_separation_is_not_applicable_with_a_single_eligible_candidate():
@@ -168,6 +206,8 @@ def test_separation_is_not_applicable_with_a_single_eligible_candidate():
     assert result["selected"] == "L1"
     assert result["separated_from_next"] is None
     assert result["separation_comparator"] is None
+    # §4 step 3 with no runner-up is "not applicable", never "fails".
+    assert "fails" not in result["note"]
 
 
 def test_separation_against_r_is_never_used_as_the_comparator():

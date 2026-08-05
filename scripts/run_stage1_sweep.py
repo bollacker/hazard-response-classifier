@@ -101,6 +101,7 @@ def _record(
     bootstrap_vs_r=None,
     marginal_bootstrap=None,
     produces_three_class_distribution=None,
+    fitted_parameter_count=None,
 ) -> dict:
     payload = {
         "level": level,
@@ -111,6 +112,8 @@ def _record(
         # Recorded per result so slice C enforces it from data rather than
         # re-deriving which structures qualify.
         "produces_three_class_distribution": produces_three_class_distribution,
+        # PREREGISTRATION_LE_STRUCTURE.md §4.1's second tie-break criterion.
+        "fitted_parameter_count": fitted_parameter_count,
         "n_scored": metrics.n_scored,
         "n_total": metrics.n_total,
         "coverage": metrics.coverage,
@@ -164,6 +167,7 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
                 "R", target, metrics, r.unavailable_hazards,
                 marginal_bootstrap=marginal,
                 produces_three_class_distribution=r.produces_three_class_distribution,
+                fitted_parameter_count=r.fitted_parameter_count(),
             )
         )
         print(f"  R  {target}: macro_f1={metrics.macro_f1:.4f} worst={metrics.worst_class_f1:.4f}")
@@ -184,6 +188,7 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
                 _record(
                     level, target, metrics, candidate.unavailable_hazards, bootstrap_vs_r=diff,
                     produces_three_class_distribution=candidate.produces_three_class_distribution,
+                    fitted_parameter_count=candidate.fitted_parameter_count(),
                 )
             )
             print(
@@ -208,6 +213,7 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
                 _record(
                     level, target, metrics, candidate.unavailable_hazards, bootstrap_vs_r=diff,
                     produces_three_class_distribution=candidate.produces_three_class_distribution,
+                    fitted_parameter_count=candidate.fitted_parameter_count(),
                 )
             )
             print(
@@ -231,6 +237,7 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
             _record(
                 "S2", target, metrics, s2.unavailable_hazards, bootstrap_vs_r=diff,
                 produces_three_class_distribution=view.produces_three_class_distribution,
+                fitted_parameter_count=view.fitted_parameter_count(),
             )
         )
         print(
@@ -251,7 +258,14 @@ def run_sweep(*, allow_download: bool, n_resamples: int) -> dict:
             by_axis.setdefault(row["axis"], []).append(row)
         r_row = next(r for r in results if r["target"] == target and r["level"] == "R")
         for axis, level_rows in by_axis.items():
-            best = max(level_rows + [r_row], key=lambda r: r["macro_f1"])
+            # A level disqualified by §3's worst-class floor cannot be the
+            # "best" of its axis -- §4 step 1 removes it before anything is
+            # ranked, so letting it win here would build the stage-2
+            # composite out of a structure the selection rule has already
+            # thrown out. No level is affected on the current data; this
+            # guards a re-run against different data.
+            eligible_levels = [r for r in level_rows if not r["disqualified_worst_class_floor"]]
+            best = max(eligible_levels + [r_row], key=lambda r: r["macro_f1"])
             best_level_per_axis[target][axis] = best["level"]
 
     split_manifest = json.loads(INTERIM_SPLIT.read_text())
