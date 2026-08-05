@@ -327,8 +327,22 @@ outputs' not-evaluated rule continues to apply.
 - Compare candidate three-class loss, weighting, sharing,
   hazard-conditioning, branching, representation, and pooling structures on
   the same fixed evaluation set, **following the pre-registration**.
-- Select the best-supported structure rather than preserving the current
-  binary-head mechanism by default.
+- ~~Select the best-supported structure rather than preserving the current
+  binary-head mechanism by default.~~ **Done — [D-68](DECISIONS.md#d-68)
+  (2026-08-05), closing queue item 2.** PR 5 builds a **flat three-class
+  multinomial softmax fitted per hazard**, no class weighting beyond the
+  estimator's own balancing, separate L and E models, mean-pooled BGE
+  (`L1 · W1 · S1 · H3 · V1 · P1`). The artifact payload is
+  `PREREGISTRATION_LE_STRUCTURE.md` §6's multinomial row: coefficient matrix
+  + intercept per target in `.npz`, class order in JSON, **no
+  `thresholds.json`**.
+
+  **The selection is a null result and PR 5 inherits its scope.** No structure
+  beat the incumbent on either target; on L the winner scores below it. It is
+  selected because the higher-scoring candidates are two-head structures that
+  cannot produce the required three-class distribution. Every figure behind it
+  is a dev-set number under [D-66](DECISIONS.md#d-66), so PR 5's models remain
+  **not evaluated** — approved per-outcome criteria still do not exist.
 - Train and version models separately from scoring.
 - Lock the model version used by each run.
 - Return a provisional L judgment and a three-class multinomial distribution

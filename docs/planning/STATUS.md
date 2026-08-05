@@ -1,9 +1,22 @@
 # Status
 
-Last updated: 2026-08-04 — **Items 1, 3, 5, and 6 are complete and retired
-from the queue.** Closed items are now removed rather than left checked off, so the
-queue stays a list of live work; their numbers are recorded under *Retired item
-numbers* and are never reused, because the ledger index cites them.
+Last updated: 2026-08-05 — **Queue item 2 is complete and retired. Item 4 is
+the only live item left.**
+
+Item 2 selected Release 1.1's L/E structure: a **per-hazard flat three-class
+multinomial softmax** for both targets, locked as
+**[D-68](DECISIONS.md#d-68)**. **The result is null** — the ablation found no
+structure that beat the incumbent on either target, and on Legitimization the
+selected structure scores *below* it. It wins because every higher-scoring
+candidate is a two-head structure that cannot emit the three-class
+distribution `../SCIENCE.md` requires. That is the finding, and it must not be
+restated as a positive selection. `../ARCHITECTURE.md` §12's L/E slot is
+closed and PR 5 now has a structure to build.
+
+**Items 1, 3, 5, and 6 are also complete and retired.** Closed items are
+removed rather than left checked off, so the queue stays a list of live work;
+their numbers are recorded under *Retired item numbers* and are never reused,
+because the ledger index cites them.
 
 Items 5 and 6 landed D-46's blank-label error and D-45's removal of the
 constant-probability substitute: 151 tests, zero regressions, specifications
@@ -29,12 +42,14 @@ discharges D-2's and D-8's disclosure obligation and retires both entries in
 full. What is left there is a non-blocking outbound request to the Standards
 team.
 
-**Next:** item 4 (build the 1.1 modular release) is the only remaining path
-that can start — `ARCHITECTURE.md` now specifies what to build, and
-`RELEASE_1_1_QUEUE_PROPOSAL.md`'s PR 1 is its first slice. PR 5 (L/E training)
-is gated behind item 2, which still needs the Standards team's fixed dataset —
-Ask A — before its comparison can run at all. The two `SCIENCE.md` defects in
-Awaiting User must be settled before PR 6 builds final integration.
+**Next:** item 4 (build the 1.1 modular release) is the only live item.
+PRs 1, 2 and 3 are complete; **PR 4 is next**, then PR 7 → PR 6 → PR 5
+([D-56](DECISIONS.md#d-56)). *(Corrected 2026-08-05: this paragraph said PR 5
+was "gated behind item 2, which still needs the Standards team's fixed dataset
+— Ask A". Both halves are stale — [D-63](DECISIONS.md#d-63) removed that gate
+on 2026-08-04, and item 2 closed on 2026-08-05 with
+[D-68](DECISIONS.md#d-68). PR 5 is no longer blocked on anything external; it
+has a selected structure to build.)*
 
 Prior update, 2026-08-03 — **The decision ledger is provenance, not
 authority.** Once a decision's effect is written into a specification, that
@@ -525,101 +540,6 @@ Detailed phased proposal:
 
 ## Queue
 
-2. [ ] **Solve the training-structure problem after the Standards team
-   approves fixed human ground truth and success criteria.** Compare candidate
-   three-class loss, weighting, sharing, hazard-conditioning, branching,
-   representation, and pooling structures on the same fixed evaluation set.
-   Select the best-supported structure. Treat the current prototype as a
-   baseline, not the target.
-
-   **Entry condition: MET as of 2026-08-04** ([D-63](DECISIONS.md#d-63)). The
-   Standards team's dataset is not arriving, so this item runs against the
-   Jailbreak v1.0 human ground truth already in the repository — 859 rows with
-   human L and E judgments, all fifteen hazard codes, all three classes
-   populated on both axes. The frozen split is `data/interim_split_v1.json`
-   (635 fit / 224 dev, grouped on prompt text per
-   [D-64](DECISIONS.md#d-64)), and the procedure is fixed in
-   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md).
-
-   **This item is now startable, and has an execution plan:**
-   [`QUEUE_ITEM_2_EXECUTION_PLAN.md`](QUEUE_ITEM_2_EXECUTION_PLAN.md) (written
-   2026-08-04, same shape as the PR plans — read-first list, preconditions,
-   slices, exit-criterion map, out-of-scope list, and a lessons-carried-forward
-   section). Its work is stage 1 and stage 2 of the pre-registration's ablation
-   ladder: at most 14 fitted configurations per target, 28 overall (corrected
-   2026-08-04, `PREREGISTRATION_LE_STRUCTURE.md` §8 — the original 16/32 did
-   not match §2.3's own axis table), selected by macro-F1 with a worst-class
-   floor and a paired cluster bootstrap over prompt groups.
-
-   **The plan's slice 0 fixes a defect the pivot session shipped**, and it must
-   run first: `data/interim_split_v1.json` records eval *group ids* and a prose
-   description of the key, but **no row-level split assignment**, and the only
-   implementation of that key is a private function in a non-importable script.
-   A consumer that recomputes the normalization even slightly differently gets
-   a different split, silently. Slice 0 moves it into a tested
-   `interim_data.py` that is the single source of truth.
-
-   **This item is analysis, not shipping.** It selects a structure and records
-   it; PR 5 implements it. The plan's §2 draws that boundary explicitly,
-   because the natural momentum at the end of a successful comparison is to go
-   build the winner.
-
-   **Progress as of 2026-08-05: slices 0, A, B, and C are complete; slice D
-   (record the decision and close the item) is next.** See Recently Completed
-   below for what each landed. `docs/planning/item2_results/stage1.json` holds
-   stage 1's 22 results; `stage2.json` holds the composites and the applied
-   selection.
-
-   **The finding, stated so slice D's entry cannot soften it: the ablation
-   found no structure that beats the incumbent `R` on this data.** No
-   candidate achieved significant separation from `R` on either target.
-   **Both targets select `L1`.** On L it is the only structure that both
-   survives the floor and produces the three-class distribution `SCIENCE.md`
-   requires, and it scores *below* `R` (macro-F1 0.4336 vs 0.4840). On E the
-   `L1+W3` composite led on macro-F1 (0.5358 vs 0.5289) but was not
-   significantly separated from `L1`, so §4 step 4's tie-break decided it on
-   worst-class F1 (`L1` 0.3500 vs 0.3415). Every figure is a dev-set number
-   under [D-66](DECISIONS.md#d-66) — not a benchmark result.
-
-   **`R` is not the only structure barred from selection.** §4's closing rule
-   requires a genuine three-class distribution, and that is structural: every
-   level keeping `R`'s `L3` two-head loss (`W2`, `W3`, `H1`, `H2`, `B1`,
-   `P2`, `P3`, `S2`) decides by threshold and returns a one-hot row. Only
-   `L1` and `L2` qualify. A first implementation of the rule missed this and
-   selected `S2` for L; corrected, with the reading recorded in
-   `PREREGISTRATION_LE_STRUCTURE.md` §8.
-
-   ~~**Entry condition:** Ask A under Awaiting User. The comparison is defined
-   as running on one fixed evaluation set, so it cannot begin without it.~~
-   Superseded by D-63.
-
-   **First deliverable — DONE 2026-08-04.** D-59's pre-registration is written:
-   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md). It
-   fixes the candidate list across the seven axes, the selection rule and its
-   metric, the tie-break, the touch budget, and the artifact payload each
-   candidate implies — closing [D-37](DECISIONS.md#d-37)'s open format half and
-   [D-49](DECISIONS.md#d-49)'s deferred artifact finalization.
-
-   **What D-66 changed about it.** D-59 wanted the rule fixed before any
-   evaluation set existed. D-63 makes one visible, retiring that particular
-   guarantee. The protection is relocated rather than dropped: the interim
-   224-row slice is a **development set** whose numbers are not benchmark
-   results, and the real evaluation set — whenever it arrives — is touched once
-   under a *re-issued* pre-registration, with selection re-run fresh rather
-   than confirmed. Re-selection rather than re-fitting is the load-bearing
-   half; a structure chosen on v1.0 labels would otherwise be laundered into a
-   v1.4 result.
-
-   **The baseline entries this item used to name no longer need amending**
-   (corrected 2026-08-04). Its original text asked for amendments to D-2, D-5,
-   D-7, D-8, D-9, D-10, D-16, and D-36. D-5 is superseded by D-45, and the
-   other seven were marked baseline-only by sub-reviews 1.8 and 1.9 and by the
-   retired item 3 dispositions — none of them constrains Release 1.1 any more,
-   so there is nothing to amend. What this item owes the ledger instead is a
-   **new** entry recording the structure it selects and the reasoning, with the
-   rejected candidates written down; that half is the part a later reader
-   cannot reconstruct.
-
 4. [ ] **Build the approved 1.1 modular release.**
 
    **PR 1 is complete** (2026-08-04): slices 0, 1A, 1B, 1C plus D-48/D-49,
@@ -705,6 +625,17 @@ across schemes:
   `critiques/2026-08-02-science-contract-branch.md` refer to them. The full
   record is in Recently Completed (three entries dated 2026-08-03) and in
   `DECISIONS.md`'s "Further dispositions from the queue item 1 review".
+- **2** — Solve the training-structure problem: compare candidate L/E structures and
+  select the best-supported one. Closed 2026-08-05. Selection recorded in
+  **[D-68](DECISIONS.md#d-68)**; the procedure that produced it is
+  [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) (read its §8 —
+  seven amendments, five of them corrections found by re-examining the selection code
+  against the document); the numbers are
+  `docs/planning/item2_results/stage1.json` and `stage2.json`, whose per-target `pool`
+  arrays are the authoritative record of every candidate and why it was rejected. The
+  execution plan, [`QUEUE_ITEM_2_EXECUTION_PLAN.md`](QUEUE_ITEM_2_EXECUTION_PLAN.md), is
+  now a record of what was built. **The result is null** — no structure beat the
+  incumbent on either target.
 - **3** — Review and update the architecture before implementation. Closed
   2026-08-03; `ARCHITECTURE.md` now specifies the Release 1.1 evaluator and its
   three parked proposals are resolved there (§3.1 exhaustion, §6 no-fallback,
@@ -719,19 +650,23 @@ across schemes:
 ## Awaiting User
 
 Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot).
-**Nothing here blocks anything.** D-63 removed the last external gate: queue
-item 2 is startable, and PR 5 no longer waits on data that is not coming. One
+**Nothing here blocks anything.** D-63 removed the last external gate, and
+queue item 2 has since closed ([D-68](DECISIONS.md#d-68), 2026-08-05); PR 5
+waits on nothing external and has a selected structure to build. One
 action remains with Kurt — schedule Riki's concurrence review, now covering
 twenty-four calls. Queue items 1 and 3 are complete and retired, and both
 architecture-pass findings (A-1, A-2) are resolved and applied to
 `SCIENCE.md`. The calls awaiting Riki's concurrence are in force under an
 assumed concurrence.
 
-**One thing here does block, and it is now named as such:** the Standards-team
-request gates queue item 2 and PR 5, which is why PR 5 moved last in the
-sequence and why the request was escalated out of its passive state. Two
-actions sit with Kurt — send the request, and schedule Riki's concurrence
-review. Neither stops PR 4 from starting.
+~~**One thing here does block:** the Standards-team request gates queue item 2
+and PR 5.~~ **No longer true, and struck 2026-08-05.** D-63 (2026-08-04)
+stopped the request gating anything, and item 2 closed on 2026-08-05 under
+D-68. `STANDARDS_REQUEST.md` is retained as the specification of what real
+data must supply — sending it still buys a re-run on ratified, in-version
+labels, which is the only route to either model being *evaluated* rather than
+*not evaluated* — but nothing waits on it. One action sits with Kurt:
+schedule Riki's concurrence review.
 
 **Riki's review now has twelve rows, covering twenty-five calls** (2026-08-04:
 the decision-debt sweep added nine in one row, the interim-data pivot four
@@ -808,6 +743,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **PR 2 scope calls** (2026-08-04): exact-only repetition **[D-50](DECISIONS.md#d-50)**, stubbed decoding-failure trigger and `partial` decoder **[D-51](DECISIONS.md#d-51)**, ambiguous-reference recording removed **[D-52](DECISIONS.md#d-52)**. Grouped as one row: made together, on one footing, each carrying its own reversal scope | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 and the release outcome; `ARCHITECTURE.md` §7 row 2, §7.1; `PR1_EXECUTION_PLAN.md` §4; `evaluator/components/decoding.py`. **Two are shortfalls against a `SCIENCE.md` success criterion**, so reverting either means building the real capability, not just re-wording |
 | **`META_PLAN.md` §1.2 added — single-approver mode** (2026-08-04): Kurt decides alone, entries lock immediately, Riki ratifies in batches. Amends §1.1's joint-approval rule and §1's `Approved by` note, which together had been overridden by all nineteen entries from D-47 on except D-53. Recorded here rather than as a ledger entry because §1.1's last bullet forbids restating a specification's content, and §1.2 *is* the specification | In force | `META_PLAN.md` §1, §1.1, §1.2. **Reverting means all nineteen assumed-concurrence entries revert to `proposed`**, which stalls Releases 1.1 wholesale — the outcome §1.2 was written to prevent a future session from triggering by enforcing a rule nobody was following |
 | **Interim-data pivot** (2026-08-04): the Standards data is not coming, so 1.1 builds on Jailbreak v1.0 human ground truth. **[D-63](DECISIONS.md#d-63)** out-of-version ground truth, request stops gating; **[D-64](DECISIONS.md#d-64)** split groups on prompt text; **[D-65](DECISIONS.md#d-65)** attacked prompts only; **[D-66](DECISIONS.md#d-66)** interim slice is a dev set, real eval set reserved for a fresh selection | In force | `PREREGISTRATION_LE_STRUCTURE.md`; `data/interim_split_v1.json`; `scripts/build_interim_split.py`; `STATUS.md` queue item 2 and §Standards team; `README.md`. **D-65 is a shortfall against a `SCIENCE.md` training requirement** and D-63 uses labels made against a different standard version — the two rows here Riki is most likely to want to argue with. Reverting D-63 does not restore the data; it stops Release 1.1 having a fitted model at all |
+| **L/E structure selected** (2026-08-05): both targets use a per-hazard flat three-class multinomial softmax (`L1 · W1 · S1 · H3 · V1 · P1`). Locked as **[D-68](DECISIONS.md#d-68)** | In force | `../ARCHITECTURE.md` §12; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list; `PREREGISTRATION_LE_STRUCTURE.md` §6's payload row; queue item 2's closure. **This is a null result** — no structure beat the incumbent, and on L the winner scores *below* it (0.4336 vs 0.4840); it wins only because every higher-scoring candidate is a two-head structure that cannot emit the required three-class distribution. Dissent does not restore a better option: reverting reopens §12's slot and leaves PR 5 with nothing to build, since the incumbent is structurally barred by `SCIENCE.md`. The arguable calls are the seven §8 amendments the selection rests on, not the arithmetic |
 | **Coverage under D-45 unavailability** (2026-08-04): a candidate that cannot score a row is measured without it, coverage reported, paired comparisons on the shared rows. Locked as **[D-67](DECISIONS.md#d-67)** | In force | `PREREGISTRATION_LE_STRUCTURE.md` §3 and §8; `experiments/comparison_metrics.py`. **A recorded departure from `SCIENCE.md` §Evidence and outputs' same-rows requirement** — reverting means either counting an unanswered row as wrong (which re-invents what D-45 removed) or letting the weakest candidate shrink the row set every other candidate is judged on. Binds mainly on `R` and `H3`; `R` cannot be selected anyway |
 | **Decision-debt sweep** (2026-08-04): nine calls clearing PR 4–PR 6. **[D-54](DECISIONS.md#d-54)** narrative + refusal stay placeholders, PR 4's criteria scoped; **[D-55](DECISIONS.md#d-55)** E reads `working`; **[D-56](DECISIONS.md#d-56)** PR 7 added; **[D-57](DECISIONS.md#d-57)** hazard scope from the artifact; **[D-58](DECISIONS.md#d-58)** pre-staging prototype; **[D-59](DECISIONS.md#d-59)** pre-registered structure selection; **[D-60](DECISIONS.md#d-60)** no prompt input; **[D-61](DECISIONS.md#d-61)** single-threaded contract; **[D-62](DECISIONS.md#d-62)** no continuous score. Grouped: made in one sweep, on one footing | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4/5/6/7; `ARCHITECTURE.md` §2, §5, §6, §7 rows 5–6, §11, §12; this file's queue items 2 and 4. **D-54 and D-55 are shortfalls against a `SCIENCE.md` success criterion**; **D-58 and D-62 are scope removals**; the rest are contracts a rebuild would have to restate rather than reverse |
 
@@ -897,6 +833,50 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **Queue item 2 closed: L/E structure selected, recorded as
+  [D-68](DECISIONS.md#d-68), item retired.** Slice D.
+
+  **Selected: `L1 · W1 · S1 · H3 · V1 · P1` for both targets** — a flat
+  three-class multinomial softmax fitted per hazard, no class weighting beyond
+  the estimator's own balancing, separate L and E models, mean-pooled BGE.
+  Branching is structurally not applicable to a flat softmax.
+
+  **The finding is null and the entry says so in terms.** No structure beat
+  the incumbent `R` on either target; none achieved significant separation
+  from it. On **L the selection scores below `R`** (macro-F1 0.4336 vs 0.4840)
+  and wins only because `R` and all eight other two-head variants are
+  structurally barred from selection — they cannot emit the three-class
+  distribution `../SCIENCE.md` requires. On **E** the `L1+W3` composite led on
+  macro-F1 but was not separated from `L1`, so §4 step 4's tie-break decided
+  it on worst-class F1 (0.3500 vs 0.3415). `L2` is the only candidate rejected
+  on performance rather than structure, failing the worst-class floor on both
+  targets.
+
+  D-68 carries the full rejected-candidate table with numbers, and the scope
+  that binds every downstream claim: dev-set numbers only (D-66),
+  out-of-version labels (D-63), attacked-only coverage (D-65), no approved
+  criteria — **so both models remain *not evaluated*** whatever was selected.
+  It also records that "no class weighting" is not literal: `class_weight="balanced"`
+  is on for every candidate, so the Weighting axis measured additional
+  re-weighting, not weighting versus none.
+
+  **Absorbed the same session** (§10 lesson 4 — a decision that reaches no
+  specification is not settled): `../ARCHITECTURE.md` §12's L/E structure item
+  is closed and now names the artifact payload, which closes D-37's open
+  format half and D-49's deferred finalization; `RELEASE_1_1_QUEUE_PROPOSAL.md`
+  PR 5's work list names the structure it builds and inherits the null-result
+  scope; `PREREGISTRATION_LE_STRUCTURE.md` §6's multinomial row is marked as
+  the selected payload. Assumed-concurrence row added with its reversal scope.
+
+  **How much correcting this took, recorded because it is the item's most
+  transferable lesson.** Five defects were found in the selection rule across
+  four self-reviews and two independent adversarial reviews — two of which
+  changed a recorded answer (the L selection, then the E selection). Every one
+  was a fidelity failure between the code and the pre-registration's own
+  words; none was a mechanical error in metrics, bootstrap, leakage, D-45
+  handling, budget or determinism, all of which verified clean throughout. The
+  independent reviews found what repeated self-review did not.
 
 - 2026-08-05 — **Queue item 2 slice C landed: stage-2 composites, the
   selection rule applied, and a correctness bug in it found and fixed.**

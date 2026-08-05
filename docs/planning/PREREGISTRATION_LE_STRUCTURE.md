@@ -253,7 +253,7 @@ serialize identically and `ARCHITECTURE.md` §10's table stands unchanged:
 
 | Candidate family | `model/` payload |
 |---|---|
-| Multinomial softmax (`L1`) | coefficient matrix `(n_features, 3)` + intercept `(3,)` per target, `.npz`; class order in JSON |
+| **Multinomial softmax (`L1`) — SELECTED for both targets, [D-68](DECISIONS.md#d-68)** | coefficient matrix `(n_features, 3)` + intercept `(3,)` per target, `.npz`; class order in JSON. **This is Release 1.1's artifact payload**; no `thresholds.json` is written |
 | Ordinal cumulative-link (`L2`) | coefficient vector `(n_features,)` + two ordered cutpoints per target, `.npz` + JSON |
 | Two binary heads (`L3` = R) | the baseline's existing `heads.npz` layout, unchanged |
 | Shared parameterization (`S2`) | one shared coefficient block plus two output blocks, same `.npz` conventions |

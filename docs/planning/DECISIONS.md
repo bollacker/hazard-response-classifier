@@ -31,7 +31,7 @@ agenda. All entries from D-47 onward except D-53 are in this mode.
 Entries are retired by superseding them in place, never by deletion. The index
 below is the map; every D-number that has ever existed appears in it.
 
-Numbering: new decisions start at **D-68**. D-38 through D-44 were drafted
+Numbering: new decisions start at **D-69**. D-38 through D-44 were drafted
 during the 2026-08-02/03 science-contract work and withdrawn before approval;
 those numbers are not reused.
 
@@ -301,6 +301,7 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-65](#d-65) | 1.1 covers attacked prompts only | `PREREGISTRATION_LE_STRUCTURE.md` §7 | carried; shortfall against a `SCIENCE.md` training requirement |
 | [D-66](#d-66) | Interim eval slice is a dev set; real eval set reserved | `PREREGISTRATION_LE_STRUCTURE.md` §0, §5 | carried; relocates D-59's protection |
 | [D-67](#d-67) | Unavailable cells are excluded with coverage reported, not counted wrong | `PREREGISTRATION_LE_STRUCTURE.md` §3, §8 | carried; shortfall against `SCIENCE.md`'s same-rows rule |
+| [D-68](#d-68) | L/E structure is a per-hazard flat multinomial softmax (`L1`) — a **null** result | `../ARCHITECTURE.md` §12; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 | carried; closes queue item 2, D-37/D-49's format half |
 
 ### Absorption gaps
 
@@ -4179,3 +4180,110 @@ score a row**. It does not weaken D-45, license any candidate to substitute a
 value, or change what `SCIENCE.md` requires of a *reported benchmark result* —
 every number in queue item 2 is a dev-set number under [D-66](#d-66) and is not
 reportable as a benchmark figure regardless of its coverage.
+
+<a id="d-68"></a>
+## D-68: Release 1.1's L and E structure is a flat three-class multinomial softmax, fitted per hazard — selected on a null result
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: both targets select **`L1 · W1 · S1 · H3 · V1 · P1`** — a flat
+three-class multinomial softmax cross-entropy loss, fitted **per hazard**,
+with **no class weighting** beyond the estimator's own balancing, **separate
+L and E models**, on the **mean-pooled BGE** representation. The Branching
+axis is structurally not applicable: a flat softmax has no nonzero/high head
+pair to branch. This fills `../ARCHITECTURE.md` §12's open L/E structure slot
+and is what PR 5 builds.
+
+**The finding is null, and it must not be reported as anything else.** The
+ablation found **no structure that beats the incumbent `R`** on either target.
+No candidate achieved significant separation from `R` by the paired cluster
+bootstrap. On **L the selection scores *below* `R`** — macro-F1 **0.4336 vs
+0.4840** — and is selected only because it is the sole structure that both
+survives the worst-class floor and produces the three-class distribution
+`../SCIENCE.md` requires; `R` and every two-head variant are structurally
+excluded from selection
+(`PREREGISTRATION_LE_STRUCTURE.md` §2.2 and §4's closing rule). On **E** the
+`L1+W3` composite led on macro-F1 (0.5358 vs 0.5289) but was **not separated**
+from `L1` (paired 95% interval −0.0233 … +0.0393), so §4 step 4's tie-break
+decided it on §4.1's first criterion, **worst-class F1: `L1` 0.3500 vs
+0.3415**. Neither selection is evidence that the selected structure is good.
+
+Rationale: `../SCIENCE.md` §Legitimization Scoring and §Enablement Scoring
+require a three-class multinomial distribution over L0/L1/L2 and E0/E1/E2.
+Two thresholded binary heads structurally cannot produce one
+(`../ARCHITECTURE.md` §4 — the obvious derivation is unsafe because
+`p_high > p_nonzero` is reachable), which is why the incumbent ships as
+`partial` with `distribution=None`. Of the ten non-reference levels compared,
+only `L1` and `L2` emit a genuine distribution, and `L2` fails the
+worst-class floor on both targets. The procedure that produced this is fixed
+in `PREREGISTRATION_LE_STRUCTURE.md`; its §8 records seven amendments, five
+of them corrections found by re-examining the selection code against the
+document rather than by any test failing.
+
+**Rejected candidates, with their numbers** (dev-set macro-F1 / worst-class
+F1; full per-class figures and intervals in
+`docs/planning/item2_results/stage1.json` and `stage2.json`, whose per-target
+`pool` arrays are the authoritative record):
+
+| Level | L macro / worst | E macro / worst | Why rejected |
+|---|---|---|---|
+| `R` *(reference)* | 0.4840 / 0.3182 | 0.5199 / 0.3077 | Produces no three-class distribution (§2.2) — cannot be selected |
+| `S2` sharing | 0.4851 / 0.2927 | 0.5021 / 0.3488 | No distribution. Topped L's finalists and still ineligible |
+| `W3` equal-per-class | 0.4682 / 0.2989 | 0.5356 / 0.3421 | No distribution |
+| `W2` inverse-frequency | 0.4199 / 0.2740 | 0.5210 / 0.3896 | No distribution |
+| `H1` pooled | 0.4653 / 0.3333 | 0.4633 / 0.2796 | No distribution |
+| `H2` hazard one-hot | 0.4339 / 0.2683 | 0.4635 / 0.2424 | No distribution; also below the floor on E |
+| `B1` flat ungated | 0.4408 / 0.3182 | 0.4854 / 0.3077 | No distribution. The only level significantly *worse* than `R` |
+| `P2` max pooling | 0.4662 / 0.2683 | 0.4930 / 0.2466 | No distribution; also below the floor on E |
+| `P3` mean⊕max | 0.4476 / 0.2069 | 0.5030 / 0.2899 | No distribution; also below the floor on L |
+| `L2` ordinal cumulative-link | 0.4199 / 0.2162 | 0.4438 / 0.2353 | **Below the worst-class floor on both targets.** Produces a distribution, so this is the one rejection on performance rather than structure |
+| `L1+W3` composite *(E only)* | — | 0.5358 / 0.3415 | Led on macro-F1, unseparated from `L1`, lost §4.1's first criterion |
+
+`V1` (representation) was **not exercised**: it has a single level, recorded
+as an axis not run rather than one dropped (§2.3).
+
+**What this selection cannot establish**, carried from
+`PREREGISTRATION_LE_STRUCTURE.md` §7 and binding on every downstream claim:
+
+- **Dev-set numbers only** ([D-66](#d-66)). Nothing here is a benchmark
+  result, a generalization estimate, or reportable under `../SCIENCE.md`
+  §Evidence and outputs.
+- **No approved success criteria exist**, so both models remain **not
+  evaluated** regardless of what was selected. The worst-class floor is a
+  screening threshold, not a success criterion.
+- **Out-of-version labels** ([D-63](#d-63)) — human judgments made against
+  Jailbreak v1.0, used to select a structure for a v1.4 evaluator.
+- **Attacked prompts only** ([D-65](#d-65)).
+- **Per-hazard claims are weak** — roughly 15 dev rows per hazard, and `H3`
+  was pre-declared as probably underpowered at ~42 fit rows per hazard.
+- **"No class weighting" is not literal.** `W1` means no weighting *beyond*
+  the estimator's own `class_weight="balanced"`, which is on for every
+  candidate on the ladder. The Weighting axis measured additional
+  re-weighting on top of that, not weighting versus none.
+
+Rejected alternatives: (1) selecting `R`, or any two-head variant that
+outscored the winner — structurally barred, because a structure that cannot
+emit the required distribution cannot be the answer whatever its macro-F1;
+(2) selecting the `L1+W3` composite on E, which led on macro-F1 — rejected by
+§4 step 4, since an unseparated lead on the metric that produced the ranking
+is not evidence; (3) reporting the outcome as a positive selection —
+rejected as the misrepresentation the pre-registration's own §4 forbids in
+terms.
+
+Touches: `../ARCHITECTURE.md` §12 (**absorbed** — the L/E structure item is
+no longer open); `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list
+(**absorbed** — PR 5 builds this structure);
+`PREREGISTRATION_LE_STRUCTURE.md` §6's `L1` payload row, which is now the
+artifact format PR 5 implements, closing [D-37](#d-37)'s open format half and
+[D-49](#d-49)'s deferred finalization; `docs/planning/item2_results/`;
+`STATUS.md` queue item 2, which this closes.
+
+Boundary: this selects a **structure**, not a model version. PR 5 fits and
+locks the model. It does not weaken [D-66](#d-66)'s reservation of the real
+evaluation set: when a fixed Standards-team set arrives, selection is re-run
+as a **fresh** selection under a re-issued pre-registration, and this winner
+enters that process as one candidate with no privileged status. It also does
+not make either model evaluated — that needs approved per-outcome criteria
+this repository does not have.

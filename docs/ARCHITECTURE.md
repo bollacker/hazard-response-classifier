@@ -552,14 +552,24 @@ a narrower view.
 Updated 2026-08-04 by the decision-debt sweep. Two items moved off this list
 and two remain.
 
-- **The L/E model structure** — loss, weighting, sharing, hazard-conditioning,
-  branching, representation, pooling. Queue item 2, still live and blocked on
-  the Standards team's fixed dataset. §8 and §10 leave the slot open on
-  purpose. **How the structure is chosen is no longer open**: D-59 requires a
-  pre-registered selection procedure — candidates, selection rule, tie-break,
-  evaluation-set touch budget, and the payload format each candidate implies —
-  written *before* the evaluation set arrives, which is also where D-37's
-  format question and D-49's deferred artifact finalization are answered.
+- ~~**The L/E model structure** — loss, weighting, sharing,
+  hazard-conditioning, branching, representation, pooling.~~ **Decided
+  2026-08-05 by [`planning/DECISIONS.md` D-68](planning/DECISIONS.md#d-68),
+  closing queue item 2.** Both targets use a **flat three-class multinomial
+  softmax fitted per hazard**, no class weighting beyond the estimator's own
+  balancing, separate L and E models, mean-pooled BGE
+  (`L1 · W1 · S1 · H3 · V1 · P1`). §10's `model/` payload is therefore
+  `PREREGISTRATION_LE_STRUCTURE.md` §6's multinomial row — a coefficient
+  matrix `(n_features, 3)` plus intercept `(3,)` per target in `.npz`, class
+  order in JSON, and **no `thresholds.json`** (that file is retained only for
+  the two-head structure the baseline used). This closes D-37's open format
+  half and D-49's deferred artifact finalization.
+
+  **Read D-68 before building on this: the result is null.** The ablation
+  found no structure that beat the incumbent, and on L the selected structure
+  scores *below* it. It wins because every higher-scoring candidate is a
+  two-head structure that cannot emit the three-class distribution §4 and
+  `SCIENCE.md` require. Selecting it is not evidence it is good.
 - **Per-outcome success criteria.** External, from the Standards team (Ask B),
   along with the approved uncertainty method §11's `metrics.json` needs.
 - ~~**Which text view E consumes** (C-4).~~ **Decided for 1.1 by D-55:** both
