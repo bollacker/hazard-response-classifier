@@ -564,11 +564,18 @@ Detailed phased proposal:
    including two new real-BGE integration tests and `test_baseline_parity.py`
    unchanged (D-48 still holds).
 
-   **PR 3 (hazard detection and multi-hazard routing) is next**, per
-   `RELEASE_1_1_QUEUE_PROPOSAL.md`'s phase order — it has no entry condition
-   of its own. No execution plan for it exists yet; per `META_PLAN.md` §5 a
-   session does not chain into unplanned work on its own, so writing that
-   plan is the next startable step here, not something this pass did.
+   **PR 3 (hazard detection and multi-hazard routing) is next**, and its
+   plan is [`PR3_EXECUTION_PLAN.md`](PR3_EXECUTION_PLAN.md) — written
+   2026-08-04 to be runnable from a clean session. **No entry condition
+   remains.** Investigation while writing it found most of PR 3's own "Work"
+   list already built as a side effect of PR 1's architecture (separate
+   per-hazard scoring, shared embedding, source-preserving rollup); the
+   genuinely new work is narrower than the PR title suggests — run-entry
+   validation of the supplied hazard and the configured hazard scope, which
+   `open_run` explicitly deferred here (`PR1_EXECUTION_PLAN.md` slice 1A).
+   Two slices — slice A (build the validation) and slice B (verify the
+   already-built routing mechanics end to end, plus close). Start with
+   slice A.
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -748,6 +755,41 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 3 execution plan written.** `PR3_EXECUTION_PLAN.md`, same
+  shape as PR 1's and PR 2's: read-first list, preconditions, slices, an
+  exit-criterion-to-test map, and an explicit out-of-scope list. No code.
+
+  **Writing it found that most of PR 3's own work list is already built.**
+  Cross-checking `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 3's ten work items
+  against the actual code: separate per-hazard provisional and final
+  judgments, the shared single embed call across hazards, `source`
+  correctly distinguishing supplied from detected, and a rollup that reads
+  `evaluated_hazards` rather than the whole configured `hazard_scope` are
+  all already in place, landed incidentally by PR 1's architecture and
+  already partly tested. What is genuinely unbuilt is narrower: `open_run`
+  only validates the component registry today (`PR1_EXECUTION_PLAN.md`
+  slice 1A deliberately deferred the other two `ARCHITECTURE.md` §2
+  conditions here), and nothing yet derives `evaluated_hazards` from a
+  stage-3 component that actually populates `detected_hazards` — every
+  existing test sets both fields by hand.
+
+  The plan proposes a specific mechanism for the missing validation (widen
+  `open_run` to take the artifact's supported-hazard set; add a sibling
+  `validate_supplied_hazard` function checked per response, after D-27
+  normalization) and observes that condition 1's three-way "missing,
+  unrecognized, or outside scope" phrasing collapses to two checks once
+  scope-vs-artifact validation runs first. This is the plan's own design
+  proposal, not a locked decision — flagged explicitly in the plan as
+  something slice A should confirm or supersede, with **D-53** (the next
+  free number) suggested if it holds up.
+
+  Slice B is scoped as a verification sweep in PR 2's own style: a
+  registry-swapped stage-3 stub proving multi-hazard routing survives
+  contact with a real component (not just hand-built fixtures), an
+  end-to-end rollup and Legitimization-N/A confirmation, a concrete test of
+  the disclosed cross-hazard exposure (`ARCHITECTURE.md` §12.1) rather than
+  fixing it, and a real-BGE two-hazard run.
 
 - 2026-08-04 — **PR 2 slice B landed: verification sweep, PR 2 closed.**
 
