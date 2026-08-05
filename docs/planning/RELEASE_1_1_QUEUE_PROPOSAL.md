@@ -296,11 +296,17 @@ selection procedure fixed in
 [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md)
 ([D-59](DECISIONS.md#d-59)) — all three of which exist.
 
-**PR 5 is therefore no longer last in the sequence.** It may run as soon as
-queue item 2's structure comparison completes. What it still cannot do is claim
-either model scientifically successful: approved per-outcome criteria are a
-policy judgment no dataset substitutes for, so `SCIENCE.md` §Evidence and
-outputs' not-evaluated rule continues to apply.
+**PR 5 is therefore no longer last in the sequence, and its remaining
+precondition is now also met.** Queue item 2's structure comparison completed
+on 2026-08-05 and selected a structure ([D-68](DECISIONS.md#d-68)); the item
+is retired. PR 5 waits on nothing external.
+
+What it still cannot do is claim either model scientifically successful:
+approved per-outcome criteria are a policy judgment no dataset substitutes
+for, so `SCIENCE.md` §Evidence and outputs' not-evaluated rule continues to
+apply — **and D-68's selection is itself a null result**, so PR 5 inherits a
+structure chosen without any demonstrated advantage over the mechanism it
+replaces.
 
 ### Work
 

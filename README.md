@@ -144,6 +144,17 @@ D-54 through D-62):
   receive response-derived text only; nobody has determined what prompt
   context the Assessment Standard actually permits.
 
+**The L/E model structure was selected without demonstrating an improvement**
+(D-68, added 2026-08-05). Release 1.1 uses a per-hazard flat three-class
+multinomial softmax for both Legitimization and Enablement. That structure was
+chosen by a pre-registered comparison, but **no candidate beat the incumbent
+two-head mechanism on either target**, and on Legitimization the selected
+structure scored *below* it. It was selected because every higher-scoring
+candidate is a two-head structure that cannot produce the three-class
+distribution `docs/SCIENCE.md` requires — not because it was shown to be
+better. Every figure behind that comparison is a development-set number (see
+below), so it supports no quality claim in either direction.
+
 **The ground truth is real but out of version** (D-63 through D-66, added
 2026-08-04). The Standards team's fixed dataset and approved success criteria
 are not arriving, so Release 1.1 is fitted and selected against the Jailbreak

@@ -389,7 +389,7 @@ Rules that make replaceability real:
 | 6 | Refusal detection | **placeholder** | Nothing external blocks building it. Held back for 1.1 (D-54) to keep the release's unevaluated surface enumerable: it would have no ground truth and no approved criterion, so it could report nothing but *not evaluated* |
 | 7 | Disclaimer detection | **partial** | Baseline disclaimer sentence detection wrapped; publishes `named["disclaimer_stripped"]` for C-4's comparison |
 | 8 | Shared embedding | **working** | §8 |
-| 9 | L and E scoring | **working** *(target)*; **partial** until PR 5 lands | Three-class multinomial per evaluated hazard, structure selected by queue item 2 (live). PR 1's wrapped baseline is partial and reports `distribution=None` (§4) |
+| 9 | L and E scoring | **working** *(target)*; **partial** until PR 5 lands | Three-class multinomial per evaluated hazard. **Structure selected 2026-08-05 by [`planning/DECISIONS.md` D-68](planning/DECISIONS.md#d-68)** — a per-hazard flat multinomial softmax; queue item 2 is closed. PR 1's wrapped baseline is partial and reports `distribution=None` (§4); PR 5 replaces it |
 | 10 | Final integration | **working** | §9 |
 
 Three placeholders and **three** partials ship visibly (decoding joined them

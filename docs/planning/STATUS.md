@@ -533,7 +533,14 @@ one item or advance past an Awaiting User item on its own. See
 
 ## Current Phase
 
-**1.1 Jailbreak Science-to-decision review.**
+**Building Release 1.1** (queue item 4). The science-to-decision review
+(retired item 1) and the L/E structure selection (retired item 2,
+[D-68](DECISIONS.md#d-68)) are both complete, so what remains is
+implementation.
+
+PRs 1, 2 and 3 are landed. **PR 4 is next**, then PR 7 → PR 6 → PR 5
+([D-56](DECISIONS.md#d-56)). PR 5 now has a selected structure to build and
+waits on nothing external.
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -654,7 +661,7 @@ Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot).
 queue item 2 has since closed ([D-68](DECISIONS.md#d-68), 2026-08-05); PR 5
 waits on nothing external and has a selected structure to build. One
 action remains with Kurt — schedule Riki's concurrence review, now covering
-twenty-four calls. Queue items 1 and 3 are complete and retired, and both
+twenty-eight calls. Queue items 1, 2 and 3 are complete and retired, and both
 architecture-pass findings (A-1, A-2) are resolved and applied to
 `SCIENCE.md`. The calls awaiting Riki's concurrence are in force under an
 assumed concurrence.
@@ -668,7 +675,8 @@ labels, which is the only route to either model being *evaluated* rather than
 *not evaluated* — but nothing waits on it. One action sits with Kurt:
 schedule Riki's concurrence review.
 
-**Riki's review now has twelve rows, covering twenty-five calls** (2026-08-04:
+**Riki's review now has fifteen rows, covering twenty-eight calls** (2026-08-05:
+D-67's coverage call and D-68's structure selection are the newest two; 2026-08-04:
 the decision-debt sweep added nine in one row, the interim-data pivot four
 more, and `META_PLAN.md` §1.2 one). **This table is the review agenda**, and
 `META_PLAN.md` §1.2 now makes maintaining it per decision a requirement rather

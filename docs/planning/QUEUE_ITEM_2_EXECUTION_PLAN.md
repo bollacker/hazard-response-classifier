@@ -1,5 +1,14 @@
 # Queue item 2 execution plan — L/E structure selection
 
+> **Complete. This is now a record of what was built, not live work.**
+> Queue item 2 closed 2026-08-05; the selection is
+> [`DECISIONS.md` D-68](DECISIONS.md#d-68) and the numbers are in
+> `item2_results/stage1.json` and `stage2.json`. Read
+> [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) §8
+> alongside this plan — five of its seven amendments are corrections found
+> *after* the code was written, and this plan's own text was wrong about the
+> fit count and the ledger number until they landed.
+
 Written 2026-08-04, after the interim-data pivot ([D-63](DECISIONS.md#d-63)–
 [D-66](DECISIONS.md#d-66)) made this item startable and D-59's pre-registration
 was written. This is the working plan for `STATUS.md` **queue item 2**, and it
@@ -351,13 +360,13 @@ it. Add a Recently Completed entry.
 
 | Criterion | Verified by |
 |---|---|
-| The comparison ran on one fixed evaluation set | Slice 0's manifest check; every result carries `split_version: interim-v1` |
-| Candidate structures compared across the seven axes | `stage1.json` has all 12 non-reference levels per target; representation recorded as not exercised |
-| The best-supported structure selected, not the prototype by default | Slice C applies §4's rule; `R` structurally excluded from winning |
-| The prototype treated as a baseline, not the target | `R` is the reference the ladder measures against |
-| Reasoning and rejected candidates recorded | The D-67 entry, plus `stage1.json`/`stage2.json` |
-| No unsupported quality claim | No number written to `README.md`; both models still *not evaluated* |
-| Item closed correctly | Item 2 in Retired item numbers; number not reused |
+| The comparison ran on one fixed evaluation set | **Met.** Slice 0's manifest check; every result carries `split_version: interim-v1` |
+| Candidate structures compared across the seven axes | **Met.** `stage1.json` has all **10** non-reference levels per target (§5's 2026-08-04 count correction); representation recorded as not exercised |
+| The best-supported structure selected, not the prototype by default | **Met, on a null result** — no structure beat `R`; the winner is the best *eligible* one. Slice C applies §4's rule; `R` structurally excluded from winning |
+| The prototype treated as a baseline, not the target | **Met.** `R` is the reference the ladder measures against |
+| Reasoning and rejected candidates recorded | **Met.** [D-68](DECISIONS.md#d-68)'s rejected-candidate table (D-67 was taken by the coverage decision), plus `stage1.json`/`stage2.json` — whose per-target `pool` arrays carry every candidate's numbers |
+| No unsupported quality claim | **Met.** No dev-set figure is presented as a quality claim anywhere; `README.md` discloses the null result; both models still *not evaluated* |
+| Item closed correctly | **Met 2026-08-05.** Item 2 in Retired item numbers; number not reused |
 
 ## 9. Explicitly out of scope
 
