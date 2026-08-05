@@ -546,9 +546,10 @@ Detailed phased proposal:
    2026-08-04, same shape as the PR plans — read-first list, preconditions,
    slices, exit-criterion map, out-of-scope list, and a lessons-carried-forward
    section). Its work is stage 1 and stage 2 of the pre-registration's ablation
-   ladder: at most 16 fitted configurations per target, 32 overall, selected by
-   macro-F1 with a worst-class floor and a paired cluster bootstrap over prompt
-   groups.
+   ladder: at most 14 fitted configurations per target, 28 overall (corrected
+   2026-08-04, `PREREGISTRATION_LE_STRUCTURE.md` §8 — the original 16/32 did
+   not match §2.3's own axis table), selected by macro-F1 with a worst-class
+   floor and a paired cluster bootstrap over prompt groups.
 
    **The plan's slice 0 fixes a defect the pivot session shipped**, and it must
    run first: `data/interim_split_v1.json` records eval *group ids* and a prose

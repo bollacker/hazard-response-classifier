@@ -131,11 +131,14 @@ conditioning in general.
 ### 2.4 Comparison budget
 
 - **Stage 1 — ablation.** From R, vary one axis at a time across all its
-  levels: 12 non-reference levels, so **12 fits per target (L, E)**.
+  levels: **10 non-reference levels** (§8's 2026-08-04 amendment; enumerated
+  directly from §2.3's table: Loss `{L1,L2}`, Weighting `{W2,W3}`, Sharing
+  `{S2}`, Hazard-conditioning `{H1,H2}`, Branching `{B1}`, Representation `{}`,
+  Pooling `{P2,P3}`), so **10 fits per target (L, E)**.
 - **Stage 2 — finalists.** Combine the best level of each axis into one
   composite; add at most **3** further hand-picked combinations where stage 1
   suggests an interaction. Maximum **4 finalists per target**.
-- **Total: at most 16 fitted configurations per target, 32 overall.**
+- **Total: at most 14 fitted configurations per target, 28 overall.**
 
 No adaptive expansion. If stage 2 is inconclusive the tie-break in §4 decides;
 the budget is not extended, because an extended search on a dev set this size
@@ -307,6 +310,30 @@ alternatives. The gap was in this document, not a deviation from it — but the
 value of a pre-registration is that the procedure is complete and visible
 before results exist, so filling the gap is logged here the same way a
 deviation would be.
+
+**2026-08-04 — stage 1's fit count corrected: 10 non-reference levels, not 12
+(§2.4).** Found while starting slice B: §2.3's own table, enumerated directly
+(each axis's levels minus its `=R` level; Representation contributes zero
+since `V1` is its only level), gives 10, not 12 — Sharing contributes exactly
+one (`S2`) and every other axis matches, so the original "12" appears to have
+double-counted at least one axis (plausibly treating `S1`/`H3` or `W1`/`B2`'s
+own reference levels as if they were additional non-reference ones). This is
+the same class of defect §10 lesson 2 names — a summary number that looks
+authoritative and was not recomputed from the table it summarizes.
+
+**What changed:** §2.4's stage 1 count (10, not 12; 10 fits/target, not 12)
+and the derived total budget (§2.4: 14/target, 28 overall — not 16/32).
+**What did not change:** §2.3's table itself, which is correct and was the
+source used to recompute this; the specific ten named levels
+(`L1, L2, W2, W3, S2, H1, H2, B1, P2, P3`) are unambiguous from it regardless
+of the summary sentence's count. No candidate was added or dropped — only the
+stated total was wrong.
+
+**Why recorded as an amendment rather than silently corrected:** the § 2.4
+budget is quoted as a hard cap in `QUEUE_ITEM_2_EXECUTION_PLAN.md` ("Do not
+expand the budget" / "That is the whole budget") and cited from `STATUS.md`;
+silently changing a number treated as non-negotiable elsewhere is exactly what
+§8's amendment mechanism exists to make visible instead.
 
 **2026-08-04 — the ladder's candidate list is closed (§2.3), restated.** Not a
 change; a confirmation made when the harness gained a `MajorityClassBaseline`

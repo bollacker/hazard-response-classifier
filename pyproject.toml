@@ -18,6 +18,13 @@ dependencies = [
 dev = [
     "pytest",
 ]
+# Only for the offline L/E structure-selection harness
+# (`src/hazard_classifier/experiments/`, `docs/planning/QUEUE_ITEM_2_EXECUTION_PLAN.md`).
+# Not a shipping-evaluator dependency -- statsmodels' OrderedModel is the `L2`
+# ordinal cumulative-link candidate's proportional-odds MLE implementation.
+experiments = [
+    "statsmodels",
+]
 
 [project.scripts]
 hrc-train = "hazard_classifier.cli.train:main"

@@ -58,7 +58,8 @@ Getting this boundary wrong is the largest risk in the plan, because the
 natural momentum at the end of a successful comparison is to go implement the
 winner.
 
-**In scope:** an offline comparison harness, 32 fitted configurations, a
+**In scope:** an offline comparison harness, 28 fitted configurations (§5's
+2026-08-04 correction), a
 selection under the pre-registration's rule, a `DECISIONS.md` entry recording
 the selected structure *and the rejected candidates*, and closing the item.
 
@@ -151,7 +152,7 @@ code.
 ### 4.1 Features
 
 One embedding pass over all 859 response texts, cached to disk as `.npy` keyed
-by model name and revision. Re-embedding inside a 32-configuration loop is the
+by model name and revision. Re-embedding inside a many-configuration loop is the
 defect `ARCHITECTURE.md` §8 names explicitly; it is also about a hundred times
 slower.
 
@@ -225,8 +226,11 @@ probability. If `R` cannot produce a distribution at all, that is expected:
 
 ## 5. Slice B — Stage 1 ablation
 
-From `R`, vary one axis at a time across all its levels: **12 non-reference
-levels × 2 targets = 24 fits.** Write every result to
+From `R`, vary one axis at a time across all its levels: **10 non-reference
+levels × 2 targets = 20 fits** (corrected 2026-08-04 —
+`PREREGISTRATION_LE_STRUCTURE.md` §8: the original "12" did not match §2.3's
+own table; the ten named levels are `L1, L2, W2, W3, S2, H1, H2, B1, P2, P3`).
+Write every result to
 `docs/planning/item2_results/stage1.json` — every configuration, its per-class
 and macro F1, its worst-class F1, and its bootstrap interval against `R`.
 
@@ -242,13 +246,13 @@ Expected findings to not be surprised by, pre-declared in the pre-registration:
 - **`V1` is the only representation level.** Comparing encoders is out of scope
   for 1.1; it is recorded as an axis not exercised, not as one dropped.
 
-**Exit:** 24 results recorded, best level identified per axis.
+**Exit:** 20 results recorded, best level identified per axis.
 
 ## 6. Slice C — Stage 2 finalists and selection
 
 Combine the best level of each axis into one composite, plus **at most 3**
 hand-picked combinations where stage 1 suggests an interaction. **Maximum 4
-finalists per target, 8 fits.** Running total: 32. That is the whole budget.
+finalists per target, 8 fits.** Running total: 28. That is the whole budget.
 
 **Do not expand the budget.** An adaptive sweep on 224 dev rows produces a
 selection rule that describes noise. If stage 2 is inconclusive, the tie-break
