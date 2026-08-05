@@ -575,19 +575,22 @@ Detailed phased proposal:
    was built rather than live work, the same way `PR1_EXECUTION_PLAN.md` and
    `PR2_EXECUTION_PLAN.md` are.
 
-   **PR 4 (narrative, refusal, and disclaimer detection) is next, and its
-   execution plan is written** (2026-08-05):
-   [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md). Four slices, no gates —
-   the three calls the plan raised are decided
+   **PR 4 (narrative, refusal, and disclaimer detection) is in progress.**
+   Execution plan: [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md). Four
+   slices, no gates — the three calls the plan raised are decided
    ([D-69](DECISIONS.md#d-69), [D-70](DECISIONS.md#d-70), and
-   `../ARCHITECTURE.md` §13's A-3) and absorbed into the specifications, so a
-   session starts at slice A. **PR 4 turned out to carry two real code changes
-   rather than none**, both found by reading the code against the
-   specifications: the model-input text view was a literal attribute access
-   while §5 claimed it was configuration-selected, and stage 7's broadest
-   disclaimer pattern was firing on bare risk vocabulary in the one direction
-   phase C can only move toward non-violating. The earlier note here that PR 4
-   "builds nothing new" is superseded by those two.
+   `../ARCHITECTURE.md` §13's A-3) and absorbed into the specifications.
+   **PR 4 turned out to carry two real code changes rather than none**, both
+   found by reading the code against the specifications: the model-input text
+   view was a literal attribute access while §5 claimed it was
+   configuration-selected, and stage 7's broadest disclaimer pattern was
+   firing on bare risk vocabulary in the one direction phase C can only move
+   toward non-violating. The earlier note here that PR 4 "builds nothing new"
+   is superseded by those two.
+
+   **Slice A landed** (2026-08-05, see Recently Completed): `EmbeddingComponent`
+   takes `text_view` as a construction argument. **Slices B, C, and D remain**
+   — B is independent of A; C depends on neither.
 
    **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
    blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
@@ -859,6 +862,38 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 4 slice A landed: the text-view selection seam
+  ([D-69](DECISIONS.md#d-69), `../ARCHITECTURE.md` §5).**
+  `evaluator/components/embedding.py`'s `EmbeddingComponent` now takes
+  `text_view: str = "working"` as a keyword-only constructor argument instead
+  of hard-coding `record.texts.working`. Reserved names (`original`,
+  `decoded`, `working`) resolve via a guarded attribute lookup, never a blind
+  `getattr`; `"disclaimer_stripped"` — the only `named` view any 1.1
+  component publishes — resolves through `texts.named`; any other name is
+  rejected with `ValueError` at construction, before any record exists, per
+  §5/§6's no-fallback rule. The resolved view is recorded in the stage-8
+  observation's `facts["text_view"]`, which `views.py` already carries
+  through to `results.jsonl` unchanged, so two runs reading different text no
+  longer look identical in the output. Default unchanged, so no caller that
+  constructs `EmbeddingComponent(provider, pooling)` (all four existing call
+  sites) changes behavior.
+
+  6 new tests in `tests/unit/test_evaluator_pr4_text_view.py`: default view
+  and its recorded fact; `text_view="disclaimer_stripped"` embeds the named
+  view's text, not `working`'s (asserted against a capturing stub provider's
+  actual captured strings); `original`/`decoded` are also selectable;
+  an unknown name raises `ValueError` at construction and nothing reaches the
+  provider. 419 tests total (413 + 6), zero regressions, including
+  `test_baseline_parity.py` (D-48 still holds — no baseline module touched).
+
+  **Nothing found in passing that wasn't already anticipated by the plan.**
+  The two-tier validation (reserved names checkable at construction; the one
+  known `named` key is also validated at construction since which keys 1.1's
+  components can ever publish is closed and static, even though a *given
+  record* carrying that key cannot be confirmed until the record exists) is
+  one reasonable reading of §5's Traps section — recorded here in case a
+  later slice reads it differently. **Slices B, C, and D of PR 4 remain.**
 
 - 2026-08-05 — **PR 4's execution plan written, and the three calls it raised
   decided and absorbed.** [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md).

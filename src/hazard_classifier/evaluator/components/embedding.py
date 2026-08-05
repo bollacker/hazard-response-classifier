@@ -20,6 +20,19 @@ has already **removed** repeated spans from the working text
 keep-mask to drop, and both models read the same `working` view (§5's
 stated default). One pooled vector per response is therefore the correct
 1.1 shape, not a simplification of the baseline's two.
+
+**The text view is a construction argument, not a hard-coded attribute
+access** (`docs/planning/DECISIONS.md` D-69, `ARCHITECTURE.md` §5). Stage 8
+is the only stage that reads a text view, so it is selected once per record
+here rather than once per model. `text_view` defaults to `"working"` --
+1.1's default per D-55 -- and the resolved view is recorded in this
+component's observation (`text_view` in `facts`) so a result names the text
+its models actually saw. The three `TextViews` attributes (`original`,
+`decoded`, `working`) and `disclaimer_stripped` -- the only `named` view any
+1.1 component publishes (`disclaimer.py`) -- are the closed set §5 currently
+defines; anything else is rejected at construction rather than silently
+falling back to `working` (§6's no-fallback rule, generalized to a
+misconfiguration that would fail every row identically).
 """
 
 from __future__ import annotations
@@ -38,6 +51,22 @@ from ..record import ComponentObservation, EvaluationRecord
 # communicate through the record, never by importing each other (§6).
 POOLED_VECTOR_FACT = "pooled_vector"
 SEGMENT_COUNT_FACT = "segment_count"
+TEXT_VIEW_FACT = "text_view"
+
+# `TextViews`' three reserved attributes -- always present, so membership
+# here is checkable at construction (`docs/planning/DECISIONS.md` D-69).
+_RESERVED_TEXT_VIEWS = frozenset({"original", "decoded", "working"})
+
+# The `named` views any 1.1 component actually publishes. `TextViews.named`
+# is populated per record, so whether a *given record* carries a key can
+# never be confirmed at construction -- but which keys 1.1's components can
+# publish at all is closed and static, and validating construction against
+# that closed set is what stops a typo from reaching every row identically
+# (`ARCHITECTURE.md` §5's Traps: "reserved names are checkable in __init__;
+# a named key is not [confirmable against a real record], since
+# `TextViews.named` is filled per record"). `disclaimer_stripped` is the
+# only one 1.1 ships (`disclaimer.py`, D-55).
+_KNOWN_NAMED_TEXT_VIEWS = frozenset({"disclaimer_stripped"})
 
 
 class EmbeddingProvider(Protocol):
@@ -115,12 +144,41 @@ class EmbeddingComponent:
     version: ClassVar[str] = "1"
     maturity: ClassVar[Maturity] = "working"
 
-    def __init__(self, provider: EmbeddingProvider, pooling: PoolingStrategy) -> None:
+    def __init__(
+        self,
+        provider: EmbeddingProvider,
+        pooling: PoolingStrategy,
+        *,
+        text_view: str = "working",
+    ) -> None:
+        if text_view not in _RESERVED_TEXT_VIEWS and text_view not in _KNOWN_NAMED_TEXT_VIEWS:
+            raise ValueError(
+                f"unknown text_view {text_view!r}; expected one of "
+                f"{sorted(_RESERVED_TEXT_VIEWS | _KNOWN_NAMED_TEXT_VIEWS)}"
+            )
         self.provider = provider
         self.pooling = pooling
+        self.text_view = text_view
+
+    def _resolve_text(self, texts) -> str:
+        """Resolve `self.text_view` against `texts` (`record.texts`).
+
+        Deliberately not a blind `getattr` -- that would make any
+        `TextViews` attribute name (e.g. `"history"`) a valid "view". A
+        reserved name always resolves; a `named` lookup is the one case
+        unreachable in 1.1 (`disclaimer_stripped` is always published by
+        stage 7 before stage 8 runs, and if stage 7 did not run the record
+        was exhausted and stage 8 is skipped) -- so a missing key here is
+        left to raise `KeyError` rather than given a fallback-to-`working`
+        path nothing can exercise (§6: never substitute silently).
+        """
+        if self.text_view in _RESERVED_TEXT_VIEWS:
+            return getattr(texts, self.text_view)
+        return texts.named[self.text_view]
 
     def run(self, record: EvaluationRecord) -> EvaluationRecord:
-        segments = segment_module.segment_text(record.texts.working, max_chars=420, stride=210)
+        text_to_embed = self._resolve_text(record.texts)
+        segments = segment_module.segment_text(text_to_embed, max_chars=420, stride=210)
         texts = [piece.text for piece in segments]
 
         # Exactly one call, covering every segment of this response, whose
@@ -139,6 +197,7 @@ class EmbeddingComponent:
                 SEGMENT_COUNT_FACT: len(texts),
                 "provider": self.provider.name,
                 "pooling": self.pooling.name,
+                TEXT_VIEW_FACT: self.text_view,
             },
             text_out=None,
             error=None,
