@@ -1,7 +1,7 @@
-"""Slice 1A tests (`docs/planning/PR1_EXECUTION_PLAN.md`) for
-`hazard_classifier/evaluator/run.py`, scoped exactly as the module is:
-registry validation only (`ARCHITECTURE.md` §2's other two rejection
-conditions -- supplied-hazard and hazard-scope validation -- are PR 3's).
+"""Tests for `hazard_classifier/evaluator/run.py`: registry validation
+(slice 1A, `docs/planning/PR1_EXECUTION_PLAN.md`) and hazard/scope
+validation (slice A, `docs/planning/PR3_EXECUTION_PLAN.md` §3) -- together,
+`ARCHITECTURE.md` §2's three rejection conditions.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from hazard_classifier.evaluator.run import (
     RunContext,
     RunRejectedError,
     open_run,
+    validate_supplied_hazard,
 )
 
 
@@ -46,7 +47,7 @@ def test_open_run_resolves_registered_components_into_a_run_context() -> None:
     registry = Registry()
     registry.register(_StubComponent("decoding", "baseline", version="3"))
 
-    context = open_run(_config(), registry)
+    context = open_run(_config(), registry, {"hte"})
 
     assert isinstance(context, RunContext)
     assert context.hazard_scope == frozenset({"hte"})
@@ -61,7 +62,7 @@ def test_open_run_rejects_an_unregistered_component_naming_stage_and_implementat
     registry = Registry()  # nothing registered
 
     with pytest.raises(RunRejectedError) as excinfo:
-        open_run(_config(), registry)
+        open_run(_config(), registry, {"hte"})
 
     message = str(excinfo.value)
     assert "decoding" in message
@@ -76,6 +77,7 @@ def test_open_run_resolves_every_selected_stage_not_just_the_first() -> None:
     context = open_run(
         _config(component_selection={"decoding": "baseline", "refusal": "baseline"}),
         registry,
+        {"hte"},
     )
 
     assert context.component_selections["decoding"].version == "1"
@@ -93,7 +95,7 @@ def test_run_config_component_selection_is_read_only() -> None:
 def test_run_context_component_selections_is_read_only() -> None:
     registry = Registry()
     registry.register(_StubComponent("decoding", "baseline"))
-    context = open_run(_config(), registry)
+    context = open_run(_config(), registry, {"hte"})
 
     assert isinstance(context.component_selections, MappingProxyType)
     with pytest.raises(TypeError):
@@ -105,3 +107,63 @@ def test_run_config_hazard_scope_is_coerced_to_a_frozenset() -> None:
 
     assert config.hazard_scope == frozenset({"hte", "prv"})
     assert isinstance(config.hazard_scope, frozenset)
+
+
+# --- Slice A: hazard/scope validation (`PR3_EXECUTION_PLAN.md` §3) ---------
+
+
+def test_open_run_rejects_a_hazard_scope_hazard_the_artifact_does_not_support() -> None:
+    registry = Registry()
+    registry.register(_StubComponent("decoding", "baseline"))
+
+    with pytest.raises(RunRejectedError) as excinfo:
+        open_run(_config(hazard_scope={"hte", "cse"}), registry, {"hte"})
+
+    assert "cse" in str(excinfo.value)
+
+
+def test_open_run_accepts_when_every_hazard_scope_member_is_supported() -> None:
+    registry = Registry()
+    registry.register(_StubComponent("decoding", "baseline"))
+
+    context = open_run(_config(hazard_scope={"hte", "prv"}), registry, {"hte", "prv", "cse"})
+
+    assert context.hazard_scope == frozenset({"hte", "prv"})
+
+
+def _run_context(hazard_scope: frozenset[str]) -> RunContext:
+    return RunContext(
+        hazard_scope=hazard_scope,
+        rule_version="v1",
+        artifact_id="artifact-1",
+        component_selections={},
+    )
+
+
+def test_validate_supplied_hazard_rejects_a_blank_value() -> None:
+    with pytest.raises(RunRejectedError) as excinfo:
+        validate_supplied_hazard("   ", _run_context(frozenset({"hte"})))
+
+    assert "missing" in str(excinfo.value)
+
+
+def test_validate_supplied_hazard_rejects_a_hazard_outside_scope() -> None:
+    with pytest.raises(RunRejectedError) as excinfo:
+        validate_supplied_hazard("prv", _run_context(frozenset({"hte"})))
+
+    assert "prv" in str(excinfo.value)
+
+
+def test_validate_supplied_hazard_does_not_case_fold() -> None:
+    """D-27: `normalize_hazard` strips and replaces hyphens, but never
+    lowercases. `"HTE"` therefore normalizes to `"HTE"`, which is not a
+    member of a scope spelled `{"hte"}` -- this must reject, not accept.
+    """
+    with pytest.raises(RunRejectedError) as excinfo:
+        validate_supplied_hazard("HTE", _run_context(frozenset({"hte"})))
+
+    assert "HTE" in str(excinfo.value)
+
+
+def test_validate_supplied_hazard_accepts_a_normalized_match() -> None:
+    validate_supplied_hazard("spc-fin", _run_context(frozenset({"spc_fin"})))

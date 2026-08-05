@@ -37,7 +37,7 @@ from hazard_classifier.evaluator.contract import Maturity
 from hazard_classifier.evaluator.pipeline import STAGE_ORDER, run_pipeline
 from hazard_classifier.evaluator.record import ComponentObservation, EvaluationRecord, Flags, TextViews
 from hazard_classifier.evaluator.registry import Registry
-from hazard_classifier.evaluator.run import RunConfig, open_run
+from hazard_classifier.evaluator.run import ComponentSelection, RunConfig, RunContext, open_run
 from hazard_classifier.model import fit
 
 _ENABLEMENT_ONLY = frozenset({"prv", "sxc_prn"})
@@ -138,7 +138,7 @@ def _run(classifier, prompt, response, *, hazard="hte", evaluated=None, registry
         artifact_id="test-artifact",
         rule_version=_RULES.version,
     )
-    run_context = open_run(config, registry)
+    run_context = open_run(config, registry, classifier.trained_hazards)
 
     record = EvaluationRecord(
         request_id="req-1",
@@ -153,6 +153,47 @@ def _run(classifier, prompt, response, *, hazard="hte", evaluated=None, registry
         observations=(),
         detected_hazards=tuple(h for h in (evaluated or ()) if h != hazard),
         evaluated_hazards=tuple(evaluated or (hazard,)),
+        flags=Flags(),
+        per_hazard={},
+        overall_result="failure",
+        overall_failure_reason="not yet evaluated",
+    )
+    return run_pipeline(record, run_context, registry)
+
+
+def _run_without_open_run(classifier, prompt, response, *, hazard, evaluated, registry, components):
+    """Bypasses `open_run` entirely. Since slice A (`PR3_EXECUTION_PLAN.md`
+    §3), `open_run` itself rejects any `hazard_scope` member the artifact
+    doesn't support, before scoring ever runs -- so a fixture built through
+    `_run`/`open_run` can no longer reach an unseen hazard at all. Used only
+    to isolate `scoring.py`'s own fail-closed handling of an unseen hazard
+    as a defense-in-depth property, independent of run-entry validation.
+    """
+    selections = {
+        stage: ComponentSelection(
+            implementation=components[stage].implementation, version=components[stage].version
+        )
+        for stage in STAGE_ORDER
+    }
+    run_context = RunContext(
+        hazard_scope=frozenset(evaluated),
+        rule_version=_RULES.version,
+        artifact_id="test-artifact",
+        component_selections=selections,
+    )
+    record = EvaluationRecord(
+        request_id="req-1",
+        prompt_uid="pu-1",
+        response_id="resp-1",
+        prompt_text=prompt,
+        response_text=response,
+        supplied_hazard=hazard,
+        run=run_context,
+        texts=TextViews(original=response, decoded=response, working=response),
+        exhausted_at=None,
+        observations=(),
+        detected_hazards=tuple(h for h in evaluated if h != hazard),
+        evaluated_hazards=tuple(evaluated),
         flags=Flags(),
         per_hazard={},
         overall_result="failure",
@@ -234,12 +275,22 @@ def test_scoring_produces_no_legitimization_judgment_for_an_enablement_only_haza
 
 
 def test_an_unseen_hazard_produces_a_per_hazard_failure_not_a_crash(classifier) -> None:
-    record = _run(
+    """Slice A's `open_run` now rejects an artifact-unsupported hazard in
+    `hazard_scope` before scoring ever runs, so this fixture bypasses
+    `open_run` (`_run_without_open_run`) to isolate `scoring.py`'s own
+    fail-closed handling as a defense-in-depth property -- D-3's "fail
+    closed on unknown/unfit cells" philosophy, still meaningful for any
+    caller that builds a `RunContext` without going through `open_run`.
+    """
+    registry, _provider, components = _build(classifier)
+    record = _run_without_open_run(
         classifier,
         "A prompt.",
         "Some substantive response text that is long enough to score.",
         hazard="iwp",  # never trained
         evaluated=("iwp",),
+        registry=registry,
+        components=components,
     )
     judgment = record.per_hazard["iwp"]
 

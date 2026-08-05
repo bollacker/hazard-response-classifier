@@ -164,7 +164,7 @@ def _run(
         artifact_id="test-artifact",
         rule_version="v1",
     )
-    run_context = open_run(config, registry)
+    run_context = open_run(config, registry, config.hazard_scope)
 
     record = EvaluationRecord(
         request_id="req-1",

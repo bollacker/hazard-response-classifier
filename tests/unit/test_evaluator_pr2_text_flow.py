@@ -118,7 +118,7 @@ def _run(classifier, prompt: str, response: str, *, hazard: str = "hte") -> Eval
         artifact_id="test-artifact",
         rule_version=_RULES.version,
     )
-    run_context = open_run(config, registry)
+    run_context = open_run(config, registry, classifier.trained_hazards)
 
     record = EvaluationRecord(
         request_id="req-1",

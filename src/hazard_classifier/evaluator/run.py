@@ -1,28 +1,31 @@
 """Run entry (`docs/ARCHITECTURE.md` §2): `RunConfig`, `RunContext`,
-`RunRejectedError`, `open_run`.
+`RunRejectedError`, `open_run`, `validate_supplied_hazard`.
 
-**Scope for slice 1A (`docs/planning/PR1_EXECUTION_PLAN.md`): registry
-validation only.** `ARCHITECTURE.md` §2 lists three rejection conditions for
-`open_run`:
+`ARCHITECTURE.md` §2 lists three rejection conditions:
 
 1. the supplied hazard of any input row is missing, unrecognized, or
    outside `hazard_scope`;
-2. `hazard_scope` contains a hazard the selected artifact does not support;
+2. `hazard_scope` contains a hazard the selected artifact does not support
+   (D-23 -- the artifact's frozen sets are authoritative);
 3. a selected component implementation is not in the registry.
 
-Only (3) is built here. (1) and (2) need a labeled artifact and per-row
-input data that this slice has no reason to touch -- they are PR 3's
-supplied-hazard and hazard-scope validation, named explicitly in
-`PR1_EXECUTION_PLAN.md` as out of scope for slice 1A. `open_run`'s
-signature reflects this: it takes a `Registry`, not yet an artifact.
+All three are now built. `open_run` checks (2) and (3) once, at run entry,
+against `supported_hazards` (the artifact's frozen hazard set -- callers
+pass `classifier.trained_hazards`, not a new artifact loader; D-49 defers
+the 1.1 evaluator artifact past this PR) and `registry`. (1) collapses to a
+single membership test against `hazard_scope` once (2) has already ruled
+out any unsupported hazard being in scope -- see `validate_supplied_hazard`,
+called once per response, before `pipeline.run_pipeline` is invoked for it
+(`docs/planning/PR3_EXECUTION_PLAN.md` §3.1).
 """
 
 from __future__ import annotations
 
 import dataclasses
 from types import MappingProxyType
-from typing import Mapping
+from typing import AbstractSet, Mapping
 
+from ..schema import normalize_hazard
 from .registry import Registry, UnregisteredComponentError
 
 
@@ -84,16 +87,28 @@ class RunRejectedError(Exception):
     """
 
 
-def open_run(config: RunConfig, registry: Registry) -> RunContext:
-    """Validate `config` against `registry` and return the `RunContext` to
-    attach to every record this run produces.
+def open_run(config: RunConfig, registry: Registry, supported_hazards: AbstractSet[str]) -> RunContext:
+    """Validate `config` against `registry` and `supported_hazards`, and
+    return the `RunContext` to attach to every record this run produces.
 
-    Slice 1A's only check: every `(stage, implementation)` pair in
-    `config.component_selection` must be registered. `ARCHITECTURE.md`
-    §2's other two rejection conditions (missing/out-of-scope supplied
-    hazard; an artifact-unsupported hazard in `hazard_scope`) are not
-    checked here -- see the module docstring.
+    Two checks, run once for the whole run (`ARCHITECTURE.md` §2's
+    conditions (2) and (3)):
+
+    - every hazard in `config.hazard_scope` must be in `supported_hazards`
+      (the artifact's frozen hazard set -- D-23); and
+    - every `(stage, implementation)` pair in `config.component_selection`
+      must be registered.
+
+    Condition (1) (a response's own supplied hazard) is per-response, not
+    checked here -- see `validate_supplied_hazard`.
     """
+    unsupported = config.hazard_scope - frozenset(supported_hazards)
+    if unsupported:
+        raise RunRejectedError(
+            f"run rejected: hazard_scope contains {sorted(unsupported)!r}, "
+            "which the selected artifact does not support"
+        )
+
     selections: dict[str, ComponentSelection] = {}
     for stage, implementation in config.component_selection.items():
         try:
@@ -111,3 +126,23 @@ def open_run(config: RunConfig, registry: Registry) -> RunContext:
         artifact_id=config.artifact_id,
         component_selections=selections,
     )
+
+
+def validate_supplied_hazard(supplied_hazard: str, run_context: RunContext) -> None:
+    """`ARCHITECTURE.md` §2 condition (1), checked once per response,
+    before `pipeline.run_pipeline` is invoked for it.
+
+    Normalizes `supplied_hazard` first (`schema.normalize_hazard` --
+    `.strip().replace("-", "_")`, no lowercasing -- D-27, carried for 1.1).
+    Rejects a blank value, or one outside `run_context.hazard_scope`.
+    Because `open_run` already validated `hazard_scope` against the
+    artifact's supported hazards, "unrecognized" and "outside scope" are one
+    membership test here, not two.
+    """
+    normalized = normalize_hazard(supplied_hazard)
+    if normalized == "":
+        raise RunRejectedError(f"run rejected: supplied_hazard={supplied_hazard!r} is missing")
+    if normalized not in run_context.hazard_scope:
+        raise RunRejectedError(
+            f"run rejected: supplied_hazard={normalized!r} is not in hazard_scope={sorted(run_context.hazard_scope)!r}"
+        )

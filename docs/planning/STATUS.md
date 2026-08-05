@@ -564,18 +564,13 @@ Detailed phased proposal:
    including two new real-BGE integration tests and `test_baseline_parity.py`
    unchanged (D-48 still holds).
 
-   **PR 3 (hazard detection and multi-hazard routing) is next**, and its
+   **PR 3 (hazard detection and multi-hazard routing) is in progress.** Its
    plan is [`PR3_EXECUTION_PLAN.md`](PR3_EXECUTION_PLAN.md) — written
-   2026-08-04 to be runnable from a clean session. **No entry condition
-   remains.** Investigation while writing it found most of PR 3's own "Work"
-   list already built as a side effect of PR 1's architecture (separate
-   per-hazard scoring, shared embedding, source-preserving rollup); the
-   genuinely new work is narrower than the PR title suggests — run-entry
-   validation of the supplied hazard and the configured hazard scope, which
-   `open_run` explicitly deferred here (`PR1_EXECUTION_PLAN.md` slice 1A).
-   Two slices — slice A (build the validation) and slice B (verify the
-   already-built routing mechanics end to end, plus close). Start with
-   slice A.
+   2026-08-04 to be runnable from a clean session. **Slice A is complete**
+   (2026-08-04, see Recently Completed): `open_run` and the new
+   `validate_supplied_hazard` cover `ARCHITECTURE.md` §2's conditions (1)
+   and (2). **Slice B (verify the already-built routing mechanics end to
+   end, plus close) is next and last for PR 3.**
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -755,6 +750,48 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 3 slice A landed: run-entry hazard/scope validation.**
+  `evaluator/run.py`'s `open_run` widened to a required `supported_hazards`
+  parameter (callers pass `classifier.trained_hazards`, per D-23; no new
+  artifact loader, D-49 still holds) and now rejects any `hazard_scope`
+  member the artifact doesn't support, before the existing registry check
+  runs. New sibling `validate_supplied_hazard(supplied_hazard, run_context)`
+  normalizes via `schema.normalize_hazard` (D-27: strip + hyphen-to-underscore,
+  no case folding) and rejects a blank or out-of-scope value — built exactly
+  as `PR3_EXECUTION_PLAN.md` §3.1 proposed, with no conflict found against
+  `ARCHITECTURE.md` §2's literal text. Module docstring updated: all three
+  §2 rejection conditions are now built, not just registry validation.
+  6 new tests in `tests/unit/test_evaluator_run.py` (293 total, zero
+  regressions), covering both new `open_run` branches and
+  `validate_supplied_hazard`'s blank/out-of-scope/no-case-folding/
+  normalized-match cases per the plan's own list.
+
+  **Widening `open_run`'s signature required updating every existing
+  caller** (`test_evaluator_scoring_pipeline.py`, `test_evaluator_pipeline.py`,
+  `test_evaluator_pr2_text_flow.py`, `test_evaluator_real_bge.py`) to pass a
+  `supported_hazards` set — mechanical, no behavior change where a real
+  classifier fixture existed to supply `trained_hazards`.
+
+  **Fix found while building this slice, same pattern as prior
+  found-in-passing fixes, not a new decision:**
+  `test_an_unseen_hazard_produces_a_per_hazard_failure_not_a_crash` built its
+  fixture through `open_run`, with an unseen hazard (`iwp`) inside
+  `hazard_scope` — exactly the configuration `open_run`'s new check now
+  rejects before scoring ever runs, so the test could no longer reach the
+  `scoring.py` behavior it was written to exercise. Fixed by giving it a
+  dedicated `_run_without_open_run` fixture builder that constructs the
+  `RunContext` directly, bypassing `open_run` — isolating `scoring.py`'s own
+  fail-closed handling of an unseen hazard as a defense-in-depth property
+  (D-3's philosophy) for any caller that builds a `RunContext` without going
+  through `open_run`, independent of run-entry validation. No production
+  code touched by this fix; `scoring.py` itself is unchanged.
+
+  **Open question carried to slice B, not resolved here:** whether §3.1's
+  proposed mechanism (two checks, `open_run` run-wide + per-response
+  `validate_supplied_hazard`, collapsing condition 1's three-way phrasing to
+  one membership test) deserves its own `DECISIONS.md` entry (**D-53**) is
+  explicitly slice B's call per the plan (§4), not decided in this slice.
 
 - 2026-08-04 — **PR 3 execution plan written.** `PR3_EXECUTION_PLAN.md`, same
   shape as PR 1's and PR 2's: read-first list, preconditions, slices, an

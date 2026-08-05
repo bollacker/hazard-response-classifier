@@ -99,7 +99,7 @@ def _run(pipeline, prompt: str, response: str, hazard: str = "hte") -> Evaluatio
         artifact_id="golden-baseline",
         rule_version="1",
     )
-    run_context = open_run(config, registry)
+    run_context = open_run(config, registry, components["scoring"].classifier.trained_hazards)
     record = EvaluationRecord(
         request_id="req-1",
         prompt_uid="pu-1",
