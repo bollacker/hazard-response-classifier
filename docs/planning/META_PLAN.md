@@ -43,8 +43,10 @@ Field notes:
   supersede stays in force meanwhile. `open` — a question, not a decision.
   `superseded-by D-<m>` — retired in place, text left intact.
 - **`Approved by`.** Who agreed. A rewrite attributed to someone in a commit
-  message is not an approval; if the agreement is not on record, the entry is
-  `proposed`.
+  message is not an approval. ~~If the agreement is not on record, the entry
+  is `proposed`.~~ **Amended 2026-08-04 — see §1.2.** Under single-approver
+  mode an entry locks on one approver's decision and says so in this field;
+  `proposed` now means *no one* has decided it, not *not everyone* has.
 - **`Touches`** doubles as the absorption record. When a decision's effect is
   written into a specification, mark that entry — `PLAN.md` §3 step 1
   (**absorbed**) — so the index can point a reader from the entry to the
@@ -89,16 +91,73 @@ Recorded 2026-08-03, joint Riki–Kurt Release 1.1 science-contract review.
 - **`../ARCHITECTURE.md` owns module order, interfaces, records, and
   implementation structure.** The ledger records choices that constrain the
   architecture without duplicating its specification.
-- **The ledger records only decisions jointly approved by Riki and Kurt.**
-  Proposals and unanswered questions belong in `STATUS.md`. An entry that
-  states a proposal must say so in its `Status` line and name what approval it
-  is waiting on.
-- **Reusing a pre-staging baseline choice for Release 1.1 requires a new joint
+- ~~**The ledger records only decisions jointly approved by Riki and Kurt.**~~
+  **Amended 2026-08-04 — superseded by §1.2's single-approver mode.**
+  Proposals and unanswered questions still belong in `STATUS.md`, and an entry
+  that states a proposal must still say so in its `Status` line and name what
+  approval it is waiting on.
+- **Reusing a pre-staging baseline choice for Release 1.1 requires a new
   decision**, not a citation of the old entry. The baseline ledger is
-  implementation provenance; it does not carry forward by default.
+  implementation provenance; it does not carry forward by default. (Read
+  "joint" out of this rule as of 2026-08-04, §1.2 — what it requires is a
+  fresh decision, not a particular number of approvers.)
 - **Do not restate a specification's content in an entry.** Two normative
   statements of one rule in two mutable files will drift. State the decision
   and point at the specification that carries it.
+
+### 1.2 Single-approver mode
+
+Amended 2026-08-04 (Kurt). §1.1 as written required joint Riki–Kurt approval
+for every ledger entry, and §1's `Approved by` note said an entry whose
+agreement was not on record must be `proposed`. **Nineteen entries — D-47
+through D-66, every one except D-53 — are `locked` while recording that Riki's
+concurrence is assumed rather than confirmed.** The rule had been overridden
+nineteen times while still claiming to be in force, which is precisely the
+condition a future session would try to *enforce*: reverting nineteen locked
+decisions to `proposed` would stall the release exactly the way this document
+exists to prevent.
+
+So the mode is named rather than left as a standing exception.
+
+**How it works.** Kurt decides alone. The entry locks immediately — it is a
+real decision with real force, not a proposal. Riki reviews in batches rather
+than per decision.
+
+**What an entry in this mode owes**, all three, non-negotiable:
+
+1. **`Approved by` states it plainly** — who decided, when, and that the second
+   approver's concurrence is assumed and not on record. The existing formula
+   ("Riki's concurrence assumed on Kurt's direction, not confirmed on record")
+   is the wording; it already appears on all nineteen.
+2. **A row in `STATUS.md` §Assumed concurrence**, carrying the decision, its
+   state, and — the load-bearing part — **its reversal scope**: exactly what
+   reverts with it if the second approver dissents. An entry without a
+   reversal scope is not reviewable in batch, because the reviewer cannot see
+   what saying no would cost.
+3. **Inclusion in the next batch review.** The table *is* the review agenda.
+   It is maintained per decision, never reconstructed at review time —
+   reconstruction is where reversal scope gets lost, which is the one thing
+   this mode cannot afford to lose.
+
+**What `proposed` now means.** Not "fewer than two people agreed" but "nobody
+has decided." An entry Kurt has decided is `locked`; an entry awaiting
+*anyone's* decision is `proposed` and names what it waits on. This keeps
+`proposed` meaningful rather than making it the default state of the whole
+ledger.
+
+**What this does not change.** Locked entries remain hard constraints (§1).
+Conflicts between locked decisions still stop a session and go to Open
+Questions rather than being resolved silently. Retirement is still by
+superseding in place, never deletion. `../SCIENCE.md` still governs any
+behavioral question, and the ledger remains provenance, not authority.
+
+**The risk this accepts, stated so it is not discovered later.** Batch review
+means rework exposure scales with batch size: the longer the interval, the more
+work sits on top of decisions that could still be reversed. `STATUS.md`'s
+reversal-scope column is the mitigation and the only one — it is what lets a
+dissent be costed instead of guessed at. If the table stops being maintained,
+this mode stops being safe, and the correct response is to return to §1.1's
+original joint rule rather than to review a reconstructed list.
 
 ## 2. Scoped, Separated Passes
 

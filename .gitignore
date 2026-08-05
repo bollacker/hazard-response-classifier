@@ -8,5 +8,10 @@ dist/
 *.egg
 artifacts/
 
+# Queue item 2's cached sentence embeddings (regenerable from the source CSV
+# by experiments/features.py). The results files beside it -- stage1.json,
+# stage2.json -- are the record and ARE committed.
+docs/planning/item2_results/embedding_cache/
+
 # macOS
 .DS_Store

@@ -19,14 +19,27 @@ Where to look instead:
 Every entry is `locked` unless marked otherwise. A locked entry that has been
 absorbed into a specification is history: it constrains nothing on its own,
 because the specification carries the constraint. Reusing a baseline choice for
-Release 1.1 requires a new joint decision, not a citation of the old entry.
+Release 1.1 requires a new decision, not a citation of the old entry.
+
+**Approval mode (2026-08-04).** Entries lock on Kurt's decision alone, under
+`META_PLAN.md` §1.2's single-approver mode; Riki ratifies in batches. Every
+entry made that way says so in `Approved by` and carries a row with its
+reversal scope in `STATUS.md` §Assumed concurrence, which is the review
+agenda. All entries from D-47 onward except D-53 are in this mode.
+`proposed` now means nobody has decided, not that fewer than two have.
 
 Entries are retired by superseding them in place, never by deletion. The index
 below is the map; every D-number that has ever existed appears in it.
 
-Numbering: new decisions start at **D-54**. D-38 through D-44 were drafted
+Numbering: new decisions start at **D-68**. D-38 through D-44 were drafted
 during the 2026-08-02/03 science-contract work and withdrawn before approval;
 those numbers are not reused.
+
+*Note for queue item 2:* `QUEUE_ITEM_2_EXECUTION_PLAN.md` §7 earmarked D-67 for
+that item's structure-selection entry, conditional on nothing else taking the
+number first. Slice A took it (coverage under D-45 unavailability), so the
+selection entry is **D-68**. The plan's own wording anticipated this — read the
+line above, not the number written into that plan.
 
 ## What the Release 1.1 standard replaces (2026-08-03)
 
@@ -135,7 +148,7 @@ The sub-review numbers are `STATUS.md` queue item 1's.
   without the approved target and threshold `../SCIENCE.md` §Continuous score
   requires — and under retired `unsafe` terminology. The score is deferred,
   not deleted: §Continuous score already permits an approved continuous
-  violation score, which would return as a new joint decision derived from the
+  violation score, which would return as a new decision derived from the
   three-class distributions, not as a revival of D-21.
 
 - **Embedding boundary and artifact format (retired queue item 3).**
@@ -152,7 +165,8 @@ The sub-review numbers are `STATUS.md` queue item 1's.
 
 Provenance: queue item 1 sub-reviews 1.3 through 1.10, executed 2026-08-03.
 These record displacement only. Reusing any baseline choice for Release 1.1
-still requires a new joint decision.
+still requires a new decision (read "joint" out of this as of 2026-08-04 —
+`META_PLAN.md` §1.2).
 
 Approval state: C-1's model/integrator split has agreement from both Riki
 (who directed it, recorded in `critiques/2026-08-02-science-contract-branch.md`)
@@ -273,6 +287,20 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-51](#d-51) | Decoding-failure trigger stubbed; decoder is `partial` | `evaluator/components/decoding.py`; `../ARCHITECTURE.md` §7 | carried |
 | [D-52](#d-52) | Ambiguous-reference recording removed from 1.1 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 work list | carried |
 | [D-53](#d-53) | Run-entry hazard/scope validation mechanism | `src/hazard_classifier/evaluator/run.py` (`open_run`, `validate_supplied_hazard`) | carried |
+| [D-54](#d-54) | Narrative and refusal stay placeholders; PR 4's exit criteria scoped | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 exit criteria | carried |
+| [D-55](#d-55) | E consumes `working`; disclaimer stripping not adopted in 1.1 | `../ARCHITECTURE.md` §5 | carried; comparison deferred, not cancelled |
+| [D-56](#d-56) | PR 7 (evaluator runner) added, sequenced before PR 6 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 7 | carried |
+| [D-57](#d-57) | Run hazard scope defaults to the artifact's frozen supported set | `../ARCHITECTURE.md` §2 | carried |
+| [D-58](#d-58) | Release 1.1 is a pre-staging prototype; promotion decided at PR 6 | `README.md` §Release 1.1 evaluator status | carried; exercises D-47's floor |
+| [D-59](#d-59) | L/E structure selection is pre-registered before the eval set arrives | `STATUS.md` queue item 2 | carried; closes D-37/D-49's format half |
+| [D-60](#d-60) | 1.1 L/E models receive no prompt input | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list | carried |
+| [D-61](#d-61) | No concurrency claim; single-threaded contract | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit criteria | carried; scopes D-31 for 1.1 |
+| [D-62](#d-62) | Continuous violation score is out of Release 1.1 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 returns | carried; completes D-21 |
+| [D-63](#d-63) | 1.1 builds on out-of-version human ground truth (jb v1.0) | `PREREGISTRATION_LE_STRUCTURE.md` §1, §7 | carried; Standards request stops gating |
+| [D-64](#d-64) | Split groups on prompt text, not `seed_prompt_id` | `data/interim_split_v1.json`; `scripts/build_interim_split.py` | carried; D-1/D-13 grouping key baseline-only |
+| [D-65](#d-65) | 1.1 covers attacked prompts only | `PREREGISTRATION_LE_STRUCTURE.md` §7 | carried; shortfall against a `SCIENCE.md` training requirement |
+| [D-66](#d-66) | Interim eval slice is a dev set; real eval set reserved | `PREREGISTRATION_LE_STRUCTURE.md` §0, §5 | carried; relocates D-59's protection |
+| [D-67](#d-67) | Unavailable cells are excluded with coverage reported, not counted wrong | `PREREGISTRATION_LE_STRUCTURE.md` §3, §8 | carried; shortfall against `SCIENCE.md`'s same-rows rule |
 
 ### Absorption gaps
 
@@ -3535,3 +3563,619 @@ Boundary: this entry is provenance for *how* conditions (1) and (2) are
 checked. `../ARCHITECTURE.md` §2 states *what* must be rejected and still
 governs on any conflict (`META_PLAN.md` §1.1) — this entry does not restate
 or reinterpret it.
+
+<a id="d-54"></a>
+## D-54: Narrative and refusal detection ship as placeholders; PR 4's exit criteria are scoped to what 1.1 delivers
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.** Raised as a decision-debt sweep before
+PR 4's execution plan was written.
+
+Decision: both stage 5 (narrative) and stage 6 (refusal) remain **pass-through
+placeholders** in Release 1.1, leaving their flags at `not_evaluated` exactly
+as `../ARCHITECTURE.md` §6 requires. `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4's
+exit criteria are rewritten to state what 1.1 actually delivers, and the two
+components join the D-47 limitations inventory as **absent components**.
+
+Two readings were considered and rejected:
+
+- **Stubs that always report a negative** (`not_detected` rather than
+  `not_evaluated`). Rejected because it buys no behavior and costs record
+  fidelity. Phase B1 tests `== "detected"`, so `not_detected` and
+  `not_evaluated` fall through identically and scoring is unchanged either
+  way. What changes is that the record would assert "I looked and found no
+  refusal" for a component that never looked — the exact failure mode D-50
+  and D-51 exist to prevent, and it would silently drop both components from
+  D-47's inventory, which keys off `not_evaluated`. It would also require
+  amending `../ARCHITECTURE.md` §6 ("a placeholder is never silently
+  equivalent to a negative result") and §3.1, whose three-valued `FlagState`
+  exists for precisely this distinction.
+- **Building refusal as a `partial` rule/lexicon detector.** Nothing external
+  blocks it — unlike narrative, which is blocked on Standards-team examples
+  this release is not requesting. Rejected for 1.1 to keep the release's
+  unevaluated surface enumerable rather than growing it with a component that
+  has no ground truth, no approved criterion, and no way to report anything
+  but *not evaluated* against `../SCIENCE.md` §Refusal detection.
+
+Rationale: PR 4's exit criteria as written ("benign narrative is removed only
+where the Standards ground truth permits", "refusal removal preserves any
+following assistance") presuppose working components and cannot be met by a
+placeholder. This is the situation D-50 and D-51 resolved for PR 2 — scope the
+criterion, name the shortfall, keep the gap visible — and PR 4 gets the same
+treatment rather than closing with criteria recorded as unmet.
+
+**Consequence, recorded so it is not rediscovered.** With narrative and refusal
+both placeholders, phase B1's **first, second, and fourth bullets can never
+fire from a real detection** in Release 1.1. Refusal and narrative flags are
+never set by a detector; the disclaimer flag is set only by stage 7's partial
+implementation. Every exhaustion path therefore lands on prompt-repetition or
+on the blank-payload branch, which sets the refusal flag itself. B1's bullet
+*ordering* — load-bearing under `../SCIENCE.md` §Evidence and outputs, and
+required to be tested there — is consequently exercised only by
+hand-constructed flag combinations in 1.1, never by the pipeline.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 exit criteria (**absorbed**);
+`../ARCHITECTURE.md` §7 rows 5 and 6, §12 (benign-narrative boundary);
+`src/hazard_classifier/evaluator/components/narrative.py` and `refusal.py`
+(both unchanged — this entry confirms their current behavior is correct);
+D-47's Release 1.1 inventory, which grows from five items to seven.
+
+Boundary: this entry governs Release 1.1 only. It does not amend
+`../SCIENCE.md` §Narrative detection or §Refusal detection, both of which
+continue to require the full behavior 1.1 does not provide, and it does not
+decide whether 1.2 builds these as models or as rules.
+
+<a id="d-55"></a>
+## D-55: The Enablement model consumes the `working` view; disclaimer stripping is not adopted in 1.1
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: the L and E models both read `TextViews.working` in Release 1.1 —
+disclaimer text is **not** stripped from model input. Stage 7 continues to
+publish `named["disclaimer_stripped"]` alongside it, so the comparison remains
+a configuration change and not a rewrite.
+
+Rationale: `../ARCHITECTURE.md` §12 lists "which text view E consumes" (C-4) as
+explicitly undecided, and `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 requires the
+choice be settled by comparison on a fixed, human-labeled evaluation set. That
+set does not exist and is an outstanding Standards-team request, so PR 4 cannot
+close without an interim default. Retaining the disclaimer is the default that
+changes nothing: `../SCIENCE.md` phase C already fixes final L at L0 for a
+qualifying Specialized Advice disclaimer, and the standard states plainly that
+a disclaimer does not lower E. Stripping would therefore alter model input to
+achieve an effect the fixed rules already achieve.
+
+Rejected alternatives: (1) stripping by default, echoing the baseline's D-19
+pre-threshold adjustment — rejected because D-19's mechanism is explicitly
+superseded for 1.1 and reinstating its instinct at a different layer would
+double-count the disclaimer; (2) making the view a required, defaultless
+configuration field — rejected because it relocates the same unmade decision
+into every run profile rather than resolving it.
+
+Touches: `../ARCHITECTURE.md` §5 (**absorbed** — the default is stated there)
+and §12 (the item moves from undecided to decided-with-a-deferred-comparison);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 work list and exit criterion "a disclaimer
+never reduces Enablement"; D-47's inventory, which gains the un-run comparison
+as a shortfall.
+
+Boundary: this fixes the 1.1 **default**, not the answer. The comparison
+`../SCIENCE.md` and PR 4 call for is deferred, not cancelled, and the published
+`named["disclaimer_stripped"]` view is what keeps it cheap to run once fixed
+human-labeled data exists.
+
+<a id="d-56"></a>
+## D-56: Release 1.1 gains PR 7, the evaluator runner, sequenced before PR 6
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: a new **PR 7 — evaluator runner, input schema, and batch entry
+point** is added to `RELEASE_1_1_QUEUE_PROPOSAL.md` and is sequenced **before
+PR 6**, despite the higher number. It owns the 1.1 input schema, the CLI and
+in-process entry points, the batch runner, and the `failures.csv` view.
+
+It is numbered 7 rather than inserted as a new 6 because
+`PR1_EXECUTION_PLAN.md`, `PR2_EXECUTION_PLAN.md`, `PR3_EXECUTION_PLAN.md`,
+`STATUS.md`, and this ledger already cite PR 6 by number. `META_PLAN.md` §5's
+never-renumber rule exists for exactly this: renumbering would silently
+re-point every existing citation. **Work order comes from stated sequencing,
+not from the number** — the same rule the queue itself follows.
+
+Rationale: no PR's work list creates a way to *run* the 1.1 evaluator. The
+package exposes only the three baseline CLIs; `evaluator/views.py` records that
+`failures.csv` "needs the batch-level runner that does not exist yet"; and
+PR 6's exit criteria require tests covering "CLI and Python interfaces" and
+`failures.csv`, both of which presuppose a runner. This is a gap in the
+approved queue, not a footnote to PR 6.
+
+Rejected alternatives: (1) folding it into PR 6 — rejected because it would
+make one PR both build and validate the thing it is meant to validate, and
+PR 6 is the release-validation gate; (2) shipping an in-process Python API only
+and scoping PR 6's CLI criterion away under the D-50/D-51 treatment — rejected
+because a runner is a real deliverable of a "runnable evaluator" release, and
+scoping away the criterion would understate what 1.1 is missing.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` (**absorbed** — new PR 7 section and a
+sequencing note on PR 6); `STATUS.md` queue item 4; `../ARCHITECTURE.md` §11
+(`failures.csv` gains an owner); `pyproject.toml` `[project.scripts]`, which
+gains an entry point in PR 7.
+
+Boundary: this entry creates and sequences the PR. It does not decide the input
+schema, the CLI's name or flags, or the run-profile format — those are PR 7's
+own work, constrained by D-57 for hazard scope and by `../ARCHITECTURE.md` §11
+for the view contracts.
+
+<a id="d-57"></a>
+## D-57: A run's hazard scope is derived from the selected artifact's frozen supported set
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: Release 1.1 defines no universal Jailbreak hazard list. A run's
+`hazard_scope` **defaults to the selected artifact's frozen supported hazard
+set** (`rules.json`, D-23), and the resolved set is recorded in the run context
+and every output record. An explicit narrower scope may still be supplied; a
+supplied scope wider than the artifact supports remains an `open_run` rejection
+under condition (2), unchanged.
+
+Rationale: `../SCIENCE.md` §Hazard scope configuration deliberately refuses to
+hard-code one universal list and requires that "every named run or profile must
+record its exact active set, which must be supported by the selected artifact."
+Deriving the default from the artifact satisfies both halves: the active set is
+always recorded, and it is supported by construction, so the run can never be
+rejected for a scope its own artifact cannot serve. Today `hazard_scope` has no
+default anywhere in the code, which means **no 1.1 result can be produced until
+a caller invents one** — an unstated dependency that would have surfaced as a
+PR 7 blocker.
+
+Rejected alternative: hard-coding all thirteen `../SCIENCE.md` §Hazard scope
+codes as the 1.1 profile. Rejected because it is the universal list the
+standard declines to fix, and because it guarantees an `open_run` rejection
+against any artifact trained on fewer hazards — turning a normal configuration
+into a failure.
+
+**Accepted cost.** The active hazard set becomes a property of the training
+data rather than a declared policy. A hazard absent from training is silently
+absent from scope rather than visibly rejected, so the recorded scope is what
+makes the difference auditable. This is why the resolved set is recorded rather
+than assumed.
+
+Touches: `../ARCHITECTURE.md` §2 (**absorbed** — `RunConfig.hazard_scope` gains
+a stated default) and §10; `src/hazard_classifier/evaluator/run.py`
+(`RunConfig`, `open_run`); `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 7, which builds
+the profile handling.
+
+Boundary: this decides the **default and its source**. It does not change
+`open_run`'s three rejection conditions (D-53 and `../ARCHITECTURE.md` §2 still
+govern those), and it does not decide how a named run profile is expressed on
+disk — that is PR 7's.
+
+<a id="d-58"></a>
+## D-58: Release 1.1 is a pre-staging prototype; promotion is decided at PR 6
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: Release 1.1 ships as a **pre-staging prototype**. D-47's pre-staging
+exemption applies: disclosure is met by the inline `README.md` §Release 1.1
+evaluator status section rather than by a separate versioned limitations
+document, and 1.1 makes no production, scientific-success, or quality claims.
+Whether to promote to staging or assign a release point version — which
+triggers D-47's full document — becomes an **explicit PR 6 exit item**.
+
+Rationale: D-47's document requires, for every published metric, the
+uncertainty estimate and method the Estimability paragraph mandates. That
+method is an outstanding Standards-team request (Ask B) and the metrics
+themselves depend on PR 5's model, so the document cannot be completed in 1.1
+even if it were required. Deciding the posture now rather than at PR 6 also
+means the inventory can be maintained incrementally as each PR adds to it,
+instead of being reconstructed at the end.
+
+Rejected alternative: promoting 1.1 to staging and writing the full document.
+Rejected as unbuildable on the above, and as a claim the release does not
+support — three placeholders, three partials, and multi-hazard correctness
+unevaluated.
+
+Touches: `README.md` §Release 1.1 evaluator status (**absorbed** — the
+disclosure floor lives there); `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit
+criteria, which gain the promotion decision as an item; [D-47](#d-47), whose
+pre-staging floor this exercises for the first time.
+
+Boundary: this decides Release 1.1's **posture**, not D-47's rule. The
+limitations document remains required before any staging promotion or release
+point version, and nothing here weakens narrowing 1's floor: a prototype is
+exempt from the separate document, never from disclosure.
+
+<a id="d-59"></a>
+## D-59: The L/E structure-selection procedure is pre-registered before the evaluation set arrives
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: `STATUS.md` queue item 2's structure comparison is governed by a
+**pre-registration document written before the Standards team's fixed
+evaluation set exists**. It fixes, in advance: the candidate list across the
+seven named axes; the selection rule and the metric it reads; the tie-break;
+how many times the fixed evaluation set may be touched; and the model payload
+format each candidate implies (closing D-37's open half and D-49's PR 5
+finalization). Deviating from it later is permitted but must be recorded as an
+amendment with its reason, not made silently.
+
+Rationale: `../SCIENCE.md` requires the evaluator be **unbiased** — "training
+and evaluation do not deliberately favor violating or non-violating results" —
+and names the equal-treatment of three outcomes an open scientific problem. The
+queue and the architecture both name the comparison *axes*; **neither says how
+the winner is chosen.** A selection rule written after the label distribution
+is visible cannot be shown not to have been shaped by it, and one fixed
+evaluation set consumed by an unbounded candidate sweep is burned rather than
+held out. Writing the rule now costs nothing — none of it depends on the data —
+and is the only point at which the choice is provably uninformed by it.
+
+Rejected alternatives: (1) deferring the procedure until the data lands —
+rejected on the above; (2) a nested dev/held-out split carved from the training
+data — not rejected on merit but not adoptable unilaterally: it requires the
+Standards team's split to permit sub-splitting, so it is a **candidate the
+pre-registration must evaluate**, not a decision this entry makes.
+
+Touches: `STATUS.md` queue item 2 (**absorbed** — the entry condition now names
+the pre-registration as its first deliverable);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list; `../ARCHITECTURE.md` §10
+(artifact payload) and §12 (the L/E structure item);
+[D-37](#d-37) and [D-49](#d-49), both of which defer format questions to this
+selection.
+
+Boundary: this governs **how the structure is chosen**, not which structure
+wins. It does not relax `../SCIENCE.md` §Legitimization Scoring or §Enablement
+Scoring, whose per-outcome criteria remain an external Standards-team input
+(Ask B), and it does not authorize the comparison to begin before Ask A lands.
+
+<a id="d-60"></a>
+## D-60: The Release 1.1 L and E models receive no prompt input
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: the 1.1 L and E models are fitted and scored on **response-derived
+working text only**. No prompt text enters model input. `../SCIENCE.md`'s
+disambiguation exception is recorded as **unexercised in 1.1**, not as
+unavailable.
+
+Rationale: `../SCIENCE.md` §Legitimization Training and §Enablement Training
+permit prompt context only "unless the Assessment Standard permits prompt
+context required for disambiguation" — and **nobody has made the reading of the
+v1.4 taxonomy that would say what it permits.** Building to an unmade reading
+is speculative; taking the restrictive branch matches §Technical restrictions
+("evaluate the response, not the prompt"), keeps PR 5's input surface identical
+to what PR 1's wrapper already feeds, and leaves the exception available to a
+release that has done the reading.
+
+Rejected alternative: reading the vendored v1.4 PDFs now and building the
+exception to match. Rejected for 1.1 as scope — it is an authoritative
+interpretation call, not an implementation choice, and the release does not
+need it.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list (**absorbed** — the
+"exclude the prompt except where the standard permits" item resolves to
+"exclude the prompt"); `../ARCHITECTURE.md` §5 (model input is a named view,
+and no view carries the prompt); D-47's inventory, which gains the unexercised
+exception.
+
+Boundary: this constrains **model input**. It does not restrict other
+components' use of the prompt — decoding uses it for substitution context and
+prompt-repetition for matching, both permitted by §Technical restrictions and
+both unaffected.
+
+<a id="d-61"></a>
+## D-61: Release 1.1 makes no concurrency claim; the evaluator's contract is single-threaded
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: the Release 1.1 evaluator is documented as **single-threaded per
+process**. PR 7's batch runner parallelizes at the process level if it
+parallelizes at all. `../SCIENCE.md` §Evidence and outputs' concurrency
+verification requirement is met by testing and documenting *that* contract —
+that a single-threaded run is correct and reproducible — not by claiming
+thread-safety.
+
+Rationale: the requirement has been unmet and unmeetable since the baseline;
+D-31 records `HazardResponseClassifier.score`'s concurrency safety as
+"genuinely unverified — documented as such in `score`'s own docstring, not
+tested or assumed either way." PR 6's exit criteria list concurrency tests that
+cannot be written until the claim exists. A stated single-threaded contract is
+testable today, is what the baseline is actually used for, and converts an
+open-ended obligation into a bounded one.
+
+Rejected alternative: claiming and verifying thread-safe scoring. Plausible on
+its face — `EvaluationRecord` is immutable and the components are stateless —
+but the real risk sits in the embedding provider and its torch backend, which
+would need genuine multi-threaded tests to support the claim. Not rejected on
+merit; rejected as work 1.1 does not need.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit criteria (**absorbed** — the
+concurrency item names the contract being verified);
+`../ARCHITECTURE.md` §6 (the component contract states it);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 7, which builds to it;
+[D-31](#d-31), whose unverified note this supersedes in scope for 1.1 while
+leaving the baseline's own docstring accurate.
+
+Boundary: this states what 1.1 **claims**, not what is true. Nothing here
+asserts the evaluator is thread-unsafe; it asserts that thread-safety is not
+claimed, not tested, and not to be relied on.
+
+<a id="d-62"></a>
+## D-62: The continuous violation score is out of Release 1.1
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: Release 1.1 produces **no continuous violation score**. PR 6's
+return-value list drops the "an approved continuous score, when available"
+item, and no record field or view column is built for it.
+
+Rationale: `../SCIENCE.md` §Continuous score requires an approved training
+target and threshold before one may be added, and neither exists.
+[D-21](#d-21) already dropped it from 1.1 output and deferred it to that
+section. What remained was a conditional line in PR 6's returns and in §Evidence
+and outputs' results list, which left the release's output contract open on a
+component that cannot be built. Closing it explicitly is what lets PR 6's
+"every evaluated hazard has exactly one final result or failure" criterion
+stand as the complete statement of the output.
+
+Rejected alternative: building the field and leaving it null. Rejected on
+D-52's reasoning — a field no component ever populates adds a permanently empty
+column to every record to describe something that never happens.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 work list and return list
+(**absorbed**); `../ARCHITECTURE.md` §11 view contracts (no column);
+[D-21](#d-21), whose deferral this completes.
+
+Boundary: this removes it from **1.1**. `../SCIENCE.md` §Continuous score is
+unchanged and still governs whenever an approved target and threshold arrive;
+the discrete result stays authoritative regardless.
+
+<a id="d-63"></a>
+## D-63: Release 1.1 uses out-of-version human ground truth; the Standards request stops gating
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: the Standards team's fixed dataset and per-outcome criteria are
+**not expected to arrive**. Release 1.1 builds end to end against the
+Jailbreak v1.0 human ground truth already in this repository
+(`data/jb_1.0_1003_ground_truth_items_for_riki_eval__with_seed_prompt_id.csv`,
+SHA-256 `8fdbec27…22ddf`, 859 rows), and the pipeline is re-run when real data
+appears. Queue item 2 and PR 5 are unblocked; `STANDARDS_REQUEST.md` is
+retained as the specification of what real data must supply, no longer as a
+gate.
+
+**This is not synthetic data and must not be described as such.** Every
+`legitimization_value` and `enablement_value` in the source is a human
+judgment on the 0/1/2 scale, which is what `../SCIENCE.md` §Scientific
+requirements means by human ground truth and what §Evidence and outputs'
+AI-only-labels prohibition is aimed at. All fifteen hazard codes are present
+and all three classes are populated on both axes. The only constructed
+artifact is the *split* (D-64).
+
+What it is **not** is ground truth approved for this standard version. The
+labels were made against Jailbreak v1.0; the evaluator targets Assessment
+Standard v1.4. Measured compatibility: applying `../SCIENCE.md`'s three
+L/E-to-result tables to the human L/E values reproduces the source's own
+`is_safe_ground_truth` on **835 of 859 rows (97.2%)**, and the 24
+disagreements concentrate exactly where the tables changed between versions —
+enablement-only 7.3%, Specialized Advice 7.4%, default family 0.2% (1 of 546).
+That figure is evidence the labels transfer well, not that they are ratified.
+
+Rationale: the alternative to building on this data is not building. The asks
+had no owner and no answer; `../SCIENCE.md`'s not-evaluated rule already
+prevents any component from being called successful without approved criteria,
+so proceeding costs no claim the release could otherwise have made. Building
+end to end now also converts the eventual data arrival from a research project
+into a re-run.
+
+Rejected alternatives: (1) synthesizing labels — rejected outright as the
+AI-only-labels prohibition; (2) treating the dataset as a development fixture
+with no evidential weight — rejected as discarding real human labels and
+misrepresenting the eventual real-data run as a first run rather than a re-run.
+
+Touches: `PREREGISTRATION_LE_STRUCTURE.md` §1 and §7 (**absorbed**);
+`STATUS.md` queue item 2 entry condition and §Standards team;
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 entry condition;
+`README.md` §Release 1.1 evaluator status; D-47's inventory.
+
+Boundary: this decides **which data 1.1 builds on**. It does not weaken
+`../SCIENCE.md` §Evidence and outputs — both models are still reported as *not
+evaluated*, because approved per-outcome criteria do not exist and no dataset
+choice can create them.
+
+<a id="d-64"></a>
+## D-64: The 1.1 split groups on prompt text, not `seed_prompt_id`
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: Release 1.1's train/evaluation split groups on **whitespace-normalized
+prompt text**, stratified by hazard, 25% of groups held out. It is frozen,
+seeded, and hashed as `data/interim_split_v1.json`, built and re-verified by
+`scripts/build_interim_split.py`. [D-1](#d-1) and [D-13](#d-13)'s
+`seed_prompt_id` grouping is **baseline-only**.
+
+Rationale: the source has 30 seed prompts and **each maps to exactly one
+hazard** — fourteen hazards have a single seed apiece. A seed-grouped holdout
+must therefore place an entire hazard wholly in training or wholly in
+evaluation, which makes per-hazard evaluation structurally impossible. Prompt
+text yields 180 groups, exactly 11 per hazard (26 for `hte`). The frozen split
+is 635 fit / 224 dev rows, 48 groups held out, with every hazard and all three
+L and E classes present on both sides and zero prompt-group overlap — verified
+by the builder, which fails rather than writes if any of those properties
+breaks.
+
+**Accepted cost, stated rather than discovered later:** other attack variants
+derived from the same seed prompt can appear in both fit and dev, so the split
+is mildly optimistic about generalization to a genuinely new seed prompt. That
+is the price of per-hazard evaluation existing at all, and it is the first
+thing to re-examine when real data arrives.
+
+Rejected alternatives: (1) keeping `seed_prompt_id` and giving up per-hazard
+evaluation — rejected because per-hazard judgment is what `../SCIENCE.md`
+§Legitimization Training asks analysts to select a structure for; (2) a
+row-level stratified split — rejected as strictly worse leakage than the
+chosen key for no gain; (3) reporting both a seed-level and a prompt-level
+split — not rejected on merit, and worth revisiting when real data makes the
+seed-level split viable, but it doubles the reporting surface for a dev-set
+number that is not a benchmark result either way.
+
+Touches: `scripts/build_interim_split.py` and `data/interim_split_v1.json`
+(**absorbed** — the split is the specification, and the builder verifies it);
+`PREREGISTRATION_LE_STRUCTURE.md` §1; [D-1](#d-1) and [D-13](#d-13), both now
+baseline-only for their grouping key.
+
+Boundary: this fixes the grouping key and the frozen split for the **interim**
+dataset. A real Standards-team dataset arrives with its own split, which
+D-63's re-run adopts rather than re-deriving; nothing here dictates how that
+one is constructed.
+
+<a id="d-65"></a>
+## D-65: Release 1.1 trains and evaluates on attacked prompts only
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: `../SCIENCE.md` §Legitimization Training and §Enablement Training
+require training data covering responses to **both naive and attacked
+prompts**. The interim dataset is 100% attacked. Release 1.1 ships on attacked
+coverage only, and the gap is named in the D-47 inventory rather than filled.
+
+Rationale: `prompt_text` differs from `seed_prompt_text` in every one of the
+859 rows, and the naive seed prompts have no responses attached. Supplying
+naive coverage would mean generating SUT responses and labeling them — and
+`../SCIENCE.md` §Evidence and outputs states plainly that AI-only labels are
+not human ground truth. **This is the one Ask A requirement that no
+modification of the existing data can honestly satisfy**, which is exactly why
+it is recorded as a shortfall rather than engineered around.
+
+Rejected alternatives: (1) generating naive responses and labeling them with a
+model — rejected as the prohibited case; (2) generating naive responses for
+end-to-end smoke-testing only, excluded from fitting and metrics — not
+rejected on merit and still available if PR 7 wants it, but it proves plumbing
+rather than closing the requirement, so it does not change this entry; (3)
+marking the requirement failed rather than scoped, blocking PR 5's exit
+criterion outright — rejected as disproportionate, since the Jailbreak release
+being attacked-heavy is defensible on its own terms.
+
+Touches: `PREREGISTRATION_LE_STRUCTURE.md` §7 (**absorbed**);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list ("cover responses to both naive
+and attacked prompts"); `README.md` §Release 1.1 evaluator status; D-47's
+inventory.
+
+Boundary: this is a **coverage** shortfall against a training requirement, not
+a change to it. `../SCIENCE.md` still requires both, and the release that
+obtains naive-prompt ground truth discharges it.
+
+<a id="d-66"></a>
+## D-66: The interim evaluation slice is a development set; the real evaluation set is reserved
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: the 224-row held-out slice of the interim split is a **development
+set**. It may be reused and iterated on freely, and **no number measured on it
+is a benchmark result**, a generalization estimate, or reportable under
+`../SCIENCE.md` §Evidence and outputs. When a real fixed evaluation set
+arrives, structure selection is **re-run as a fresh selection** under a
+re-issued pre-registration — not confirmed, and not merely re-fitted. The
+interim winner enters that process as one candidate with no privileged status.
+
+Rationale: [D-59](#d-59) required the selection procedure be pre-registered
+*before* the evaluation set existed, so the rule could be shown not to have
+been shaped by the labels. D-63 makes a dataset visible, which retires that
+particular guarantee. Declaring the interim slice a dev set preserves what
+D-59 was actually protecting — that the *real* held-out set is touched once,
+by a rule fixed in advance — while letting 1.1 be built and exercised now.
+Re-selection rather than re-fitting is the load-bearing half: a structure
+chosen on v1.0 labels carries their fingerprints, and re-fitting alone would
+launder that into a v1.4 result.
+
+Rejected alternatives: (1) treating the interim result as the selection and
+re-fitting only when real data lands — rejected on the laundering argument
+above; (2) dropping the pre-registration and selecting empirically — rejected
+because it gives up the unbiased-selection property for a saving of a few
+hours.
+
+Touches: `PREREGISTRATION_LE_STRUCTURE.md` §0 and §5 (**absorbed** — §5 is the
+touch budget); `STATUS.md` queue item 2; [D-59](#d-59), whose protection this
+relocates rather than removes.
+
+Boundary: this governs **what the interim numbers mean**. It does not restrict
+how the interim dev set is used during development, and it does not decide the
+real evaluation set's split, which arrives with the data (D-64's boundary).
+
+<a id="d-67"></a>
+## D-67: A candidate that cannot score a row is measured without it, with coverage reported
+Date: 2026-08-04
+Status: locked
+Approved by: Kurt, 2026-08-04. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.**
+
+Decision: in queue item 2's structure comparison, a row a candidate cannot
+score — a `(target, hazard)` cell that was unfittable, which [D-45](#d-45)
+makes *unavailable* — is **excluded from that candidate's metric**, and the
+resulting coverage is reported alongside every figure. A paired comparison
+between two candidates is computed on the rows **both** could score.
+
+Where this conflicts with `../SCIENCE.md` §Evidence and outputs' requirement
+that comparable implementations use the same rows and metrics, **the same-rows
+requirement gives way** and the departure is recorded rather than engineered
+around. Coverage is reported precisely so the departure is visible in the
+numbers instead of hidden inside them.
+
+Rationale: the only ways to keep every candidate on identical rows are to
+count an unavailable cell as a wrong answer, or to shrink every candidate's
+evaluation to the intersection the weakest one can score. The first invents a
+result — it asserts the candidate answered and answered badly, when it did not
+answer at all, which is exactly what D-45 removed from this codebase. The
+second lets the worst candidate dictate the evidence base for all the others,
+and in practice would let the reference `R` — which cannot be the selection
+anyway (`PREREGISTRATION_LE_STRUCTURE.md` §2.2) — silently shrink the row set
+every real candidate is judged on.
+
+In practice this binds almost entirely on `R` and on `H3` (per-hazard models,
+pre-declared as probably underpowered at ~42 fit rows per hazard), which are
+the structures with per-`(target, hazard)` cells to lose. A candidate pooled
+across hazards has no unfittable cell and reports full coverage.
+
+Rejected alternatives: (1) counting an unavailable cell as incorrect —
+rejected as the invented result above; (2) restricting all candidates to the
+intersection of every candidate's coverage — rejected as letting the weakest
+candidate define the comparison; (3) disqualifying any candidate with less
+than full coverage — not rejected on merit and reconsidered if a *selectable*
+candidate ever comes in short, but as written it would disqualify `R` for a
+property `R` is expected to have, removing the ladder's reference point rather
+than measuring it.
+
+Touches: `PREREGISTRATION_LE_STRUCTURE.md` §3 and §8 (**absorbed** — §3 states
+the rule, §8 records it as this document's first amendment);
+`src/hazard_classifier/experiments/comparison_metrics.py`
+(`classification_metrics` coverage fields, `paired_cluster_bootstrap`'s
+intersection); [D-45](#d-45), whose unavailable-is-not-wrong principle this
+carries into the metrics layer; D-47's inventory, which gains it.
+
+Boundary: this governs **how the comparison measures a candidate that cannot
+score a row**. It does not weaken D-45, license any candidate to substitute a
+value, or change what `SCIENCE.md` requires of a *reported benchmark result* —
+every number in queue item 2 is a dev-set number under [D-66](#d-66) and is not
+reportable as a benchmark figure regardless of its coverage.

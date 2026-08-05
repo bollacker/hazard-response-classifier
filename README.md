@@ -121,6 +121,53 @@ D-47's own narrowing-2 correction records and fixes for a different
 document. `DECISIONS.md` D-50 and D-51 record the reasoning behind the two
 components currently shipping `partial` specifically.
 
+**Four limitations are not components and appear in no table**, so unlike the
+list above they are stated here directly (added 2026-08-04; `DECISIONS.md`
+D-54 through D-62):
+
+- **Some final-integration rules cannot be reached by the pipeline.** With
+  narrative and refusal detection both placeholders, no detector ever sets
+  those flags, so three of `SCIENCE.md` phase B1's five bullets never fire
+  from a real detection — every exhaustion path lands on prompt-repetition or
+  on the blank-payload branch. B1's bullet *ordering* is load-bearing, and in
+  this release it is exercised only by hand-constructed flag combinations.
+- **Multi-hazard correctness is unevaluated.** Hazard detection is a
+  placeholder that returns no additional hazards, and the cross-hazard
+  completeness backstop was withdrawn on 2026-08-04. A response whose true
+  hazard sits in a stricter family than the supplied one is scored under the
+  wrong table and produces a passing result rather than a visible failure.
+  See `docs/ARCHITECTURE.md` §12.1.
+- **The disclaimer text-view choice is an untested default.** L and E read
+  text with disclaimers retained (D-55). The comparison against stripping,
+  which `SCIENCE.md` calls for on fixed human-labeled data, has not been run.
+- **The prompt-disambiguation exception is unexercised** (D-60). The models
+  receive response-derived text only; nobody has determined what prompt
+  context the Assessment Standard actually permits.
+
+**The ground truth is real but out of version** (D-63 through D-66, added
+2026-08-04). The Standards team's fixed dataset and approved success criteria
+are not arriving, so Release 1.1 is fitted and selected against the Jailbreak
+v1.0 human ground truth already in `data/`. The labels are genuine human
+judgments — not synthetic, and not model-generated — but four things follow:
+
+- **They were made against Jailbreak v1.0, not Assessment Standard v1.4.**
+  Measured compatibility is 97.2%: applying `docs/SCIENCE.md`'s L/E-to-result
+  tables to the human L/E values reproduces the source's own safe/unsafe label
+  on 835 of 859 rows, with disagreement concentrated in the two families whose
+  tables changed (enablement-only 7.3%, Specialized Advice 7.4%, default 0.2%).
+- **Attacked prompts only** (D-65). `docs/SCIENCE.md` requires training
+  coverage of naive prompts too; no row supplies it, and none can be
+  manufactured without producing AI labels.
+- **Development-set numbers only** (D-66). The 224-row held-out slice is a dev
+  set. Nothing measured on it is a benchmark result or a generalization
+  estimate, and a real evaluation set — should one arrive — triggers a fresh
+  structure selection, not a re-fit.
+- **No approved success criteria exist**, so both the Legitimization and
+  Enablement models are reported as *not evaluated* whatever their measured
+  numbers.
+
 No quality, coverage, or scientific-success claim is made for any component
 §7 marks `partial` or `placeholder`, per `SCIENCE.md` §Evidence and outputs'
-not-evaluated rule.
+not-evaluated rule, nor for anything in the list immediately above. Release
+1.1 ships as a **pre-staging prototype** (`DECISIONS.md` D-58); whether to
+promote it is an explicit PR 6 decision.

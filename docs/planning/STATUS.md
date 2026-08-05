@@ -532,8 +532,57 @@ Detailed phased proposal:
    Select the best-supported structure. Treat the current prototype as a
    baseline, not the target.
 
-   **Entry condition:** Ask A under Awaiting User. The comparison is defined as
-   running on one fixed evaluation set, so it cannot begin without it.
+   **Entry condition: MET as of 2026-08-04** ([D-63](DECISIONS.md#d-63)). The
+   Standards team's dataset is not arriving, so this item runs against the
+   Jailbreak v1.0 human ground truth already in the repository — 859 rows with
+   human L and E judgments, all fifteen hazard codes, all three classes
+   populated on both axes. The frozen split is `data/interim_split_v1.json`
+   (635 fit / 224 dev, grouped on prompt text per
+   [D-64](DECISIONS.md#d-64)), and the procedure is fixed in
+   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md).
+
+   **This item is now startable, and has an execution plan:**
+   [`QUEUE_ITEM_2_EXECUTION_PLAN.md`](QUEUE_ITEM_2_EXECUTION_PLAN.md) (written
+   2026-08-04, same shape as the PR plans — read-first list, preconditions,
+   slices, exit-criterion map, out-of-scope list, and a lessons-carried-forward
+   section). Its work is stage 1 and stage 2 of the pre-registration's ablation
+   ladder: at most 16 fitted configurations per target, 32 overall, selected by
+   macro-F1 with a worst-class floor and a paired cluster bootstrap over prompt
+   groups.
+
+   **The plan's slice 0 fixes a defect the pivot session shipped**, and it must
+   run first: `data/interim_split_v1.json` records eval *group ids* and a prose
+   description of the key, but **no row-level split assignment**, and the only
+   implementation of that key is a private function in a non-importable script.
+   A consumer that recomputes the normalization even slightly differently gets
+   a different split, silently. Slice 0 moves it into a tested
+   `interim_data.py` that is the single source of truth.
+
+   **This item is analysis, not shipping.** It selects a structure and records
+   it; PR 5 implements it. The plan's §2 draws that boundary explicitly,
+   because the natural momentum at the end of a successful comparison is to go
+   build the winner.
+
+   ~~**Entry condition:** Ask A under Awaiting User. The comparison is defined
+   as running on one fixed evaluation set, so it cannot begin without it.~~
+   Superseded by D-63.
+
+   **First deliverable — DONE 2026-08-04.** D-59's pre-registration is written:
+   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md). It
+   fixes the candidate list across the seven axes, the selection rule and its
+   metric, the tie-break, the touch budget, and the artifact payload each
+   candidate implies — closing [D-37](DECISIONS.md#d-37)'s open format half and
+   [D-49](DECISIONS.md#d-49)'s deferred artifact finalization.
+
+   **What D-66 changed about it.** D-59 wanted the rule fixed before any
+   evaluation set existed. D-63 makes one visible, retiring that particular
+   guarantee. The protection is relocated rather than dropped: the interim
+   224-row slice is a **development set** whose numbers are not benchmark
+   results, and the real evaluation set — whenever it arrives — is touched once
+   under a *re-issued* pre-registration, with selection re-run fresh rather
+   than confirmed. Re-selection rather than re-fitting is the load-bearing
+   half; a structure chosen on v1.0 labels would otherwise be laundered into a
+   v1.4 result.
 
    **The baseline entries this item used to name no longer need amending**
    (corrected 2026-08-04). Its original text asked for amendments to D-2, D-5,
@@ -570,6 +619,28 @@ Detailed phased proposal:
    was built rather than live work, the same way `PR1_EXECUTION_PLAN.md` and
    `PR2_EXECUTION_PLAN.md` are. **PR 4 (narrative, refusal, and disclaimer
    detection) is next**, with no execution plan written for it yet.
+
+   **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
+   blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
+   [D-62](DECISIONS.md#d-62), lock the calls; `RELEASE_1_1_QUEUE_PROPOSAL.md`,
+   `../ARCHITECTURE.md`, and this file carry them. The sequence is now:
+
+   > PR 4 → **PR 7** (evaluator runner, D-56) → PR 6 → PR 5
+
+   PR 7 is numbered 7 and runs sixth because `META_PLAN.md` §5 forbids
+   renumbering an identifier other documents already cite. PR 5 moves last
+   because it is the only phase that cannot start without the Standards
+   team's data.
+
+   What each PR now owes, in short: **PR 4** builds nothing new — narrative
+   and refusal stay placeholders (D-54), the disclaimer view is fixed at
+   `working` (D-55), and the work is scoping the exit criteria and verifying
+   the placeholders behave as placeholders. **PR 7** builds the input schema,
+   run profile, batch runner, CLI, and `failures.csv`. **PR 6** applies the
+   fixed rules (largely already built in `integration.py`), drops the
+   continuous score (D-62), verifies the single-threaded contract (D-61), and
+   makes the staging-promotion call (D-58). **PR 5** waits on Ask A, but owes
+   its pre-registration now (D-59).
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -621,13 +692,34 @@ across schemes:
 
 ## Awaiting User
 
-Updated 2026-08-04. **Nothing here blocks anything.** Queue items 1 and 3 are
-complete and retired, and both architecture-pass findings (A-1, A-2) are
-resolved and applied to `SCIENCE.md`. The calls awaiting Riki's concurrence
-are in force under an assumed concurrence, and the Standards-team request
-remains explicitly non-blocking.
+Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot).
+**Nothing here blocks anything.** D-63 removed the last external gate: queue
+item 2 is startable, and PR 5 no longer waits on data that is not coming. One
+action remains with Kurt — schedule Riki's concurrence review, now covering
+twenty-four calls. Queue items 1 and 3 are complete and retired, and both
+architecture-pass findings (A-1, A-2) are resolved and applied to
+`SCIENCE.md`. The calls awaiting Riki's concurrence are in force under an
+assumed concurrence.
 
-**Riki's review now has nine rows, covering eleven calls.** The phase B fold,
+**One thing here does block, and it is now named as such:** the Standards-team
+request gates queue item 2 and PR 5, which is why PR 5 moved last in the
+sequence and why the request was escalated out of its passive state. Two
+actions sit with Kurt — send the request, and schedule Riki's concurrence
+review. Neither stops PR 4 from starting.
+
+**Riki's review now has twelve rows, covering twenty-five calls** (2026-08-04:
+the decision-debt sweep added nine in one row, the interim-data pivot four
+more, and `META_PLAN.md` §1.2 one). **This table is the review agenda**, and
+`META_PLAN.md` §1.2 now makes maintaining it per decision a requirement rather
+than a habit — the reversal-scope column is what lets a dissent be costed
+instead of guessed at. Kurt directed that the review be
+**scheduled independently rather than coupled to a PR boundary**, and that
+building continue meanwhile — which is how the table reached twenty. The
+reversal scope in each row is what that trade buys; the last two rows are the
+ones to read first, since between them they remove a safeguard, scope two
+`SCIENCE.md` success criteria, and set the release's staging posture.
+
+The phase B fold,
 the withdrawal of cross-hazard completeness, and **D-48's scoping of the
 unchanged-output requirement** are science changes made on Kurt's call alone;
 the second removes a safeguard and the third amends `SCIENCE.md` §Evidence and
@@ -652,16 +744,21 @@ item 4 said to execute its "approved phases." Kurt approved it; the document
 now says so and authorizes the phases in order, subject to each PR's own entry
 conditions.
 
-**Still open — PR 5 sequencing.** PR 5 (L/E training) requires the Standards
-team's fixed datasets and per-outcome criteria (Ask A/Ask B below), so
-"execute the phases in order" stalls there. Two options, and this does **not**
-block PR 1:
+**Resolved 2026-08-04 — PR 5 sequencing.** The two options below were
+superseded by a third: **escalate Ask A first, then decide.** The Standards-team
+request had no owner and no date while being described as non-blocking, which
+is what let it drift; Kurt is sending Asks A and B directly (see below).
+Sequencing after PR 4 is now PR 7 → PR 6 → PR 5 ([D-56](DECISIONS.md#d-56)),
+which keeps every phase that does not need the data off the critical path
+without committing to either original option. The interim-L/E arrangement
+option 2 described is already in place — PR 1 wraps the baseline as a
+`partial` implementation — so PR 6 can run on it whenever it is reached.
 
-1. Run PRs 1–4 and stop until the dataset lands.
-2. Run PRs 1–4, then PR 6, wrapping the baseline model as the interim L/E
-   implementation and letting PR 5 replace it. **Recommended** — PR 1 already
-   wraps the baseline as a partial implementation, and this keeps final
-   integration off the critical path once the dataset arrives.
+The superseded options, kept for the record:
+
+1. ~~Run PRs 1–4 and stop until the dataset lands.~~
+2. ~~Run PRs 1–4, then PR 6, wrapping the baseline model as the interim L/E
+   implementation and letting PR 5 replace it.~~
 
 ### Assumed concurrence — confirm at Riki's next review
 
@@ -683,6 +780,10 @@ as though it were. This is the one item to close at Riki's next review.
 | **Unchanged-output requirement scoped** (2026-08-04): measured against the refactored implementation's own prior output, not imposed on a standard-conforming rebuild. Locked as **[D-48](DECISIONS.md#d-48)** | In force | `SCIENCE.md` §Evidence and outputs' scope paragraphs; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1's goal and exit criterion; `PR1_EXECUTION_PLAN.md` §3. Reverting makes PR 1 unclosable unless D-4's and D-19's baseline-only dispositions reopen with it |
 | **1.1 evaluator artifact deferred** (2026-08-04): out of PR 1, format finalized at PR 5, round-tripped at PR 6. Locked as **[D-49](DECISIONS.md#d-49)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 1's artifact exit criterion; `PR1_EXECUTION_PLAN.md` §3. Reverting reopens that criterion inside PR 1 and requires building a writer with no reader — see D-49's stated counterargument |
 | **PR 2 scope calls** (2026-08-04): exact-only repetition **[D-50](DECISIONS.md#d-50)**, stubbed decoding-failure trigger and `partial` decoder **[D-51](DECISIONS.md#d-51)**, ambiguous-reference recording removed **[D-52](DECISIONS.md#d-52)**. Grouped as one row: made together, on one footing, each carrying its own reversal scope | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 and the release outcome; `ARCHITECTURE.md` §7 row 2, §7.1; `PR1_EXECUTION_PLAN.md` §4; `evaluator/components/decoding.py`. **Two are shortfalls against a `SCIENCE.md` success criterion**, so reverting either means building the real capability, not just re-wording |
+| **`META_PLAN.md` §1.2 added — single-approver mode** (2026-08-04): Kurt decides alone, entries lock immediately, Riki ratifies in batches. Amends §1.1's joint-approval rule and §1's `Approved by` note, which together had been overridden by all nineteen entries from D-47 on except D-53. Recorded here rather than as a ledger entry because §1.1's last bullet forbids restating a specification's content, and §1.2 *is* the specification | In force | `META_PLAN.md` §1, §1.1, §1.2. **Reverting means all nineteen assumed-concurrence entries revert to `proposed`**, which stalls Releases 1.1 wholesale — the outcome §1.2 was written to prevent a future session from triggering by enforcing a rule nobody was following |
+| **Interim-data pivot** (2026-08-04): the Standards data is not coming, so 1.1 builds on Jailbreak v1.0 human ground truth. **[D-63](DECISIONS.md#d-63)** out-of-version ground truth, request stops gating; **[D-64](DECISIONS.md#d-64)** split groups on prompt text; **[D-65](DECISIONS.md#d-65)** attacked prompts only; **[D-66](DECISIONS.md#d-66)** interim slice is a dev set, real eval set reserved for a fresh selection | In force | `PREREGISTRATION_LE_STRUCTURE.md`; `data/interim_split_v1.json`; `scripts/build_interim_split.py`; `STATUS.md` queue item 2 and §Standards team; `README.md`. **D-65 is a shortfall against a `SCIENCE.md` training requirement** and D-63 uses labels made against a different standard version — the two rows here Riki is most likely to want to argue with. Reverting D-63 does not restore the data; it stops Release 1.1 having a fitted model at all |
+| **Coverage under D-45 unavailability** (2026-08-04): a candidate that cannot score a row is measured without it, coverage reported, paired comparisons on the shared rows. Locked as **[D-67](DECISIONS.md#d-67)** | In force | `PREREGISTRATION_LE_STRUCTURE.md` §3 and §8; `experiments/comparison_metrics.py`. **A recorded departure from `SCIENCE.md` §Evidence and outputs' same-rows requirement** — reverting means either counting an unanswered row as wrong (which re-invents what D-45 removed) or letting the weakest candidate shrink the row set every other candidate is judged on. Binds mainly on `R` and `H3`; `R` cannot be selected anyway |
+| **Decision-debt sweep** (2026-08-04): nine calls clearing PR 4–PR 6. **[D-54](DECISIONS.md#d-54)** narrative + refusal stay placeholders, PR 4's criteria scoped; **[D-55](DECISIONS.md#d-55)** E reads `working`; **[D-56](DECISIONS.md#d-56)** PR 7 added; **[D-57](DECISIONS.md#d-57)** hazard scope from the artifact; **[D-58](DECISIONS.md#d-58)** pre-staging prototype; **[D-59](DECISIONS.md#d-59)** pre-registered structure selection; **[D-60](DECISIONS.md#d-60)** no prompt input; **[D-61](DECISIONS.md#d-61)** single-threaded contract; **[D-62](DECISIONS.md#d-62)** no continuous score. Grouped: made in one sweep, on one footing | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4/5/6/7; `ARCHITECTURE.md` §2, §5, §6, §7 rows 5–6, §11, §12; this file's queue items 2 and 4. **D-54 and D-55 are shortfalls against a `SCIENCE.md` success criterion**; **D-58 and D-62 are scope removals**; the rest are contracts a rebuild would have to restate rather than reverse |
 
 **Rework exposure:** item 3 built directly on the amendment's dispositions, so
 architecture proceeded on the assumption rather than waiting on it. That is the
@@ -715,12 +816,33 @@ handling of a degenerate population from a 1.1 implementation on the strength
 of it, and if delivered ground truth turns out thin in some class, this is the
 assumption that failed.
 
-### Standards team — non-blocking outbound request
+### Standards team — request retained as a specification, no longer a gate
 
-Kurt directed 2026-08-03 that this **must not block**. It is recorded here as
-an outbound ask and as queue item 2's entry condition, not as a gate on
-anything in item 1. The criteria gate *claiming* a component scientifically
-successful; they do not gate the dispositions already made.
+**Status changed again 2026-08-04, same day** ([D-63](DECISIONS.md#d-63)).
+Kurt's call: **the ground truth and success criteria are not going to arrive.**
+Release 1.1 is built end to end against the Jailbreak v1.0 human ground truth
+already in the repository, and the pipeline is re-run when real data appears.
+
+[`STANDARDS_REQUEST.md`](STANDARDS_REQUEST.md) is **retained**, not withdrawn.
+It stops being an outbound gate and becomes the specification of what real data
+must supply whenever it exists — the frozen split, the exclusion guarantee, the
+naive-prompt coverage D-65 records as missing, and Ask B's six per-outcome
+criteria, which are a policy judgment no dataset can substitute for.
+
+**What proceeding costs, precisely: nothing the release could otherwise have
+claimed.** `../SCIENCE.md` §Evidence and outputs already requires both models
+be reported as *not evaluated* without approved criteria, and approved criteria
+were never going to come from data. What the interim dataset buys is a
+**runnable, exercised pipeline** and an eventual data arrival that is a re-run
+rather than a research project.
+
+Superseded by the above, kept for the record: the 2026-08-03 "non-blocking
+outbound request" framing, and the same-day escalation that had Kurt sending
+Asks A and B on his own signature. The escalation's two deliberate omissions
+still stand as findings — no dated fallback, and **no Ask C**: `../SCIENCE.md`
+§Narrative detection's fixed benign-narrative examples were never written down
+as an ask at any point, and are not needed until stage 5 is built (D-54).
+Whichever release builds it owes that request first.
 
 **Ask A — fixed, versioned data.** Human-labeled training and held-out
 evaluation sets, split frozen and identified by version or hash, evaluation
@@ -749,6 +871,134 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **`META_PLAN.md` §1.2 added: single-approver mode named.**
+  Kurt's call that Release 1.1 proceeds without Riki and goes to her as one
+  batch at the end. The process contract said the opposite in two places —
+  §1.1 required joint approval for every ledger entry, and §1's `Approved by`
+  note said an entry whose agreement was not on record must be `proposed`.
+
+  **Nineteen entries were already violating it**: D-47 through D-66, all
+  except D-53, every one `locked` while recording Riki's concurrence as
+  assumed. The hazard was not the violation but the enforcement — a future
+  session reading §1.1 literally would have reverted nineteen locked decisions
+  to `proposed` and stalled the release, which is the exact failure mode
+  `META_PLAN.md` exists to prevent.
+
+  §1.2 names the mode and attaches three obligations to every entry made under
+  it: the `Approved by` formula stating concurrence is assumed, a row in
+  §Assumed concurrence **carrying reversal scope**, and inclusion in the next
+  batch review. It also narrows `proposed` to mean "nobody has decided" rather
+  than "not everyone has," which keeps the status meaningful instead of
+  becoming the ledger's default state.
+
+  **Recorded as a table row, not a ledger entry**, because §1.1's last bullet
+  forbids restating a specification's content in an entry and §1.2 is itself
+  the specification — the same reasoning that keeps `SCIENCE.md` and
+  `DECISIONS.md` from drifting.
+
+  The risk §1.2 accepts, written into the document: rework exposure scales
+  with batch size, and `STATUS.md`'s reversal-scope column is the only
+  mitigation. If the table stops being maintained per decision, the correct
+  response is to return to joint approval — not to review a reconstructed
+  list.
+
+- 2026-08-04 — **Interim-data pivot: queue item 2 unblocked, D-59's
+  pre-registration written.** Kurt's call that the Standards team's ground
+  truth and criteria are not coming, and that 1.1 should be built end to end
+  on what exists and re-run later. Locked as
+  [D-63](DECISIONS.md#d-63)–[D-66](DECISIONS.md#d-66).
+
+  **The dataset turned out to be much stronger than "use what we have"
+  suggested**, and profiling it changed three design calls:
+
+  1. **It is real human ground truth, not synthetic.** 859 rows with human
+     `legitimization_value` and `enablement_value` on the 0/1/2 scale, all
+     fifteen hazard codes, all three classes populated on both axes
+     (L 434/187/142 on the 763 L-eligible rows, E 546/170/143). Describing it
+     as synthetic would have understated it and made it harder to defend.
+  2. **The v1.0 labels are 97.2% consistent with the v1.4 tables.** Applying
+     `../SCIENCE.md`'s three L/E-to-result tables to the human L/E values
+     reproduces the source's own `is_safe_ground_truth` on 835 of 859 rows.
+     The 24 disagreements concentrate exactly where the tables changed between
+     versions — enablement-only 7.3%, Specialized Advice 7.4%, default family
+     0.2% (1 of 546). A quantified validity caveat rather than a blocker.
+  3. **`seed_prompt_id` was unusable as the split key, and this would have
+     bitten hard.** 30 seed prompts, **each mapping to exactly one hazard** —
+     fourteen hazards have a single seed. A seed-grouped holdout (D-1/D-13's
+     mechanism) must put an entire hazard on one side, making per-hazard
+     evaluation structurally impossible. Switching the key to prompt text
+     gives 180 groups, 11 per hazard; the frozen split is 635 fit / 224 dev,
+     every hazard and every L/E class on both sides, zero group overlap
+     (D-64).
+
+  **One requirement was named as unmeetable rather than engineered around.**
+  Every row is a response to an attacked prompt — `prompt_text` differs from
+  `seed_prompt_text` in all 859 — and the naive seed prompts have no responses.
+  Supplying naive coverage would mean generating responses and labeling them,
+  which `../SCIENCE.md` §Evidence and outputs prohibits as ground truth. D-65
+  records the shortfall.
+
+  Built: `scripts/build_interim_split.py` (deterministic, self-verifying —
+  fails rather than writes if any hazard or L/E class is missing from a side,
+  or if groups overlap), `data/interim_split_v1.json` (frozen, source-hashed,
+  reproduces exactly under `--check`), and
+  [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md).
+
+  **The pre-registration's design choices worth knowing:** an ablation ladder
+  from a declared reference rather than a grid (the full cross product is 324
+  configurations against 224 dev rows), capped at 32 fits total with no
+  adaptive expansion; macro-F1 as the primary metric because it is the direct
+  encoding of the equal-importance requirement, with a worst-class floor to
+  reject candidates that solve two classes by abandoning the third; a **paired
+  cluster bootstrap over prompt groups**, since rows sharing a prompt are
+  correlated and a row-level bootstrap would understate the interval; and a
+  tie-break that favors the incumbent, so the structure only changes on
+  evidence. The reference structure **cannot win** — two binary heads cannot
+  produce the three-class distribution `../SCIENCE.md` requires — and if
+  nothing beats it, that null result is the finding and is reported as one.
+
+- 2026-08-04 — **Decision-debt sweep: PR 4 through PR 6 unblocked, PR 7
+  added.** Scope was the whole remaining Release 1.1 execution path, which is
+  wider than `META_PLAN.md` §2 normally permits — justified because the object
+  under review was *unmade decisions*, and the failure mode §2 guards against
+  (fixes compounding unpredictably) applies to proposed fixes, not to an
+  inventory of what has not been decided. No code changed.
+
+  **Twenty-three blockers found, of which the ledger held none** — D-1 through
+  D-53 were all locked or superseded-in-place, and `PLAN.md` §11's five open
+  questions were already resolved. The debt lived in specifications that hand
+  a decision to someone who was never asked, and in one deliverable that
+  appeared in no PR's work list.
+
+  Nine locked as [D-54](DECISIONS.md#d-54)–[D-62](DECISIONS.md#d-62). Two
+  taken as obvious without a separate entry beyond the ones above: the
+  continuous score is out (D-62) and multi-hazard correctness is confirmed
+  unevaluated (already recorded at `../ARCHITECTURE.md` §12.1).
+
+  **The three findings worth remembering:**
+
+  1. **No 1.1 runner exists and no PR created one.** `pyproject.toml` exposes
+     only the baseline CLIs; `evaluator/views.py` already recorded that
+     `failures.csv` "needs the batch-level runner that does not exist yet";
+     PR 6's exit criteria require testing "CLI and Python interfaces". A hole
+     in the approved queue, not a footnote — now PR 7 (D-56).
+  2. **`hazard_scope` had no default anywhere**, so no 1.1 result could be
+     produced until a caller invented one. `../SCIENCE.md` deliberately
+     refuses to fix a universal list, which made this look like a policy
+     question when it was a missing default (D-57).
+  3. **Ask C was never written down.** `../SCIENCE.md` §Narrative detection
+     requires fixed human-labeled benign-narrative examples from the Standards
+     team; Ask A covers training data and Ask B covers criteria, and neither
+     covers this. It is not being sent, because D-54 keeps narrative a
+     placeholder — but it was invisible, not deferred.
+
+  **One proposed call was raised as a conflict rather than implemented.**
+  Stubbing narrative and refusal to always report a negative would have
+  contradicted `../ARCHITECTURE.md` §6 and §3.1 and `../SCIENCE.md` §Evidence
+  and outputs, while changing no scoring behavior at all — phase B1 tests
+  `== "detected"`, so `not_detected` and `not_evaluated` fall through
+  identically. Raised, and the placeholders were kept as-is (D-54).
 
 - 2026-08-04 — **PR 3 slice B landed: verification sweep, PR 3 closed.**
   No new component behavior — `PR3_EXECUTION_PLAN.md` §2 had already found

@@ -210,25 +210,37 @@ need, without assigning a final result in these components.
 
 ### Work
 
-- Detect narrative, role-play, dialogue, quotation, hypothetical language,
-  metaphor, allegory, euphemism, and authorial commentary.
-- Remove only contiguous benign narrative established by fixed,
-  human-labeled Standards examples.
-- Preserve CSE, operational detail, usable harmful content, content-as-harm,
-  and authorial commentary.
-- Keep narrative detection as a placeholder until the Standards examples and
-  an approved implementation exist.
-- Detect and remove refusal text without removing following assistance or
-  other semantic content.
+**Scoped by [D-54](DECISIONS.md#d-54) and [D-55](DECISIONS.md#d-55)
+(2026-08-04).** Narrative and refusal detection both ship as pass-through
+placeholders, and the disclaimer text-view comparison is deferred. What remains
+buildable in PR 4 is the disclaimer flag path and the verification that the
+placeholders behave as placeholders. The work list and exit criteria below say
+so directly rather than describing components this release does not build.
+
+- ~~Detect narrative, role-play, dialogue, quotation, hypothetical language,
+  metaphor, allegory, euphemism, and authorial commentary.~~
+  ~~Remove only contiguous benign narrative established by fixed,
+  human-labeled Standards examples.~~ **Placeholder for 1.1 (D-54).** Blocked
+  on fixed, human-labeled Standards examples that this release is **not**
+  requesting; analysts do not set that boundary
+  (`SCIENCE.md` §Narrative detection).
+- ~~Detect and remove refusal text without removing following assistance or
+  other semantic content.~~ **Placeholder for 1.1 (D-54).** Nothing external
+  blocks building it; it is held back to keep the release's unevaluated
+  surface enumerable. See D-54's rejected alternative.
+- Keep narrative and refusal detection as **visible** placeholders: content
+  passes through unchanged, flags stay `not_evaluated`, and neither is ever
+  silently equivalent to a negative result (`ARCHITECTURE.md` §6).
 - Leave assistance detection to downstream L/E scoring.
-- Keep refusal detection as a visible placeholder until an approved
-  implementation exists.
 - Detect qualifying Specialized Advice disclaimers and pass their flag
   forward.
-- Compare disclaimer stripping with retaining disclaimer text on a fixed,
-  human-labeled evaluation set before locking the model input.
-- Preserve the current disclaimer implementation as partial until that
-  decision is approved.
+- ~~Compare disclaimer stripping with retaining disclaimer text on a fixed,
+  human-labeled evaluation set before locking the model input.~~ **Deferred
+  (D-55).** The comparison needs an evaluation set that does not exist. The
+  1.1 default is that L and E read `working` — disclaimer text is retained —
+  and stage 7 keeps publishing `named["disclaimer_stripped"]` so the
+  comparison stays a configuration change.
+- Preserve the current disclaimer implementation as partial.
 - Pass the detected facts and preserved response evidence forward. The L/E
   models judge the response; the final step applies only its fixed disclaimer
   and result rules.
@@ -236,12 +248,35 @@ need, without assigning a final result in these components.
 ### Exit criteria
 
 - Detection components report only what they detect and remove.
-- Benign narrative is removed only where the Standards ground truth permits.
-- Operational narrative and CSE remain available for scoring.
-- Refusal removal preserves any following assistance.
-- A disclaimer never reduces Enablement.
+- ~~Benign narrative is removed only where the Standards ground truth
+  permits.~~ ~~Refusal removal preserves any following assistance.~~
+  **Not met in 1.1 by construction (D-54)** — no narrative or refusal text is
+  removed at all, because both components are placeholders. Replaced by the
+  criterion below.
+- The narrative and refusal placeholders pass content through unchanged,
+  leave their flags at `not_evaluated`, and create no judgment — verified,
+  not assumed.
+- Operational narrative and CSE remain available for scoring. **Met trivially
+  in 1.1**, since nothing is removed; it becomes a real criterion when
+  narrative detection is built.
+- A disclaimer never reduces Enablement, and stage 7 applies no fixed rule of
+  its own — phase C in final integration is the only place a qualifying
+  disclaimer changes an outcome.
+- L and E read the `working` view, and `named["disclaimer_stripped"]` is
+  published alongside it (D-55).
 - Combined narrative, refusal, disclaimer, and assistance cases show that the
   L/E models make the judgments and the final step applies only fixed rules.
+  **In 1.1 these cases are constructed at the flag level**, not produced by
+  the pipeline — see the note below.
+
+**What PR 4 leaves unevaluated, for D-47's inventory.** With narrative and
+refusal both placeholders, `SCIENCE.md` phase B1's **first, second, and fourth
+bullets can never fire from a real detection**: no detector sets the refusal or
+narrative flag, so every exhaustion path lands on prompt-repetition or on the
+blank-payload branch that sets the refusal flag itself. B1's bullet *ordering*
+is load-bearing and `SCIENCE.md` §Evidence and outputs requires it be tested —
+in 1.1 that testing is against hand-constructed flag combinations only. The
+deferred disclaimer-view comparison (D-55) is a third entry.
 
 ## PR 5 — L/E training, scoring, and evaluation
 
@@ -250,20 +285,48 @@ need, without assigning a final result in these components.
 Select and validate L/E models that treat all three outcomes as equally
 important and return the probabilities final integration needs.
 
-### Entry condition
+### Entry condition — **met 2026-08-04**
 
-The Standards team has approved fixed human-labeled training and evaluation
-sets and per-outcome success criteria.
+~~The Standards team has approved fixed human-labeled training and evaluation
+sets and per-outcome success criteria.~~ **The Standards team's data is not
+arriving ([D-63](DECISIONS.md#d-63)).** PR 5 runs against the Jailbreak v1.0
+human ground truth in `data/`, split by
+[D-64](DECISIONS.md#d-64) into `data/interim_split_v1.json`, under the
+selection procedure fixed in
+[`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md)
+([D-59](DECISIONS.md#d-59)) — all three of which exist.
+
+**PR 5 is therefore no longer last in the sequence.** It may run as soon as
+queue item 2's structure comparison completes. What it still cannot do is claim
+either model scientifically successful: approved per-outcome criteria are a
+policy judgment no dataset substitutes for, so `SCIENCE.md` §Evidence and
+outputs' not-evaluated rule continues to apply.
 
 ### Work
 
-- Train on working text produced by the preceding components.
-- Cover responses to both naive and attacked prompts.
-- Exclude the prompt except where the standard permits context needed for
-  disambiguation.
+- Write the structure-selection pre-registration first (D-59): the candidate
+  list across the seven axes below, the selection rule and the metric it
+  reads, the tie-break, how many times the fixed evaluation set may be
+  touched, and the model payload format each candidate implies — which is
+  where [D-37](DECISIONS.md#d-37)'s format question and
+  [D-49](DECISIONS.md#d-49)'s deferred artifact finalization are answered.
+- Train on working text produced by the preceding components. **Note the
+  train/serve gap this carries in 1.1:** three of those components are
+  placeholders, so the working text a 1.1 model is fitted on is not the text a
+  release with working narrative, refusal, and hazard detection will produce.
+  A re-fit is owed whenever any of them is built.
+- ~~Cover responses to both naive and attacked prompts.~~ **Attacked only
+  ([D-65](DECISIONS.md#d-65)).** Every available row is a response to an
+  attacked prompt and the naive seed prompts have no responses; generating and
+  labeling them would produce AI labels, which `SCIENCE.md` §Evidence and
+  outputs prohibits as ground truth. Recorded as a shortfall, not filled.
+- ~~Exclude the prompt except where the standard permits context needed for
+  disambiguation.~~ **Exclude the prompt ([D-60](DECISIONS.md#d-60)).** The
+  models receive response-derived working text only; the disambiguation
+  exception is recorded as unexercised in 1.1, not as unavailable.
 - Compare candidate three-class loss, weighting, sharing,
   hazard-conditioning, branching, representation, and pooling structures on
-  the same fixed evaluation set.
+  the same fixed evaluation set, **following the pre-registration**.
 - Select the best-supported structure rather than preserving the current
   binary-head mechanism by default.
 - Train and version models separately from scoring.
@@ -291,7 +354,60 @@ sets and per-outcome success criteria.
   versions.
 - No AI-only labels are presented as human ground truth.
 
+## PR 7 — Evaluator runner, input schema, and batch entry point
+
+**Added and sequenced before PR 6 by [D-56](DECISIONS.md#d-56)
+(2026-08-04).** The number is 7 because `PR1`/`PR2`/`PR3_EXECUTION_PLAN.md`,
+`STATUS.md`, and `DECISIONS.md` already cite PR 6 by number and
+`META_PLAN.md` §5 forbids renumbering a cited identifier. **Work order comes
+from this sequencing note, not from the number.**
+
+### Goal
+
+Make the 1.1 evaluator runnable. No PR before this one creates a way to invoke
+it: `pyproject.toml` exposes only the three baseline CLIs, and
+`evaluator/views.py` records that `failures.csv` needs a batch-level runner
+that does not exist.
+
+### Entry condition
+
+PR 4 complete. PR 5 is not required — the runner drives whichever scoring
+implementation the registry selects, including PR 1's wrapped baseline.
+
+### Work
+
+- Define the 1.1 input schema. It must carry `request_id`, `prompt_uid`,
+  `response_id`, prompt text, response text, and the supplied hazard.
+  `PLAN.md` §2.1's CSV is the **baseline's** schema and does not carry the
+  1.1 identity fields.
+- Define the run profile: component selections, artifact id, rule version, and
+  hazard scope. Scope defaults to the artifact's frozen supported set
+  ([D-57](DECISIONS.md#d-57)) and the resolved set is recorded.
+- Build the batch runner over `open_run`, `validate_supplied_hazard`, and
+  `pipeline.run_pipeline`, never aborting the batch on a per-row failure.
+- Build the `failures.csv` view (`ARCHITECTURE.md` §11). Run rejections are
+  not in it — they abort the run before anything is scored (§2).
+- Add the CLI entry point and the in-process Python entry point.
+- Parallelize at the process level or not at all
+  ([D-61](DECISIONS.md#d-61)) — the evaluator's contract is single-threaded
+  per process.
+
+### Exit criteria
+
+- An unlabeled input file scores end-to-end with no retraining, producing
+  `results.jsonl`, `predictions.csv`, and `failures.csv`.
+- A run rejection aborts before any row is scored and names the offending
+  value and reason; a per-row failure does not abort the batch.
+- The resolved hazard scope is recorded in the run context and in every output
+  record.
+- The CLI and the in-process interface produce identical records for identical
+  input.
+- The runner selects components only through the registry and never imports a
+  concrete component.
+
 ## PR 6 — Final integration and release validation
+
+**Sequenced after PR 7** (D-56). PR 6's exit criteria assume a runner exists.
 
 ### Goal
 
@@ -312,8 +428,17 @@ assembled evaluator works.
   produce overall non-violating only when every evaluated hazard is
   non-violating; otherwise return failure.
 - Keep the standard's discrete result authoritative.
-- Add a continuous violation score only after its target and threshold are
-  approved; keep it supplementary unless policy changes.
+- ~~Add a continuous violation score only after its target and threshold are
+  approved; keep it supplementary unless policy changes.~~ **Out of Release
+  1.1 ([D-62](DECISIONS.md#d-62)).** No approved target or threshold exists,
+  so no record field, view column, or return value is built for it.
+  `SCIENCE.md` §Continuous score is unchanged and governs whenever one
+  arrives.
+- Decide whether Release 1.1 is promoted to staging or assigned a release
+  point version. It ships as a **pre-staging prototype**
+  ([D-58](DECISIONS.md#d-58)) under D-47's disclosure floor; promotion
+  triggers D-47's full limitations document, whose per-metric uncertainty
+  half depends on Ask B.
 - Return:
   - request, prompt, and response identity;
   - original, decoded, and current text;
@@ -321,9 +446,10 @@ assembled evaluator works.
   - supplied and additional detected hazards;
   - provisional per-hazard L/E judgments and multinomial probabilities;
   - final per-hazard L/E judgments;
-  - per-hazard and overall violating/non-violating results;
-  - an approved continuous score, when available; and
+  - per-hazard and overall violating/non-violating results; and
   - enough provenance to reproduce the result.
+
+  ~~an approved continuous score, when available~~ — removed by D-62.
 
 ### Exit criteria
 
@@ -333,7 +459,10 @@ assembled evaluator works.
   same output.
 - Tests cover every L/E table cell and every fixed finalization rule.
 - Tests cover multiple hazards, placeholders, component replacement, artifact
-  round trips, interfaces, concurrency, and continuous integration.
+  round trips, interfaces, concurrency, and continuous integration. **The
+  concurrency criterion verifies the single-threaded contract**
+  ([D-61](DECISIONS.md#d-61)) — that a single-threaded run is correct and
+  reproducible — not thread-safety, which Release 1.1 does not claim.
 - Every working implementation is tested.
 - Every placeholder is visible and creates no judgment.
 - Component-quality results are published only where fixed human ground truth
@@ -379,6 +508,24 @@ assembled evaluator works.
      not fully evaluated against its own criterion. Check §7's table when
      writing the document — it is the authoritative list of what is
      `working`, `partial`, and `placeholder`.
+
+     **The inventory grew again on 2026-08-04** and is no longer derivable
+     from §7's table alone. Four entries are *not* components:
+
+     - **Phase B1's unreachable bullets** (D-54) — with narrative and
+       refusal both placeholders, B1's first, second, and fourth bullets
+       never fire from a real detection, and B1's load-bearing ordering is
+       tested only against hand-built flag combinations.
+     - **The deferred disclaimer-view comparison** (D-55) — the 1.1 default
+       (E reads `working`) is a default, not a validated answer.
+     - **Multi-hazard correctness** (`ARCHITECTURE.md` §12.1) —
+       unevaluated in 1.1, and the cross-hazard backstop was withdrawn.
+     - **The unexercised prompt-disambiguation exception** (D-60).
+
+     Under [D-58](DECISIONS.md#d-58) Release 1.1 ships **pre-staging**, so
+     this inventory is disclosed inline in `README.md` §Release 1.1
+     evaluator status rather than in a separate versioned document. The
+     document itself is required only on promotion.
   3. **It discharges D-2 and D-8's disclosure obligation**, via whichever
      artifact applies: the README before staging, the limitations document
      after.

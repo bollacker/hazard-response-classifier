@@ -42,6 +42,18 @@ RunConfig
   rule_version: str
 ```
 
+**`hazard_scope` defaults to the selected artifact's frozen supported hazard
+set** (`planning/DECISIONS.md` D-57). `SCIENCE.md` §Hazard scope configuration
+declines to fix one universal Jailbreak 1.1 list and requires every run to
+record its exact active set; deriving the default from the artifact satisfies
+both halves and makes rejection condition (2) unreachable by default. An
+explicit narrower scope may still be supplied. A supplied scope wider than the
+artifact supports is still a condition (2) rejection.
+
+The accepted cost: the active set becomes a property of the training data
+rather than a declared policy, so a hazard absent from training is silently
+absent from scope. The recorded resolved set is what keeps that auditable.
+
 `open_run(config, artifact) -> Run` rejects when:
 
 1. the supplied hazard of any input row is missing, unrecognized, or outside
@@ -302,8 +314,21 @@ selected by configuration — and the default is that both receive `working`.
 The disclaimer question (C-4) is exactly a choice of view: stage 7 publishes
 `named["disclaimer_stripped"]` alongside leaving `working` intact, so the
 comparison C-4 requires on fixed human-labeled data is a configuration change,
-not a rewrite. **Which view E consumes stays open until that evaluation runs**
-(§12); the architecture must not prejudge it, and does not.
+not a rewrite.
+
+**For Release 1.1, L and E both consume `working` — disclaimer text is
+retained** (`planning/DECISIONS.md` D-55, 2026-08-04). This is an interim
+default, not the answer C-4 asked for: the comparison needs an evaluation set
+that does not exist. It is the default that changes nothing, because
+`SCIENCE.md` phase C already fixes final L at L0 for a qualifying Specialized
+Advice disclaimer and the standard states that a disclaimer does not lower E —
+so stripping would alter model input to achieve what the fixed rules already
+achieve. `named["disclaimer_stripped"]` keeps being published so the deferred
+comparison stays a config flip.
+
+**No view carries the prompt.** The 1.1 L/E models receive response-derived
+working text only (D-60); `SCIENCE.md`'s prompt-disambiguation exception is
+unexercised in this release, not unavailable.
 
 ## 6. Component contract and registry
 
@@ -341,6 +366,16 @@ Rules that make replaceability real:
 - **A placeholder passes content through unchanged**, writes
   `outcome: "not_evaluated"`, leaves its flags `not_evaluated`, and creates no
   judgment. A placeholder is never silently equivalent to a negative result.
+  **Reaffirmed 2026-08-04** (`planning/DECISIONS.md` D-54) against the
+  alternative of stubbing narrative and refusal to report `not_detected`:
+  since phase B1 tests `== "detected"`, both states behave identically and
+  scoring is unchanged, so the only effect would be a record that asserts a
+  negative for a component that never looked.
+- **The evaluator's contract is single-threaded per process** (D-61). Release
+  1.1 makes no thread-safety claim; components are stateless and the record is
+  immutable, but the embedding provider's backend is unverified under
+  concurrency and nothing here should be relied on across threads.
+  Parallelism, where PR 7's runner needs it, is at the process level.
 
 ## 7. Component inventory for 1.1
 
@@ -350,8 +385,8 @@ Rules that make replaceability real:
 | 2 | Decoding | **partial** | Baseline `preprocess/decode.py` wrapped. Never drops content — its worst case is the un-decoded text. But the **failure-detection trigger is stubbed** for 1.1 (`planning/DECISIONS.md` D-51): `decoding_failed` is recorded `not_evaluated`, never `not_detected`, and no integrator consequence is defined because the flag cannot fire |
 | 3 | Hazard detection | **placeholder** | Passes the supplied hazard through; returns no additional hazards; `not_evaluated` |
 | 4 | Prompt-repetition detection | **partial** | Exact normalized substring matching only, per §7.1. Summarized and closely-paraphrased repetition are not implemented and the gap is reported, not hidden |
-| 5 | Narrative detection | **placeholder** | Blocked on the Standards team's fixed benign-narrative examples (`SCIENCE.md` §Narrative detection); analysts do not set that boundary |
-| 6 | Refusal detection | **placeholder** | — |
+| 5 | Narrative detection | **placeholder** | Blocked on the Standards team's fixed benign-narrative examples (`SCIENCE.md` §Narrative detection); analysts do not set that boundary. Release 1.1 is **not requesting** them (`planning/DECISIONS.md` D-54) |
+| 6 | Refusal detection | **placeholder** | Nothing external blocks building it. Held back for 1.1 (D-54) to keep the release's unevaluated surface enumerable: it would have no ground truth and no approved criterion, so it could report nothing but *not evaluated* |
 | 7 | Disclaimer detection | **partial** | Baseline disclaimer sentence detection wrapped; publishes `named["disclaimer_stripped"]` for C-4's comparison |
 | 8 | Shared embedding | **working** | §8 |
 | 9 | L and E scoring | **working** *(target)*; **partial** until PR 5 lands | Three-class multinomial per evaluated hazard, structure selected by queue item 2 (live). PR 1's wrapped baseline is partial and reports `distribution=None` (§4) |
@@ -501,7 +536,7 @@ record itself, and every view is versioned separately.
 | `results.jsonl` | The full record | One record per response; the only lossless output |
 | `predictions.csv` | Per-hazard tabular results | Explicit, versioned flattening rule; one row per (response, hazard) |
 | `metrics.json` | Evaluation | Per-outcome metrics with an uncertainty estimate and its method (`SCIENCE.md` Estimability) |
-| `failures.csv` | Rejected and failed rows | Run rejections are not in here — they abort the run (§2) |
+| `failures.csv` | Rejected and failed rows | Run rejections are not in here — they abort the run (§2). **Built by PR 7** (D-56), which supplies the batch runner it needs |
 
 This answers two of proposal 3's recorded counterarguments directly.
 **Flattening** is a named, versioned contract per view rather than an implicit
@@ -514,15 +549,26 @@ a narrower view.
 
 ## 12. What this document does not decide
 
+Updated 2026-08-04 by the decision-debt sweep. Two items moved off this list
+and two remain.
+
 - **The L/E model structure** — loss, weighting, sharing, hazard-conditioning,
   branching, representation, pooling. Queue item 2, still live and blocked on
-  the Standards team's fixed dataset. §8 and §10 leave the slot open on purpose.
-- **Which text view E consumes** (C-4). Settled by evaluation on fixed
-  human-labeled data, not by architecture. §5 makes both alternatives a
-  configuration change.
-- **Per-outcome success criteria.** External, from the Standards team.
-- **The benign-narrative boundary.** `SCIENCE.md` assigns it to the Standards
-  team's fixed examples; stage 5 stays a placeholder until they exist.
+  the Standards team's fixed dataset. §8 and §10 leave the slot open on
+  purpose. **How the structure is chosen is no longer open**: D-59 requires a
+  pre-registered selection procedure — candidates, selection rule, tie-break,
+  evaluation-set touch budget, and the payload format each candidate implies —
+  written *before* the evaluation set arrives, which is also where D-37's
+  format question and D-49's deferred artifact finalization are answered.
+- **Per-outcome success criteria.** External, from the Standards team (Ask B),
+  along with the approved uncertainty method §11's `metrics.json` needs.
+- ~~**Which text view E consumes** (C-4).~~ **Decided for 1.1 by D-55:** both
+  models read `working`. The *comparison* is deferred, not the default — see
+  §5.
+- ~~**The benign-narrative boundary.**~~ **Not being resolved in 1.1** (D-54).
+  `SCIENCE.md` still assigns it to the Standards team's fixed examples, and
+  this release does not request them; stage 5 stays a placeholder, and stage 6
+  joins it.
 
 ### 12.1 Exposure created by removing cross-hazard completeness
 
