@@ -233,14 +233,28 @@ so directly rather than describing components this release does not build.
   silently equivalent to a negative result (`ARCHITECTURE.md` §6).
 - Leave assistance detection to downstream L/E scoring.
 - Detect qualifying Specialized Advice disclaimers and pass their flag
-  forward.
+  forward. **Scoped by [D-70](DECISIONS.md#d-70) (2026-08-05):** three of the
+  four inherited patterns, excluding `safety_warning`, whose bare risk-word
+  matching is not the disclaimer form `SCIENCE.md` describes — `ARCHITECTURE.md`
+  §7.2 carries the pattern set, the two qualifying forms 1.1 does not
+  implement, and the measurement. **An identified scoring change**: a
+  Specialized Advice row is no longer fixed at L0 by phase C on a risk word
+  alone.
 - ~~Compare disclaimer stripping with retaining disclaimer text on a fixed,
   human-labeled evaluation set before locking the model input.~~ **Deferred
   (D-55).** The comparison needs an evaluation set that does not exist. The
   1.1 default is that L and E read `working` — disclaimer text is retained —
   and stage 7 keeps publishing `named["disclaimer_stripped"]` so the
   comparison stays a configuration change.
-- Preserve the current disclaimer implementation as partial.
+- Preserve the current disclaimer implementation as partial. Wrapping rather
+  than rebuilding is what this requires; it does not require shipping every
+  inherited pattern (D-70), the same way PR 1's identical wording for prompt
+  repetition coexisted with `ARCHITECTURE.md` §7.1 dropping a path.
+- Make the model-input text view a real selection rather than a literal
+  attribute access ([D-69](DECISIONS.md#d-69), 2026-08-05), so D-55's deferred
+  comparison is the configuration change that decision assumes.
+  `ARCHITECTURE.md` §5 states where the selection lives in 1.1 and what PR 7
+  inherits.
 - Pass the detected facts and preserved response evidence forward. The L/E
   models judge the response; the final step applies only its fixed disclaimer
   and result rules.
@@ -263,20 +277,35 @@ so directly rather than describing components this release does not build.
   its own — phase C in final integration is the only place a qualifying
   disclaimer changes an outcome.
 - L and E read the `working` view, and `named["disclaimer_stripped"]` is
-  published alongside it (D-55).
+  published alongside it (D-55) — with the view **selected**, not hard-coded,
+  and recorded in the result (D-69).
+- Stage 7's pattern set matches `ARCHITECTURE.md` §7.2, its exclusion is tested
+  rather than only stated, and its unimplemented qualifying forms are disclosed
+  (D-70).
 - Combined narrative, refusal, disclaimer, and assistance cases show that the
   L/E models make the judgments and the final step applies only fixed rules.
   **In 1.1 these cases are constructed at the flag level**, not produced by
   the pipeline — see the note below.
 
-**What PR 4 leaves unevaluated, for D-47's inventory.** With narrative and
-refusal both placeholders, `SCIENCE.md` phase B1's **first, second, and fourth
-bullets can never fire from a real detection**: no detector sets the refusal or
-narrative flag, so every exhaustion path lands on prompt-repetition or on the
-blank-payload branch that sets the refusal flag itself. B1's bullet *ordering*
-is load-bearing and `SCIENCE.md` §Evidence and outputs requires it be tested —
-in 1.1 that testing is against hand-constructed flag combinations only. The
-deferred disclaimer-view comparison (D-55) is a third entry.
+**What PR 4 leaves unevaluated, for D-47's inventory.** `SCIENCE.md` phase B1's
+**first, second, and fourth bullets can never fire from a real detection** —
+for two distinct reasons, separated 2026-08-05 after the first was found to
+cover only two of the three. The **first and fourth** (refusal, narrative)
+because no detector sets those flags: both components are placeholders. The
+**second** (qualifying disclaimer) because of the exhaustion short-circuit —
+stage 7 never writes `working`, so a response that reaches B1 was exhausted at
+stage 1 or 4 and skipped disclaimer detection, leaving the flag
+`not_evaluated`. Either way every exhaustion path lands on prompt-repetition or
+on the blank-payload branch that sets the refusal flag itself. B1's bullet
+*ordering* is load-bearing and `SCIENCE.md` §Evidence and outputs requires it be
+tested — in 1.1 that testing is against hand-constructed flag combinations
+only.
+
+Two further entries: the deferred disclaimer-view comparison (D-55), and
+**disclaimer detection's coverage and precision** ([D-70](DECISIONS.md#d-70),
+2026-08-05) — two of `SCIENCE.md`'s five qualifying forms are unimplemented and
+precision is unmeasurable without human disclaimer labels
+(`ARCHITECTURE.md` §7.2).
 
 ## PR 5 — L/E training, scoring, and evaluation
 

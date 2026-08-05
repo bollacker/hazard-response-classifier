@@ -1,7 +1,10 @@
 # Status
 
 Last updated: 2026-08-05 — **Queue item 2 is complete and retired. Item 4 is
-the only live item left.**
+the only live item left, and PR 4 is its next slice with a written plan and no
+gates** ([`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md); two new calls,
+[D-69](DECISIONS.md#d-69) and [D-70](DECISIONS.md#d-70), both absorbed —
+see Recently Completed).
 
 Item 2 selected Release 1.1's L/E structure: a **per-hazard flat three-class
 multinomial softmax** for both targets, locked as
@@ -570,8 +573,21 @@ Detailed phased proposal:
    session (see Recently Completed). Its plan,
    [`PR3_EXECUTION_PLAN.md`](PR3_EXECUTION_PLAN.md), is now a record of what
    was built rather than live work, the same way `PR1_EXECUTION_PLAN.md` and
-   `PR2_EXECUTION_PLAN.md` are. **PR 4 (narrative, refusal, and disclaimer
-   detection) is next**, with no execution plan written for it yet.
+   `PR2_EXECUTION_PLAN.md` are.
+
+   **PR 4 (narrative, refusal, and disclaimer detection) is next, and its
+   execution plan is written** (2026-08-05):
+   [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md). Four slices, no gates —
+   the three calls the plan raised are decided
+   ([D-69](DECISIONS.md#d-69), [D-70](DECISIONS.md#d-70), and
+   `../ARCHITECTURE.md` §13's A-3) and absorbed into the specifications, so a
+   session starts at slice A. **PR 4 turned out to carry two real code changes
+   rather than none**, both found by reading the code against the
+   specifications: the model-input text view was a literal attribute access
+   while §5 claimed it was configuration-selected, and stage 7's broadest
+   disclaimer pattern was firing on bare risk vocabulary in the one direction
+   phase C can only move toward non-violating. The earlier note here that PR 4
+   "builds nothing new" is superseded by those two.
 
    **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
    blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
@@ -585,10 +601,10 @@ Detailed phased proposal:
    because it is the only phase that cannot start without the Standards
    team's data.
 
-   What each PR now owes, in short: **PR 4** builds nothing new — narrative
-   and refusal stay placeholders (D-54), the disclaimer view is fixed at
-   `working` (D-55), and the work is scoping the exit criteria and verifying
-   the placeholders behave as placeholders. **PR 7** builds the input schema,
+   What each PR now owes, in short: **PR 4** is mostly verification —
+   narrative and refusal stay placeholders (D-54) and the disclaimer view stays
+   `working` (D-55) — plus the two code changes D-69 and D-70 added on
+   2026-08-05 and the disclosure they carry. **PR 7** builds the input schema,
    run profile, batch runner, CLI, and `failures.csv`. **PR 6** applies the
    fixed rules (largely already built in `integration.py`), drops the
    continuous score (D-62), verifies the single-threaded contract (D-61), and
@@ -752,6 +768,8 @@ as though it were. This is the one item to close at Riki's next review.
 | **`META_PLAN.md` §1.2 added — single-approver mode** (2026-08-04): Kurt decides alone, entries lock immediately, Riki ratifies in batches. Amends §1.1's joint-approval rule and §1's `Approved by` note, which together had been overridden by all nineteen entries from D-47 on except D-53. Recorded here rather than as a ledger entry because §1.1's last bullet forbids restating a specification's content, and §1.2 *is* the specification | In force | `META_PLAN.md` §1, §1.1, §1.2. **Reverting means all nineteen assumed-concurrence entries revert to `proposed`**, which stalls Releases 1.1 wholesale — the outcome §1.2 was written to prevent a future session from triggering by enforcing a rule nobody was following |
 | **Interim-data pivot** (2026-08-04): the Standards data is not coming, so 1.1 builds on Jailbreak v1.0 human ground truth. **[D-63](DECISIONS.md#d-63)** out-of-version ground truth, request stops gating; **[D-64](DECISIONS.md#d-64)** split groups on prompt text; **[D-65](DECISIONS.md#d-65)** attacked prompts only; **[D-66](DECISIONS.md#d-66)** interim slice is a dev set, real eval set reserved for a fresh selection | In force | `PREREGISTRATION_LE_STRUCTURE.md`; `data/interim_split_v1.json`; `scripts/build_interim_split.py`; `STATUS.md` queue item 2 and §Standards team; `README.md`. **D-65 is a shortfall against a `SCIENCE.md` training requirement** and D-63 uses labels made against a different standard version — the two rows here Riki is most likely to want to argue with. Reverting D-63 does not restore the data; it stops Release 1.1 having a fitted model at all |
 | **L/E structure selected** (2026-08-05): both targets use a per-hazard flat three-class multinomial softmax (`L1 · W1 · S1 · H3 · V1 · P1`). Locked as **[D-68](DECISIONS.md#d-68)** | In force | `../ARCHITECTURE.md` §12; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list; `PREREGISTRATION_LE_STRUCTURE.md` §6's payload row; queue item 2's closure. **This is a null result** — no structure beat the incumbent, and on L the winner scores *below* it (0.4336 vs 0.4840); it wins only because every higher-scoring candidate is a two-head structure that cannot emit the required three-class distribution. Dissent does not restore a better option: reverting reopens §12's slot and leaves PR 5 with nothing to build, since the incumbent is structurally barred by `SCIENCE.md`. The arguable calls are the seven §8 amendments the selection rests on, not the arithmetic |
+| **Text view is selected at component construction** (2026-08-05): stage 8 takes the view as an argument, default `working`, resolved view recorded in the result; no `RunConfig` field, no second registered implementation until the comparison runs; §5's "selected by configuration" claim corrected. Locked as **[D-69](DECISIONS.md#d-69)** | In force | `../ARCHITECTURE.md` §5; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 work list and exit criteria; `PR4_EXECUTION_PLAN.md` §3 and slice A; `evaluator/components/embedding.py`. **Reverting leaves D-55's stated rationale unbacked** — that decision was made on the premise that the deferred comparison is a configuration change, which was not true of the code. Dissent costs ~20 lines and pushes the seam to PR 7, not the comparison |
+| **Stage 7 ships three of four disclaimer patterns** (2026-08-05): `safety_warning` excluded as bare risk-word matching, not a disclaimer form. Locked as **[D-70](DECISIONS.md#d-70)** | In force | `../ARCHITECTURE.md` §7 row 7 and new §7.2; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4; `evaluator/components/disclaimer.py`; `README.md`'s inventory. **This is an identified scoring change and the row Riki is most likely to want to argue with.** Reverting re-flags 42 of 217 Specialized Advice rows and moves ~5% of the family back toward non-violating on evidence that showed no enrichment over the unflagged base rate and was false-positive on all eleven rows where it changed a result. The baseline is untouched either way; the counter-argument is that `SCIENCE.md` does list "warn about risks" as qualifying, so 1.1 now has two unimplemented forms rather than one |
 | **Coverage under D-45 unavailability** (2026-08-04): a candidate that cannot score a row is measured without it, coverage reported, paired comparisons on the shared rows. Locked as **[D-67](DECISIONS.md#d-67)** | In force | `PREREGISTRATION_LE_STRUCTURE.md` §3 and §8; `experiments/comparison_metrics.py`. **A recorded departure from `SCIENCE.md` §Evidence and outputs' same-rows requirement** — reverting means either counting an unanswered row as wrong (which re-invents what D-45 removed) or letting the weakest candidate shrink the row set every other candidate is judged on. Binds mainly on `R` and `H3`; `R` cannot be selected anyway |
 | **Decision-debt sweep** (2026-08-04): nine calls clearing PR 4–PR 6. **[D-54](DECISIONS.md#d-54)** narrative + refusal stay placeholders, PR 4's criteria scoped; **[D-55](DECISIONS.md#d-55)** E reads `working`; **[D-56](DECISIONS.md#d-56)** PR 7 added; **[D-57](DECISIONS.md#d-57)** hazard scope from the artifact; **[D-58](DECISIONS.md#d-58)** pre-staging prototype; **[D-59](DECISIONS.md#d-59)** pre-registered structure selection; **[D-60](DECISIONS.md#d-60)** no prompt input; **[D-61](DECISIONS.md#d-61)** single-threaded contract; **[D-62](DECISIONS.md#d-62)** no continuous score. Grouped: made in one sweep, on one footing | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4/5/6/7; `ARCHITECTURE.md` §2, §5, §6, §7 rows 5–6, §11, §12; this file's queue items 2 and 4. **D-54 and D-55 are shortfalls against a `SCIENCE.md` success criterion**; **D-58 and D-62 are scope removals**; the rest are contracts a rebuild would have to restate rather than reverse |
 
@@ -841,6 +859,56 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 4's execution plan written, and the three calls it raised
+  decided and absorbed.** [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md).
+  No code yet — slice A is where a session starts.
+
+  **The plan set out to be a verification pass and found two real code
+  changes**, both by reading modules against the sentences that describe them
+  (`QUEUE_ITEM_2_EXECUTION_PLAN.md` §10 lesson 6, again):
+
+  - **[D-69](DECISIONS.md#d-69)** — `embedding.py` read `record.texts.working`
+    as a literal attribute access while `../ARCHITECTURE.md` §5 claimed a model's
+    input is "a named view selected by configuration", and D-55's rationale for
+    retaining disclaimer text rests on the deferred comparison being a
+    configuration change. A fourth absorption gap of the same kind: a
+    specification sentence describing behavior nobody had built. Resolved by
+    building the seam at the layer §6 actually defines — construction argument
+    in 1.1, registry-native implementation when the comparison runs, profile
+    field at PR 7 — and correcting §5.
+  - **[D-70](DECISIONS.md#d-70)** — stage 7's `safety_warning` pattern matches
+    bare risk vocabulary anywhere in a response. On the interim ground truth it
+    nearly doubles the Specialized Advice flag rate (46 → 88 of 217) while
+    adding rows showing **no enrichment** in human L0 over the unflagged base
+    rate (57.1% [39.4–75.0] vs 51.2% [43.8–59.1], cluster-bootstrapped over
+    `prompt_group_id`). All **eleven** rows where it alone changes a result are
+    false positives on inspection — "reduce the risk of backlash from clients",
+    a "Physical & Mental Harm:" section header — and seven carry the source
+    label `unsafe`, several with human L2/E2, where phase C's L0 makes the
+    Specialized Advice table read non-violating. Its apparent signal is
+    **refusals** explaining themselves in risk vocabulary, in a release that
+    ships no refusal detector by choice (D-54). Excluded; `ARCHITECTURE.md`
+    §7.2 now carries the pattern set the way §7.1 carries stage 4's.
+  - **`ARCHITECTURE.md` §13's A-3** — phase B1's bullet 2 fires without the
+    family gate phase C uses. Resolved as a *reading*, not a defect: "qualifying"
+    is a property of the disclaimer's form, phase C supplies the family
+    restriction, and no outcome differs. No code change.
+
+  **One published justification was wrong and is fixed.** `README.md` and
+  `RELEASE_1_1_QUEUE_PROPOSAL.md` both said three of phase B1's five bullets
+  never fire because "no detector sets those flags" — true of refusal and
+  narrative, false of the disclaimer bullet, whose real reason is the
+  exhaustion short-circuit (stage 7 never writes `working`). The claim was
+  right, the reason covered two of the three bullets it counted. D-54's own
+  text was already correct.
+
+  **Absorbed the same session** (§10 lesson 4): `../ARCHITECTURE.md` §5, §7 row
+  7, new §7.2, §13's A-3; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4's work list,
+  exit criteria, and unevaluated-inventory note; `README.md`'s B1 wording.
+  Two assumed-concurrence rows added with their reversal scope. **What is
+  deliberately not absorbed yet:** `README.md`'s disclaimer coverage entry,
+  which describes shipped behavior and lands with slice B's code.
 
 - 2026-08-05 — **Queue item 2 closed: L/E structure selected, recorded as
   [D-68](DECISIONS.md#d-68), item retired.** Slice D.

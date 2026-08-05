@@ -125,12 +125,20 @@ components currently shipping `partial` specifically.
 list above they are stated here directly (added 2026-08-04; `DECISIONS.md`
 D-54 through D-62):
 
-- **Some final-integration rules cannot be reached by the pipeline.** With
-  narrative and refusal detection both placeholders, no detector ever sets
-  those flags, so three of `SCIENCE.md` phase B1's five bullets never fire
-  from a real detection — every exhaustion path lands on prompt-repetition or
-  on the blank-payload branch. B1's bullet *ordering* is load-bearing, and in
-  this release it is exercised only by hand-constructed flag combinations.
+- **Some final-integration rules cannot be reached by the pipeline.** Three of
+  `SCIENCE.md` phase B1's five bullets never fire from a real detection, for
+  **two different reasons** (the second corrected 2026-08-05, having previously
+  been folded into the first):
+  - the **refusal** and **narrative** bullets, because both detectors are
+    placeholders and no detector ever sets those flags; and
+  - the **disclaimer** bullet, for a structural reason instead — B1 runs only
+    when working text is exhausted, exhaustion is checked after each of stages
+    1–7, and stage 7 never writes `working`, so any response reaching B1 was
+    exhausted earlier and skipped disclaimer detection entirely.
+
+  Every exhaustion path therefore lands on prompt-repetition or on the
+  blank-payload branch. B1's bullet *ordering* is load-bearing, and in this
+  release it is exercised only by hand-constructed flag combinations.
 - **Multi-hazard correctness is unevaluated.** Hazard detection is a
   placeholder that returns no additional hazards, and the cross-hazard
   completeness backstop was withdrawn on 2026-08-04. A response whose true
