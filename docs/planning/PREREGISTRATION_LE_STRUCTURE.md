@@ -361,6 +361,20 @@ having measured qualifying ones, and §4's own wording ("the highest-ranked
 candidate that produces a genuine three-class distribution") reads
 naturally over everything ranked, not over the finalist subset alone.
 
+**And a third correction, from the same re-examination: §4 step 3's
+comparator is the next-ranked *eligible* candidate, not `R`.** Step 3
+requires the top candidate's paired interval "against the next-ranked
+candidate" to exclude zero. An earlier implementation tested it against `R`
+— but `R` can never be selected, so separating from it decides nothing.
+Step 3 exists to establish that the winner is distinguishable from the
+runner-up it was actually chosen over, and that runner-up is whatever would
+have been selected instead: on the E target, `L1` (macro-F1 0.5289), not
+`R`. Measured correctly, the E composite's margin over `L1` is +0.0069 with
+a 95% interval of (−0.0233, +0.0393) — comfortably not separated, the same
+verdict the wrong comparator happened to give, on the right basis. Where a
+target has only one eligible candidate (L), step 3 is **not applicable**
+rather than passed or failed, and is recorded as such.
+
 **2026-08-04 — the ladder's candidate list is closed (§2.3), restated.** Not a
 change; a confirmation made when the harness gained a `MajorityClassBaseline`
 diagnostic. §2.3's levels are fixed and none may be added without an

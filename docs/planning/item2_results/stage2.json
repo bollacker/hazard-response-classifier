@@ -1,6 +1,6 @@
 {
   "stage": "stage2",
-  "generated_at": "2026-08-05T03:27:42.885120+00:00",
+  "generated_at": "2026-08-05T03:34:27.827405+00:00",
   "split_version": "interim-v1",
   "split_source_sha256": "8fdbec27dbcec27b0d2df4a1e3106f98e3e72d746bd0faa939f57e6a49922ddf",
   "reference": "R",
@@ -116,6 +116,8 @@
       "outcome": "no_structure_beat_the_incumbent",
       "selected": "L1",
       "separated_from_next": null,
+      "separation_comparator": null,
+      "separation_interval": null,
       "blocked_top_finalist": "S2 (= L composite)",
       "note": "The highest-ranked finalist (S2 (= L composite)) cannot be selected: like R, it decides by threshold and returns a one-hot row rather than the genuine three-class distribution `SCIENCE.md` requires (\u00a72.2, \u00a74's closing rule). The selection is therefore the highest-ranked candidate that does produce one: L1 (macro-F1 0.4336, below R's 0.4840). **The ablation found no structure that beats the incumbent on this data** -- this is the finding, reported as such, not a positive selection."
     },
@@ -148,7 +150,20 @@
       "outcome": "selected_without_separation",
       "selected": "L1+W3 (= E composite)",
       "separated_from_next": false,
-      "note": "L1+W3 (= E composite) ranked first among eligible candidates but was not significantly separated from R (\u00a74 step 3 fails). It is selected because it is the highest-ranked structure that produces a genuine three-class distribution -- not because it was shown to beat the incumbent."
+      "separation_comparator": "L1",
+      "separation_interval": {
+        "point_estimate": 0.006880722573466613,
+        "ci_low": -0.02329648642535584,
+        "ci_high": 0.03932233879426661,
+        "ci_level": 0.95,
+        "excludes_zero": false,
+        "n_resamples": 1000,
+        "n_groups": 48,
+        "n_paired_rows": 224,
+        "comparator": "L1",
+        "top": "L1+W3 (= E composite)"
+      },
+      "note": "L1+W3 (= E composite) ranked first among eligible candidates but was not significantly separated from L1 (\u00a74 step 3 fails). It is selected because it is the highest-ranked structure that produces a genuine three-class distribution -- not because it was shown to beat the incumbent."
     }
   }
 }

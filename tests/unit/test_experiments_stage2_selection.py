@@ -111,13 +111,21 @@ def test_no_eligible_candidate_when_every_distribution_producer_is_disqualified(
 
 def test_composite_ranked_first_with_separation_is_selected_outright():
     r = _r(macro_f1=0.48, worst=0.30)
-    composite = _row("L1+W3", 0.55, 0.34, excludes_zero=True, distribution=True)
+    composite = _row("L1+W3", 0.55, 0.34, distribution=True)
+    runner_up = _row("L1", 0.50, 0.31, distribution=True)
 
-    result = _select("E", r, [r, composite], [r, composite])
+    result = _select(
+        "E",
+        r,
+        [r, composite],
+        [r, composite, runner_up],
+        separation={"excludes_zero": True, "comparator": "L1"},
+    )
 
     assert result["outcome"] == "selected_outright"
     assert result["selected"] == "L1+W3"
     assert result["separated_from_next"] is True
+    assert result["separation_comparator"] == "L1"
 
 
 def test_composite_ranked_first_without_separation_says_so_plainly():
@@ -126,15 +134,57 @@ def test_composite_ranked_first_without_separation_says_so_plainly():
     imply it was shown to beat R.
     """
     r = _r(macro_f1=0.5199, worst=0.3077)
-    composite = _row("L1+W3", 0.5356, 0.3415, excludes_zero=False, distribution=True)
+    composite = _row("L1+W3", 0.5356, 0.3415, distribution=True)
     l1 = _row("L1", 0.5289, 0.3500, distribution=True)
 
-    result = _select("E", r, [r, composite], [r, composite, l1])
+    result = _select(
+        "E",
+        r,
+        [r, composite],
+        [r, composite, l1],
+        separation={"excludes_zero": False, "comparator": "L1"},
+    )
 
     assert result["outcome"] == "selected_without_separation"
     assert result["selected"] == "L1+W3"
     assert result["separated_from_next"] is False
+    # The comparator must be the next-ranked *eligible* candidate, never R:
+    # R can never be selected, so separating from it decides nothing.
+    assert result["separation_comparator"] == "L1"
     assert "not because it was shown to beat the incumbent" in result["note"]
+
+
+def test_separation_is_not_applicable_with_a_single_eligible_candidate():
+    """The L-target shape: only one structure both survives the floor and
+    produces a distribution, so there is no runner-up to separate from.
+    That must read as 'not applicable', never as a passed or failed test.
+    """
+    r = _r(macro_f1=0.4840, worst=0.3182)
+    s2 = _row("S2", 0.4851, 0.2927, distribution=False)
+    l1 = _row("L1", 0.4336, 0.2667, distribution=True)
+
+    result = _select("L", r, [r, s2], [r, s2, l1], separation=None)
+
+    assert result["selected"] == "L1"
+    assert result["separated_from_next"] is None
+    assert result["separation_comparator"] is None
+
+
+def test_separation_against_r_is_never_used_as_the_comparator():
+    """Forcing function for the bug this replaced: an earlier version read
+    the candidate's own `bootstrap_vs_r` and so reported separation against
+    R. A row carrying a misleading `bootstrap_vs_r` must not influence the
+    result when the caller supplies no separation.
+    """
+    r = _r(macro_f1=0.48, worst=0.30)
+    composite = _row("L1+W3", 0.55, 0.34, excludes_zero=True, distribution=True)
+
+    result = _select("E", r, [r, composite], [r, composite], separation=None)
+
+    # bootstrap_vs_r says excludes_zero=True, but with no eligible runner-up
+    # there is nothing to separate from -- it must not be read as outright.
+    assert result["outcome"] != "selected_outright"
+    assert result["separated_from_next"] is None
 
 
 def test_r_outranking_everything_still_selects_the_best_distribution_producer():

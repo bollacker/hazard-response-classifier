@@ -61,7 +61,10 @@ sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from run_stage1_sweep import TARGETS, _features_for, _target_frames  # noqa: E402
 
-from hazard_classifier.experiments.candidates import MultinomialSoftmax  # noqa: E402
+from hazard_classifier.experiments.candidates import (  # noqa: E402
+    STAGE1_BUILDERS,
+    MultinomialSoftmax,
+)
 from hazard_classifier.experiments.comparison_metrics import (  # noqa: E402
     WORST_CLASS_F1_FLOOR,
     Predictions,
@@ -104,7 +107,13 @@ def _record(
     }
 
 
-def _select(target: str, r_row: dict, finalists: list[dict], eligible_pool: list[dict]) -> dict:
+def _select(
+    target: str,
+    r_row: dict,
+    finalists: list[dict],
+    eligible_pool: list[dict],
+    separation: dict | None = None,
+) -> dict:
     """Pre-registration §4, applied to one target.
 
     `finalists` is stage 2's own finalist set (here: R plus the composite --
@@ -188,15 +197,23 @@ def _select(target: str, r_row: dict, finalists: list[dict], eligible_pool: list
     top_finalist = ranked_finalists[0] if ranked_finalists else None
     finalist_won = top_finalist is not None and top_finalist["level"] == selected["level"]
 
-    # Separation (§4 step 3) is only meaningful when the selected candidate
-    # is the top finalist and the next-ranked finalist is R -- the only
-    # pairing this run's finalist set supports.
-    separated = None
-    if finalist_won and len(ranked_finalists) > 1:
-        next_row = ranked_finalists[1]
-        bootstrap = selected.get("bootstrap_vs_r")
-        if next_row["level"] == r_row["level"] and bootstrap is not None:
-            separated = bool(bootstrap["excludes_zero"])
+    # §4 step 3: separation of the top candidate against **the next-ranked
+    # candidate**. The comparator must be the next-ranked *eligible*
+    # candidate, not R.
+    #
+    # Getting this wrong is subtle and was wrong here once: an earlier
+    # version read `selected["bootstrap_vs_r"]`, testing separation against
+    # R -- a structure that can never be selected. Step 3 exists to decide
+    # whether the winner is distinguishable from the runner-up it was
+    # actually chosen over, and the runner-up is whatever would have been
+    # selected instead. On the E target that is `L1` (0.5289), not R.
+    #
+    # `separation` is supplied by the caller because computing it needs
+    # row-level predictions for both candidates, which this pure function
+    # does not have. `None` means "not applicable" -- there was no second
+    # eligible candidate to separate from.
+    separated = None if separation is None else bool(separation["excludes_zero"])
+    separation_comparator = None if separation is None else separation.get("comparator")
 
     if finalist_won and separated:
         return {
@@ -204,9 +221,12 @@ def _select(target: str, r_row: dict, finalists: list[dict], eligible_pool: list
             "outcome": "selected_outright",
             "selected": selected["level"],
             "separated_from_next": True,
+            "separation_comparator": separation_comparator,
+            "separation_interval": separation,
             "note": (
                 f"{selected['level']} ranked first among eligible candidates and its "
-                f"paired bootstrap interval against R excludes zero -- selected outright."
+                f"paired bootstrap interval against the next-ranked eligible candidate "
+                f"({separation_comparator}) excludes zero -- selected outright."
             ),
         }
 
@@ -216,9 +236,12 @@ def _select(target: str, r_row: dict, finalists: list[dict], eligible_pool: list
             "outcome": "selected_without_separation",
             "selected": selected["level"],
             "separated_from_next": separated,
+            "separation_comparator": separation_comparator,
+            "separation_interval": separation,
             "note": (
                 f"{selected['level']} ranked first among eligible candidates but was not "
-                f"significantly separated from R (§4 step 3 fails). It is selected because "
+                f"significantly separated from {separation_comparator} (§4 step 3 fails). "
+                f"It is selected because "
                 f"it is the highest-ranked structure that produces a genuine three-class "
                 f"distribution -- not because it was shown to beat the incumbent."
             ),
@@ -232,6 +255,8 @@ def _select(target: str, r_row: dict, finalists: list[dict], eligible_pool: list
         "outcome": "no_structure_beat_the_incumbent",
         "selected": selected["level"],
         "separated_from_next": separated,
+        "separation_comparator": separation_comparator,
+        "separation_interval": separation,
         "blocked_top_finalist": blocked,
         "note": (
             f"The highest-ranked finalist ({blocked}) cannot be selected: like R, it "
@@ -296,6 +321,7 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
         "refit R does not match stage1.json's R -- fitting is not reproducing stage 1"
     )
 
+    composite_predictions_e = predictions
     diff = paired_cluster_bootstrap(
         dev_y["E"], predictions, r_predictions_e, dev_groups["E"], n_resamples=n_resamples
     )
@@ -328,6 +354,33 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
         f"vs_R_excludes_zero={diff.excludes_zero}"
     )
 
+    # Row-level predictions for the candidates §4 step 3 may need to compare.
+    # Only distribution-producing stage-1 levels can ever be the top or
+    # next-ranked *eligible* candidate, so only those are rebuilt. Refitting
+    # is deterministic and recomputes an already-counted stage-1
+    # configuration -- it adds nothing to the §2.4 budget -- and each refit
+    # is asserted against stage 1's own recorded macro-F1 so a silent
+    # divergence cannot pass unnoticed.
+    eligible_predictions: dict[tuple[str, str], Predictions] = {
+        ("L1+W3 (= E composite)", "E"): composite_predictions_e,
+    }
+    for target in TARGETS:
+        for level, builder in STAGE1_BUILDERS.items():
+            probe = builder()
+            if not probe.produces_three_class_distribution:
+                continue
+            recorded = stage1_by_key[(level, target)]
+            if recorded["disqualified_worst_class_floor"]:
+                continue  # cannot be top or next-ranked eligible
+            probe.fit(fit_X[target], fit_y[target], fit_hazards[target])
+            preds = Predictions.from_proba(probe.predict_proba(dev_X[target], dev_hazards[target]))
+            got = classification_metrics(dev_y[target], preds).macro_f1
+            assert abs(got - recorded["macro_f1"]) < 1e-9, (
+                f"refit {level}/{target} macro-F1 {got} != stage1's {recorded['macro_f1']} "
+                "-- fitting is not reproducing stage 1"
+            )
+            eligible_predictions[(level, target)] = preds
+
     selections = {}
     for target in TARGETS:
         r_row = stage1_by_key[("R", target)]
@@ -336,7 +389,37 @@ def run_stage2(*, stage1_path: pathlib.Path, allow_download: bool, n_resamples: 
         # composite -- not just stage 2's finalists.
         pool = [row for row in stage1["results"] if row["target"] == target]
         pool = pool + [composites[target]]
-        selections[target] = _select(target, r_row, [r_row, composites[target]], pool)
+
+        # §4 step 3's comparator: the next-ranked *eligible* candidate.
+        eligible_ranked = sorted(
+            [
+                row
+                for row in pool
+                if not row["disqualified_worst_class_floor"]
+                and row.get("produces_three_class_distribution") is True
+            ],
+            key=lambda row: row["macro_f1"],
+            reverse=True,
+        )
+        separation = None
+        if len(eligible_ranked) > 1:
+            top_level, next_level = eligible_ranked[0]["level"], eligible_ranked[1]["level"]
+            top_preds = eligible_predictions[(top_level, target)]
+            next_preds = eligible_predictions[(next_level, target)]
+            diff_sep = paired_cluster_bootstrap(
+                dev_y[target], top_preds, next_preds, dev_groups[target], n_resamples=n_resamples
+            )
+            separation = {**diff_sep.as_dict(), "comparator": next_level, "top": top_level}
+            print(
+                f"  separation[{target}]: {top_level} vs {next_level} -> "
+                f"excludes_zero={diff_sep.excludes_zero}"
+            )
+        else:
+            print(f"  separation[{target}]: not applicable (only one eligible candidate)")
+
+        selections[target] = _select(
+            target, r_row, [r_row, composites[target]], pool, separation=separation
+        )
         print(f"  selection[{target}]: {selections[target]['outcome']} -> {selections[target]['selected']}")
 
     split_manifest = json.loads(INTERIM_SPLIT.read_text())
