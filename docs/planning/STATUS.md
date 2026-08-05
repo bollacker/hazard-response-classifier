@@ -564,6 +564,16 @@ Detailed phased proposal:
    because the natural momentum at the end of a successful comparison is to go
    build the winner.
 
+   **Progress as of 2026-08-05: slices 0, A, and B are complete; slice C
+   (stage 2 finalists and selection) is next.** See Recently Completed below
+   for what each landed. `docs/planning/item2_results/stage1.json` holds
+   stage 1's 22 results (11 non-reference levels + `R`, per target). Headline
+   finding, stated so momentum doesn't carry past it: **no candidate
+   significantly beat `R`** by the paired bootstrap on either target; `B1` is
+   the one significant result, and it is significantly *worse*. Slice C
+   still has to run its own selection rule against this — this is not itself
+   the item's finding, only stage 1's.
+
    ~~**Entry condition:** Ask A under Awaiting User. The comparison is defined
    as running on one fixed evaluation set, so it cannot begin without it.~~
    Superseded by D-63.
@@ -872,6 +882,94 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **Queue item 2 slice B landed: stage-1 ablation, all ten
+  non-reference levels, swept.** `QUEUE_ITEM_2_EXECUTION_PLAN.md` §5.
+  `docs/planning/item2_results/stage1.json` now holds 22 results (11 levels
+  including `R`, per target) against the real 635-fit/224-eval split, 1000
+  resamples, paired cluster bootstrap against `R`.
+
+  Eight levels built directly in `experiments/candidates.py`:
+  `TwoHeadFamily` generalizes `R` with weighting/hazard-conditioning/branching
+  knobs (`W2`, `W3`, `H1`, `H2`, `B1`) — verified bit-identical to
+  `TwoHeadReference` at `R`'s own configuration before anything else;
+  `MultinomialSoftmax` (`L1`, sklearn's native multinomial, no new
+  dependency); `P2`/`P3` needed no candidate code at all — `R` re-fit on
+  differently-pooled features.
+
+  Two completed on Kurt's direction after being raised as genuine Open
+  Questions rather than guessed at: **`L2`** (ordinal cumulative-link) added
+  `statsmodels`' `OrderedModel`, not `mord` (unmaintained since 2017) — and
+  found a real defect before it could produce a wrong number: unregularized,
+  it is underdetermined against a ~35-95-row per-hazard cell at BGE's 768
+  dimensions, confirmed by hand to either raise on construction or silently
+  reach exact in-sample separation. Fixed with a PCA reduction sized
+  empirically against every real `(target, hazard)` cell; a forcing-function
+  test reproduces the failing shape and pins the fix. **`S2`** (shared L/E
+  parameterization) added `JointCandidate` alongside `Candidate` rather than
+  changing it — every already-tested single-target candidate is untouched.
+  `SharedTwoHeadJoint` fits one head pair per hazard on both targets' rows
+  pooled together, verified genuinely shared (not coincidental) and exactly
+  half of `R`'s per-target head count.
+
+  Also corrected, found before writing any model code: the pre-registration
+  claimed "12 non-reference levels" but its own §2.3 table gives 10 when
+  enumerated directly — same defect class as §10 lesson 2's L-class-count
+  bug. Stage 1 is 10 fits/target, total budget 14/target, 28 overall, not
+  16/32; recorded as a dated `PREREGISTRATION_LE_STRUCTURE.md` §8 amendment,
+  no candidate added or dropped.
+
+  35 new tests (385 total, zero regressions), including two real-data
+  smoke tests with `warnings.simplefilter('error')` confirming zero
+  Hessian-inversion or other warnings across the full ladder. Findings: no
+  candidate significantly beats `R` on either target by the paired
+  bootstrap; `B1` is the one significant result and is significantly worse
+  (expected — it is deliberately the pre-D-9/D-10 ungated rule this codebase
+  already replaced); the worst-class floor disqualifies 5 of 22 despite some
+  having respectable macro-F1; no hazard was unavailable for any candidate on
+  this split. Slice C (finalists and selection) is next.
+
+- 2026-08-04 — **Queue item 2 slice A landed: the comparison harness.**
+  `QUEUE_ITEM_2_EXECUTION_PLAN.md` §4. New `src/hazard_classifier/experiments/`
+  package (deliberately separate from the evaluator; nothing in it ships):
+  `features.py` (one cached embedding pass keyed by model, revision, and
+  exact content, storing per-sentence vectors so the `P1`/`P2`/`P3` pooling
+  axis needs no re-embedding), `candidates.py` (the `Candidate` protocol;
+  `R`, the incumbent two-head reference, wrapping the baseline's own fit path
+  rather than reimplementing it; a runtime AST assertion enforcing the
+  pre-registration's no-fixed-rule constraint, not a comment),
+  `comparison_metrics.py` (per-class/macro/worst-class F1, and the paired
+  cluster bootstrap over prompt groups).
+
+  Both traps §4.3 names are covered by forcing functions confirmed to fail
+  against the mistakes they catch: an unpaired bootstrap compared against
+  itself yields `(-0.093, +0.104)` instead of a zero-width interval; a
+  row-level bootstrap understates a group-correlated interval by 3.46x. The
+  harness is anchored against `PREREGISTRATION_LE_STRUCTURE.md` §3's
+  externally-fixed majority-class figures, reproduced exactly (L 0.5688 on
+  434/763, E 0.6356 on 546/859) after re-deriving them from source rather
+  than trusting the document, per §10 lesson 2.
+
+  Locked **D-67**: a candidate that cannot score a row (D-45 unavailability)
+  is measured without it, coverage reported, paired comparisons on the
+  shared rows — a recorded departure from `SCIENCE.md`'s same-rows
+  requirement, absorbed into `PREREGISTRATION_LE_STRUCTURE.md` §3 with a
+  reversal-scope row below. Numbering note: the plan had earmarked D-67 for
+  slice D's own selection entry "if nothing else has taken it" — slice A
+  took it, so that entry is now **D-68**.
+
+- 2026-08-04 — **Queue item 2 slice 0 landed: closed the split-reproduction
+  trap.** `QUEUE_ITEM_2_EXECUTION_PLAN.md` §3. `data/interim_split_v1.json`
+  recorded eval group ids and a prose description of the group key, but no
+  row-level assignment, and the only implementation of that key was a
+  private function inside a non-importable script — a consumer that
+  reimplemented the normalization even slightly differently would silently
+  get a different split. New `src/hazard_classifier/interim_data.py` is now
+  the single source of truth (`prompt_group_id`, `load_interim`,
+  `legitimization_rows`, plus a source-SHA256 check that raises on drift);
+  `scripts/build_interim_split.py` imports it rather than defining its own.
+  8 new tests; `--check` still reproduces the frozen manifest exactly after
+  the move.
 
 - 2026-08-04 — **`META_PLAN.md` §1.2 added: single-approver mode named.**
   Kurt's call that Release 1.1 proceeds without Riki and goes to her as one
