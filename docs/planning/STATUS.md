@@ -630,7 +630,9 @@ Detailed phased proposal:
    construction and **nothing ever updates it**; `hazard_scope` has **no
    default anywhere**, which is D-57's half that becomes real here; and
    `schema.py`'s columns are the baseline's and carry neither `request_id` nor
-   `response_id`. It also flags, without blocking, that §2's classification of
+   `response_id`. **Its one gate is answered** —
+   [D-74](DECISIONS.md#d-74) (2026-08-05): the profile carries `text_view` as
+   a construction parameter, conditional on an end-to-end test that flips it. It also flags, without blocking, that §2's classification of
    a bad supplied hazard as a *run rejection* forces an all-or-nothing
    two-pass runner — correct per the specification, and harsher than a
    benchmark harness would normally be.
@@ -870,6 +872,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **L/E structure selected** (2026-08-05): both targets use a per-hazard flat three-class multinomial softmax (`L1 · W1 · S1 · H3 · V1 · P1`). Locked as **[D-68](DECISIONS.md#d-68)** | In force | `../ARCHITECTURE.md` §12; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list; `PREREGISTRATION_LE_STRUCTURE.md` §6's payload row; queue item 2's closure. **This is a null result** — no structure beat the incumbent, and on L the winner scores *below* it (0.4336 vs 0.4840); it wins only because every higher-scoring candidate is a two-head structure that cannot emit the required three-class distribution. Dissent does not restore a better option: reverting reopens §12's slot and leaves PR 5 with nothing to build, since the incumbent is structurally barred by `SCIENCE.md`. The arguable calls are the seven §8 amendments the selection rests on, not the arithmetic |
 | **Text view is selected at component construction** (2026-08-05): stage 8 takes the view as an argument, default `working`, resolved view recorded in the result; no `RunConfig` field, no second registered implementation until the comparison runs; §5's "selected by configuration" claim corrected. Locked as **[D-69](DECISIONS.md#d-69)** | In force | `../ARCHITECTURE.md` §5; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 work list and exit criteria; `PR4_EXECUTION_PLAN.md` §3 and slice A; `evaluator/components/embedding.py`. **Reverting leaves D-55's stated rationale unbacked** — that decision was made on the premise that the deferred comparison is a configuration change, which was not true of the code. Dissent costs ~20 lines and pushes the seam to PR 7, not the comparison |
 | **Stage 7 ships three of four disclaimer patterns** (2026-08-05): `safety_warning` excluded as bare risk-word matching, not a disclaimer form. Locked as **[D-70](DECISIONS.md#d-70)** | In force | `../ARCHITECTURE.md` §7 row 7 and new §7.2; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4; `evaluator/components/disclaimer.py`; `README.md`'s inventory. **This is an identified scoring change and the row Riki is most likely to want to argue with.** Reverting re-flags 42 of 217 Specialized Advice rows and moves ~5% of the family back toward non-violating on evidence that showed no enrichment over the unflagged base rate and was false-positive on all eleven rows where it changed a result. The baseline is untouched either way; the counter-argument is that `SCIENCE.md` does list "warn about risks" as qualifying, so 1.1 now has two unimplemented forms rather than one |
+| **The run profile carries the model-input text view** (2026-08-05): optional `text_view`, default `working`, passed to `EmbeddingComponent`'s constructor by PR 7's component factory — **not** a `RunConfig`/`RunContext` field and **not** a registry key. Ships only with an end-to-end test at a non-default value. Locked as **[D-74](DECISIONS.md#d-74)** | In force | `../ARCHITECTURE.md` §5's profile bullet; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 7's run-profile work item; `PR7_EXECUTION_PLAN.md` §3 and slice B. **Closes the half [D-69](DECISIONS.md#d-69) deferred to PR 7.** Reverting costs a profile field and one test, and returns D-55's deferred comparison to being a configuration change only in the sense of a Python constructor call — which is the gap D-69 was raised to close one level down. The structural half of D-69's objection is answered rather than overridden: a construction parameter is not an implementation selection, so §6's registry keying is untouched |
 | **PR 5's two fitting calls** (2026-08-05): **[D-72](DECISIONS.md#d-72)** the models are fitted on pipeline **working text**, not the raw `response_text` D-68's selection used, and the selection is **not** re-run; **[D-73](DECISIONS.md#d-73)** the shipped artifact is fitted on the **fit split only**. Grouped: decided together, on one footing, each with its own reversal scope | In force | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5, §7, §8; `PR5_EXECUTION_PLAN.md` §3, slices A/B/D. **D-72 closes a `SCIENCE.md` training shortfall and opens a stated assumption in its place** — that D-68's ranking survives the change of input view, which the procedure did not test; reverting means either re-running the selection (spending a budget §2.4 fixed) or accepting that 285 of 859 rows are scored in a form the model never saw. `scripts/probe_working_text_delta.py` is the evidence and reproduces it. **D-73 costs ~35% of the rows** for a per-hazard fit already at ~42 rows/cell; reverting it buys them back and makes every reported number describe a model that is not the one shipped |
 | **PR 5 sequenced before PR 6** (2026-08-05): the remaining order is PR 7 → PR 5 → PR 6. Locked as **[D-71](DECISIONS.md#d-71)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6 sequencing notes; this file's queue item 4 and §Current Phase; `PR5_EXECUTION_PLAN.md` §1. **Ordering only — no PR's scope changes**, so reverting costs the order and nothing built. What reverting re-creates is the inversion D-71 fixed: PR 6's "artifact round trips" exit criterion depends on the artifact format [D-49](DECISIONS.md#d-49) assigns to PR 5, and PR 6's promotion call (D-58) and limitations document (D-47) would describe a release whose L/E models PR 5 has not yet replaced. Note that D-56 never decided PR 5's position — the old "PR 7 → PR 6 → PR 5 (D-56)" formula over-attributed |
 | **`META_PLAN.md` §6 amended** (2026-08-05): a verification sweep is a critique pass, not bookkeeping — routed to Opus at high effort, with a preference for a fresh context that did not write the specification being checked. Justified by PR 2's and PR 3's sweeps each finding a D-47 absorption gap on a check expected to be clean, and by queue item 2's five selection-rule defects | In force | `META_PLAN.md` §6. Process bookkeeping, not science — the same lowest-stakes footing as the §5 amendment. Reverting sends PR closes back to the cheapest model, which is what the three cited findings argue against |
@@ -967,12 +970,27 @@ further concurrence — Riki directed it.
   [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md), five slices. PR 7 is
   plumbing — every piece it composes (`open_run`, `validate_supplied_hazard`,
   `run_pipeline`, the registry, two of four views) is built and tested — so its
-  risk sits in edge cases rather than in science. **One gate question**,
-  blocking slice B only: whether the run profile carries the model-input text
-  view, which [D-69](DECISIONS.md#d-69) deferred to PR 7 by name and
-  `../ARCHITECTURE.md` §5 states as a fact about the future. Recommended yes,
-  *conditional on* a test that flips it to a non-default value — otherwise it
-  is the unexercised surface D-69 rejected in PR 4.
+  risk sits in edge cases rather than in science. **Its one gate question was
+  raised and answered the same day**, locked as [D-74](DECISIONS.md#d-74):
+  the run profile **does** carry the model-input `text_view`, as a
+  construction parameter defaulting to `working`, and **only with an
+  end-to-end test that sets it to a non-default value** — without that test
+  the field does not ship, since an unexercised profile field is the same
+  unverified surface [D-69](DECISIONS.md#d-69) rejected when it declined to
+  register a second embedding implementation in PR 4.
+
+  **What made the answer non-obvious.** D-69 gave two reasons against a
+  `RunConfig` field: no runner read one until PR 7, *and* that it would be a
+  second selection mechanism for one stage, which `../ARCHITECTURE.md` §6
+  exists to prevent. PR 7 discharges the first; the second is structural and
+  survives. D-74 resolves it with a distinction D-69 had no occasion to draw —
+  **which implementation serves a stage** (§6's registry, recorded in
+  `component_selections`) versus **how the selected implementation is
+  constructed** (the profile, like the provider and pooling strategy stage 8
+  already takes). So `text_view` is a construction parameter and is
+  deliberately *not* a `RunConfig` field, *not* a `RunContext` field, and
+  *not* a registry key; provenance stays in the stage-8 observation where
+  D-69 put it. §5's profile bullet is rewritten to carry that distinction.
 
   **Three gaps found by reading the code against the work list**, none
   visible from the planning documents:

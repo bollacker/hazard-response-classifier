@@ -41,8 +41,10 @@ correspondingly concentrated in edge cases rather than in science.**
 **Five slices** (`META_PLAN.md` §5): A the input schema and record
 construction, B the run profile and artifact resolution, C the batch runner and
 `failures.csv`, D the two entry points, E a real end-to-end run plus the sweep
-and close. **§3's one gate question blocks slice B only**, so a session starts
-at slice A either way.
+and close. **§3's gate question is answered and absorbed**
+([D-74](DECISIONS.md#d-74)) — the profile carries `text_view` as a construction
+parameter, conditional on a test that flips it. **A session starts at slice A
+and runs straight through; no gate is open.**
 
 ---
 
@@ -118,11 +120,18 @@ docstring still says "only `record.py`, `contract.py`, `registry.py`, and
 `run.py` exist so far (slice 1A — pure structure, no pipeline, no components
 yet)". Four PRs stale, and it is the package's front door.
 
-## 3. Entry gate — one question for Kurt
+## 3. Entry gate — answered
 
-**Blocks slice B only.** Slices A, C, D, and E do not turn on it.
+> **G-1 was decided by Kurt on 2026-08-05, locked as
+> [D-74](DECISIONS.md#d-74), and absorbed into `ARCHITECTURE.md` §5 before any
+> code.** **Yes** — the profile carries an optional `text_view` defaulting to
+> `working`, **conditional on an end-to-end test at a non-default value**;
+> without that test the field does not ship. **There is no open gate: a session
+> starts at slice A and runs straight through.** The rest of this section is
+> the record of why, and §5 carries the one distinction that makes the answer
+> compatible with D-69 rather than a partial reversal of it.
 
-### G-1 — Does the run profile carry the model-input text view?
+### G-1 — Does the run profile carry the model-input text view? — **answered: yes, conditionally**
 
 [D-69](DECISIONS.md#d-69) built the text-view selection seam in PR 4 as a
 construction argument on `EmbeddingComponent`, and deferred exactly one half of
@@ -141,16 +150,35 @@ inherited call, not a new one.
   unexercised surface — the same argument D-69 used to *reject* registering a
   second embedding implementation in PR 4.
 
-**Recommendation: yes, with one condition — a test that actually flips it.** The
+**Decided: yes, with the condition — a test that actually flips it.** The
 asymmetry with D-69's rejected registry entry is that a profile field is read by
 code PR 7 is building anyway and is exercised by a single end-to-end test at a
 non-default value, whereas a registered implementation nothing selects is
-exercised by nothing. If the field ships without that test, the "no" answer is
-the better one.
+exercised by nothing. **If the field ships without that test, it should not ship
+at all** — D-74 makes that conditional part of the decision, not advice.
 
-**Whichever way it goes, `ARCHITECTURE.md` §5's third bullet must end up true of
-the code** — it currently says a profile field "is PR 7's", which is a statement
-about the future that PR 7 either fulfils or must rewrite.
+**The half of D-69's objection that did *not* expire, and how D-74 answers it.**
+D-69 gave two reasons against a `RunConfig` field: no runner read one until
+PR 7 (discharged here), *and* that it would be a second selection mechanism for
+one stage, which §6 exists to prevent. The second is structural and still
+stands. What resolves it is a distinction D-69 had no occasion to draw:
+
+- **Which implementation serves a stage** is §6's configuration — keyed
+  `(stage, implementation_id)`, resolved through the registry, recorded in
+  `RunContext.component_selections`.
+- **How the selected implementation is constructed** is not. `EmbeddingComponent`
+  already takes its provider and its pooling strategy as construction
+  arguments; neither is a registry key or a record field, and `text_view` is
+  the same kind of thing.
+
+So the profile carries a construction parameter, **not** a `RunConfig` or
+`RunContext` field — adding one of those would be exactly the parallel
+mechanism D-69 refused. Provenance needs no new field either: the resolved view
+is already recorded in the stage-8 observation and reaches `results.jsonl`
+through `views.py` (D-69, slice A).
+
+`ARCHITECTURE.md` §5's profile bullet is rewritten accordingly — it no longer
+says a profile field "is PR 7's", which was a statement about the future.
 
 ## 4. Slice A — The 1.1 input schema and record construction
 
@@ -194,10 +222,25 @@ malformed input is rejected with a message naming the offending column or row;
 ## 5. Slice B — The run profile and artifact resolution
 
 - **The profile carries what `RunConfig` needs and resolves what it cannot**:
-  component selections, artifact id, rule version, hazard scope — plus
-  `text_view` if §3's G-1 says yes. A JSON file is the natural form (it is
-  provenance a consumer should be able to diff), with CLI flags able to
-  override.
+  component selections, artifact id, rule version, hazard scope — **plus
+  `text_view`, optional and defaulting to `working`**
+  ([D-74](DECISIONS.md#d-74), `ARCHITECTURE.md` §5). A JSON file is the natural
+  form (it is provenance a consumer should be able to diff), with CLI flags
+  able to override.
+- **`text_view` is a construction parameter, and the code must keep it one.**
+  It goes profile → component factory → `EmbeddingComponent(...)`. It does
+  **not** become a `RunConfig` field, a `RunContext` field, or a second
+  registry key — those are §6's implementation-selection surface and D-69
+  refused a parallel mechanism there. `EmbeddingComponent` already validates
+  the name at construction and records the resolved view in its observation,
+  so PR 7 adds no validation and no provenance of its own; **if a session finds
+  itself writing either, it has built the wrong thing.**
+- **The conditional test is a deliverable, not a nicety** (D-74): one
+  end-to-end run with `text_view: "disclaimer_stripped"`, asserting the
+  stage-8 observation records that view in `results.jsonl` and that the
+  embedded text is the stripped one. Without it the field does not ship —
+  an unexercised profile field is the same unverified surface D-69 rejected
+  when it declined to register a second embedding implementation.
 - **`hazard_scope` defaults to the artifact's frozen supported set**
   ([D-57](DECISIONS.md#d-57)) **in the profile layer, not in `open_run`.**
   `open_run` should keep receiving a concrete scope, so `RunContext` always has
@@ -396,11 +439,11 @@ the code — where the specification is what to correct, in the same session.
 
 ## Open Questions
 
-**One gate (§3), plus one design concern worth Kurt's eye that does not block.**
+**None open. One design concern worth Kurt's eye that does not block.**
 
 | Question | Status | Where it lands |
 |---|---|---|
-| **G-1** — does the run profile carry the model-input text view? | **Open**, blocks slice B only. Inherited from [D-69](DECISIONS.md#d-69) and named in `ARCHITECTURE.md` §5. §3 recommends **yes, conditional on a test that flips it to a non-default value** — otherwise no | A ledger entry; `ARCHITECTURE.md` §5's third bullet; slice B |
+| **G-1** — does the run profile carry the model-input text view? | **Answered 2026-08-05: yes, conditional on an end-to-end test at a non-default value.** The structural half of D-69's objection is answered by distinguishing *which implementation serves a stage* (§6's registry) from *how it is constructed* (the profile) — so no `RunConfig`/`RunContext` field and no second registry key | [D-74](DECISIONS.md#d-74); `ARCHITECTURE.md` §5's profile bullet, rewritten; slice B |
 | **An all-or-nothing abort on one bad hazard** is what `ARCHITECTURE.md` §2 specifies, and §6 implements it as written. It is also harsh for a large benchmark input, where most harnesses would route the bad row to `failures.csv` and continue | **Not blocking** — the specification is unambiguous and PR 7 follows it. Raised because the ergonomics only become visible once the runner exists, and changing it later means amending §2 rather than adjusting the runner | If Kurt wants the other behavior: an `ARCHITECTURE.md` §2 amendment and a ledger entry, before slice C |
 
 Nothing else in PR 7 is open. The pipeline, the record, the registry, the

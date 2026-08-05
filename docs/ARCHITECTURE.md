@@ -357,9 +357,24 @@ surface no release had built:
   `ClassVar`, so two views are two implementations, not two configurations of
   one. The `disclaimer_stripped` implementation is registered when the deferred
   comparison below is actually run, not in advance.
-- **A run-profile field, if a profile should carry one, is PR 7's** — that is
-  where `RELEASE_1_1_QUEUE_PROPOSAL.md` defines the run profile. 1.1 does not
-  add a second selection mechanism for one stage.
+- **The run profile carries the view as a construction parameter**
+  (`planning/DECISIONS.md` [D-74](planning/DECISIONS.md#d-74), 2026-08-05,
+  answering the question D-69 left to PR 7). PR 7's profile has an optional
+  `text_view`, defaulting to `working`, which the component factory passes to
+  `EmbeddingComponent`'s constructor when it builds the registry.
+
+  **This is not the second selection mechanism D-69 refused, and the
+  distinction is what keeps §6 intact.** §6's configuration is *which
+  implementation serves a stage*, keyed `(stage, implementation_id)` and
+  recorded in `RunContext.component_selections`. A construction parameter is
+  *how the selected implementation is built* — the same kind of thing as the
+  provider and pooling strategy stage 8 already takes, neither of which is a
+  registry key either. So `text_view` is **not** a `RunConfig` or `RunContext`
+  field, and adding one would be the parallel mechanism D-69 rejected.
+  Provenance stays where D-69 put it: the resolved view is recorded in the
+  stage-8 observation and reaches `results.jsonl` through `views.py`, so a
+  result still names the text its models saw without a second record field
+  claiming to select it.
 
 The disclaimer question (C-4) is exactly a choice of view: stage 7 publishes
 `named["disclaimer_stripped"]` alongside leaving `working` intact, so the

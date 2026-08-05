@@ -307,6 +307,7 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-71](#d-71) | PR 5 is sequenced **before** PR 6: PR 7 → PR 5 → PR 6 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6; `STATUS.md` queue item 4 | carried; resolves a D-49 dependency inversion |
 | [D-72](#d-72) | 1.1's L/E models are fitted on pipeline **working text**; D-68's selection (raw text) is not re-run | `PREREGISTRATION_LE_STRUCTURE.md` §1, §7, §8 | carried; closes a `SCIENCE.md` training shortfall, adds a recorded assumption |
 | [D-73](#d-73) | The shipped artifact is fitted on the **fit split only**; the dev slice stays held out | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5 | carried; makes PR 5's reported numbers describe the shipped model |
+| [D-74](#d-74) | The run profile carries `text_view` as a **construction parameter**, not a selection field | `../ARCHITECTURE.md` §5 | carried; closes D-69's deferred half, conditional on an end-to-end test |
 
 ### Absorption gaps
 
@@ -4672,3 +4673,79 @@ release fitted on real Standards data, where the split, its size, and the
 touch budget are all re-decided (`PREREGISTRATION_LE_STRUCTURE.md` §5), and it
 makes no claim that the dev slice is an evaluation set — under D-66 it remains
 dev-class, and held out is not approved.
+
+<a id="d-74"></a>
+## D-74: The run profile carries the model-input text view as a construction parameter, not a selection field
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.** Raised as gate G-1 in
+`PR7_EXECUTION_PLAN.md` §3, which is the question [D-69](#d-69) deferred to
+PR 7 by name.
+
+Decision: PR 7's run profile gains an optional **`text_view`**, defaulting to
+`working`, which the component factory passes to `EmbeddingComponent`'s
+constructor when it builds the registry. **It ships only with a test that runs
+end to end at a non-default value**; without that test the field does not ship
+at all.
+
+Three things it is deliberately **not**:
+
+- **not a `RunConfig` or `RunContext` field** — that is the parallel selection
+  mechanism D-69 refused, and refusing it is still right;
+- **not a registry key** — a second registered embedding implementation is
+  still deferred to whenever the [D-55](#d-55) comparison actually runs;
+- **not a change to which view is selected** — the 1.1 default remains
+  `working` under D-55.
+
+Rationale: D-69 deferred this half with a conditional — "if a model-input view
+belongs in a profile, that is where it goes" — and gave two reasons for not
+building it in PR 4. One was that no runner read such a field until PR 7; PR 7
+discharges it. The other was structural, and survives: §6 defines configuration
+as *which implementation serves a stage*, keyed `(stage, implementation_id)`,
+so two views are two implementations rather than two configurations of one.
+
+**What resolves the structural objection is a distinction D-69 did not need to
+draw**: *which implementation is selected* versus *how the selected
+implementation is constructed*. `EmbeddingComponent` already takes its provider
+and its pooling strategy as construction arguments, and neither is a registry
+key or a `RunContext` field. `text_view` is the same kind of thing. The profile
+is the document that builds components; carrying a construction parameter there
+adds no second answer to "which implementation serves stage 8", which is the
+question §6 reserves for the registry.
+
+**Why it is worth building now rather than deferring again.** D-69 was decided
+on the premise that D-55's deferred comparison "remains a configuration change
+and not a rewrite" — and until a profile carries the view, that claim is true
+only of a Python constructor call, not of anything a run is configured with. PR
+7 is the first PR where a run *has* a configuration document, so this is where
+the claim becomes true or stays aspirational.
+
+**The conditional is the whole safeguard.** D-69's own reason for rejecting a
+registered second implementation was that "an implementation nothing selects and
+no test exercises is unverified surface". A profile field nothing ever sets to a
+non-default value is the same defect wearing a different hat. The end-to-end
+test at `text_view: "disclaimer_stripped"` is what makes this a built feature
+rather than a declared one.
+
+Rejected alternatives: (1) leaving the view a constructor argument only —
+rejected because it leaves D-69's and D-55's shared rationale unbacked at the
+configuration layer, which is exactly the gap D-69 was raised to close one level
+down; (2) adding a `RunConfig`/`RunContext` field so the view appears in
+`component_selections` — rejected on §6, and unnecessary: the resolved view is
+already recorded in the stage-8 observation and reaches `results.jsonl` through
+`views.py`; (3) registering a `disclaimer_stripped` embedding implementation in
+PR 7 — rejected, unchanged from D-69: it belongs to whenever the comparison
+runs.
+
+Touches: `../ARCHITECTURE.md` §5's profile bullet (**absorbed** — rewritten to
+carry the construction-parameter distinction);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 7's run-profile work item;
+`PR7_EXECUTION_PLAN.md` §3 and slice B; [D-69](#d-69), whose deferred half this
+closes.
+
+Boundary: this decides **where the view is configured**, not **which view is
+right** — [D-55](#d-55)'s deferred comparison is untouched, its default stays
+`working`, and nothing here runs, prejudges, or reschedules it. It also does not
+give any other stage a profile-level construction parameter; stage 8 is the only
+stage that reads a text view (§5).

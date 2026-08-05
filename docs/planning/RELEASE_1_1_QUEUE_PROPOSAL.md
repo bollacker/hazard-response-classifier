@@ -438,7 +438,12 @@ implementation the registry selects, including PR 1's wrapped baseline.
   1.1 identity fields.
 - Define the run profile: component selections, artifact id, rule version, and
   hazard scope. Scope defaults to the artifact's frozen supported set
-  ([D-57](DECISIONS.md#d-57)) and the resolved set is recorded.
+  ([D-57](DECISIONS.md#d-57)) and the resolved set is recorded. **The profile
+  also carries the model-input `text_view`** as a construction parameter,
+  defaulting to `working` ([D-74](DECISIONS.md#d-74), 2026-08-05, closing the
+  half [D-69](DECISIONS.md#d-69) deferred here) — not as a `RunConfig` field
+  and not as a registry key, and only with an end-to-end test that sets it to
+  a non-default value.
 - Build the batch runner over `open_run`, `validate_supplied_hazard`, and
   `pipeline.run_pipeline`, never aborting the batch on a per-row failure.
 - Build the `failures.csv` view (`ARCHITECTURE.md` §11). Run rejections are
