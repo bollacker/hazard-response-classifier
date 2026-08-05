@@ -296,7 +296,37 @@ whole process exists to prevent), so spend the strongest reasoning there.
 | Integration check | Opus | Checking a fix against the *whole* ledger for second-order conflicts is the other place interference hides. |
 | Fix-proposal | Sonnet 5 | Scope is one issue against an already-locked ledger — constrained generative work. |
 | Implementation-slice | Sonnet 5 | Standard coding + test writing for a small, scoped slice. |
-| STATUS.md/DECISIONS.md bookkeeping | Haiku 4.5 | Pure mechanical file updates — no judgment required. |
+| **Verification sweep / PR close** | **Opus, high effort** | Added 2026-08-05 — see below. Not bookkeeping: it is a critique pass aimed at the work just finished. |
+| STATUS.md/DECISIONS.md bookkeeping | Haiku 4.5 | Pure mechanical file updates — no judgment required. Applies to *recording* a decided outcome, not to deciding whether the outcome is right. |
+
+**A verification sweep is not bookkeeping** (added 2026-08-05, Kurt; Riki's
+concurrence assumed, not confirmed on record). Every PR in this project closes
+with a sweep — map each exit criterion to what verifies it, check the
+limitations inventory, confirm the specifications still describe the code. That
+reads like file updating, and the bookkeeping row above would send it to the
+cheapest model. Three findings say otherwise:
+
+- **PR 2's sweep** found a live `DECISIONS.md` D-47 absorption gap on a check
+  that looked like it should be clean — `README.md` documented the baseline's
+  two statistical warts and none of the five 1.1 shortfalls.
+- **PR 3's sweep** was told to expect a clean confirmation on the same check
+  and found another gap.
+- **Queue item 2** logged five defects in its selection rule across four
+  self-reviews and two independent adversarial reviews, two of which changed a
+  recorded answer. Its own conclusion: *"The independent reviews found what
+  repeated self-review did not."*
+
+So a sweep hunts for cross-document interference between a specification and
+the code that was just written against it — which is what the Critique and
+Integration rows already route to the strongest reasoning. Spend it here too.
+
+**Prefer a fresh context for the sweep.** A session that wrote the
+specification reviews its own reasoning when it checks the code against it, and
+item 2's evidence is that this is where self-review underperforms. Where it is
+practical, run the sweep as a separate session given the diff and the
+specifications but not the plan's reasoning, and ask whether they match. This is
+a model-selection concern rather than a new mechanism: the scarce resource being
+allocated is attention that has not already committed to an answer.
 
 ---
 

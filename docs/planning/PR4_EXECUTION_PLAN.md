@@ -60,14 +60,12 @@ specification, not the entry.
 - PR 3 is complete; queue item 2 is closed and retired
   ([D-68](DECISIONS.md#d-68)). Item 4 is the only live queue item and **PR 4 is
   the startable slice** (`STATUS.md` §Current Phase).
-- Branch `main`. `HEAD` was `fd60230` when this plan was written; the plan
-  itself, D-69, D-70, and their absorption into `ARCHITECTURE.md` §5 / §7 row 7
-  / §7.2 / §13's A-3 land in the commit **after** it, with `README.md`,
-  `RELEASE_1_1_QUEUE_PROPOSAL.md`, and `STATUS.md`. **Start slice A from a clean
-  tree at that commit** — if `git status` is dirty with those files, the
-  decisions have not been committed yet and that is the step before this one.
-- Baseline is green: **413 tests**, `pytest` from the repo root, ~22 s. No code
-  changed with the decisions, so slice A starts from 413.
+- Branch `main`. The plan, D-69, D-70, and their absorption landed as
+  `7ec3d36`; **slices A and B are complete** (`1c7fb15`, `dc0ee22`).
+  **A fresh session starts at slice C** (§5) — read §3 and §4 as records of what
+  was built, not as work to do.
+- Baseline is green: **427 tests**, `pytest` from the repo root, ~23 s. Slice C
+  starts from 427.
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine — the pyenv shim needs the env.
 - No entry condition blocks PR 4. It needs neither the Standards team's data
@@ -129,7 +127,10 @@ published justification covers two of the three bullets it counts. Corrected
 So PR 4 is: one design question that needs Kurt (§3), one disclosure slice
 (§4), one verification slice (§5), and a close (§6).
 
-## 3. Slice A — The text-view selection seam (start here)
+## 3. Slice A — The text-view selection seam
+
+> **Complete** (2026-08-05), commit `1c7fb15`. 413 → 419 tests. This section is
+> now a record of what was built, not live work.
 
 **Decided 2026-08-05 (Kurt); locked as [D-69](DECISIONS.md#d-69) and absorbed
 into `ARCHITECTURE.md` §5 before any code.** This section was written as an
@@ -216,6 +217,15 @@ The problem this closes, so the slice is not mistaken for busywork:
 is true of the code, 413 + n tests green.
 
 ## 4. Slice B — What stage 7 detects, narrowed and disclosed
+
+> **Complete** (2026-08-05), commit `dc0ee22`. 427 tests. This section is now a
+> record of what was built. Two corrections it made, both worth carrying: §4's
+> `spc_ele` official-source-link figures below rested on an **undefined
+> heuristic** and did not reproduce — `scripts/probe_disclaimer_scope.py` now
+> pins the definition and finds 10 and 4, not 4 and 2 (no specification quoted
+> the old pair). And `DisclaimerDetector.version` went 1 → 2, so
+> `component_selections` still names the code that produced a result while the
+> implementation id stays put.
 
 **Decided 2026-08-05 (Kurt); locked as [D-70](DECISIONS.md#d-70) and absorbed
 into `ARCHITECTURE.md` §7.2 before any code.** §7.2 governs; this section is the
