@@ -588,9 +588,10 @@ Detailed phased proposal:
    toward non-violating. The earlier note here that PR 4 "builds nothing new"
    is superseded by those two.
 
-   **Slice A landed** (2026-08-05, see Recently Completed): `EmbeddingComponent`
-   takes `text_view` as a construction argument. **Slices B, C, and D remain**
-   — B is independent of A; C depends on neither.
+   **Slices A and B landed** (2026-08-05, see Recently Completed):
+   `EmbeddingComponent` takes `text_view` as a construction argument, and
+   stage 7 now ships three of the four inherited disclaimer patterns.
+   **Slices C and D remain** — C depends on neither A nor B.
 
    **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
    blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
@@ -862,6 +863,71 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 4 slice B landed: stage 7 narrowed to three disclaimer
+  patterns ([D-70](DECISIONS.md#d-70), `../ARCHITECTURE.md` §7.2).**
+  `evaluator/components/disclaimer.py` gained `RELEASE_1_1_PATTERN_NAMES`
+  (`professional_referral`, `uncertainty_warning`, `verify_or_check`) and
+  `EXCLUDED_PATTERN_NAMES` (`safety_warning`), resolved against the shared
+  `preprocess/flags.py` **by name at import time** — a rename or removal
+  upstream now raises rather than silently shipping a smaller set, which is
+  the "runs, returns results, and looks healthy" failure D-70 was itself found
+  by looking for. `DISCLAIMER_PATTERNS` is untouched; the baseline still scores
+  with all four (D-48, confirmed by running `test_baseline_parity.py`, not by
+  reasoning about it). The module docstring now carries §7.2's three reasons
+  for `partial`, which it previously gave only one of.
+
+  **`scripts/probe_disclaimer_scope.py` is committed and reproduces D-70's
+  measurement** — 859 interim rows, 217 Specialized Advice; unflagged 129 rows
+  at 51.2% human L0, `professional_referral` 33/81.8%, `uncertainty_warning`
+  21/76.2%, `verify_or_check` 0, `safety_warning` 68/66.2%, its 42 exclusive
+  rows 57.1% against the other three's 46 rows at 76.1%; flag rate 46 → 88 of
+  217; 11 rows (5.1%) where it alone flips a result, 7 source-labeled
+  `unsafe`. Cluster-bootstrapped over `prompt_group_id`, 2000 draws, seeded.
+  **Every row count and every point estimate in D-70 and `PR4_EXECUTION_PLAN.md`
+  §4 reproduced exactly**; intervals differ only in the last decimal, from a
+  different bootstrap RNG stream. `--show-adjudication` reprints the eleven
+  rows, and all four spans D-70 quotes are there verbatim.
+
+  8 new tests in `tests/unit/test_evaluator_pr4_disclaimer.py`, including the
+  phase-C end-to-end pair the plan asked for: an operational-risk response
+  under `spc_lgl` now keeps the model's L (`decided_by == "B2"`, `final_l ==
+  provisional_l.label`) while a genuine referral still gives `decided_by ==
+  "C"` and `final_l == "L0"` with E untouched. **Both were confirmed to fail
+  when `safety_warning` is restored**, so they are forcing functions rather
+  than descriptions. Also pinned: the `spc_ele` official-source-link gap, as a
+  disclosure with a comment telling a future implementer why the test exists.
+  427 tests total (419 + 8), zero regressions.
+
+  `README.md` §Release 1.1 evaluator status gained the coverage-and-precision
+  entry (now five non-component limitations, not four) stating plainly that a
+  spuriously flagged Specialized Advice response reads non-violating whatever
+  the models judged, with no accuracy claim in either direction. Its stale
+  "two components currently shipping `partial`" is corrected to three.
+
+  **Two things found in passing.**
+
+  - **`PR4_EXECUTION_PLAN.md` §4's electoral sentence did not reproduce** and
+    is corrected in place with a dated note. "Official-source-style reference"
+    was never defined; the committed probe pins an explicit, deliberately
+    generous heuristic and finds **10** such `spc_ele` rows with **4** flagged,
+    not 4 and 2. The gap is *wider* than the sentence implied, the conclusion
+    is unchanged, and **no specification quoted those numbers** — `../ARCHITECTURE.md`
+    §7.2 and D-70 say only that no pattern implements the form, which stays
+    exactly true. The §4 *table* itself reproduced exactly.
+  - **`DisclaimerDetector.version` bumped `"1"` → `"2"`**, a call this slice
+    made rather than inherited. D-70 is an identified scoring change, and
+    `version` is what `RunContext.component_selections` records so §6's "a
+    result names the exact implementations that produced it" survives it —
+    without the bump, records made before and after the narrowing are
+    indistinguishable in their own provenance. The **implementation id is
+    deliberately unchanged**: this is one implementation that changed, not a
+    second co-existing one (contrast D-69's registry-native form), and other
+    documents cite the id. Flagged here rather than filed as a ledger entry
+    because it is mechanical application of an existing §6 requirement, not a
+    new decision — but slice D should confirm that reading.
+
+  **Slices C and D of PR 4 remain.**
 
 - 2026-08-05 — **PR 4 slice A landed: the text-view selection seam
   ([D-69](DECISIONS.md#d-69), `../ARCHITECTURE.md` §5).**

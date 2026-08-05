@@ -288,6 +288,18 @@ nobody was looking at.
 link. 57 `spc_ele` rows, 12 flagged; 4 contain an official-source-style
 reference and only 2 of those are flagged, by unrelated patterns.
 
+> **Corrected 2026-08-05, slice B.** Everything in §4's table above reproduced
+> exactly — every row count and every point estimate, intervals differing only
+> in the last decimal from a different bootstrap RNG stream. **This sentence
+> did not**, because "official-source-style reference" was never defined:
+> `scripts/probe_disclaimer_scope.py` now pins an explicit (deliberately
+> generous) heuristic and finds **10** such `spc_ele` rows, **4** of them
+> flagged by unrelated patterns — not 4 and 2. The gap is therefore *wider*
+> than the original sentence suggested, not narrower, and the conclusion is
+> unchanged. No specification quoted these two numbers: `ARCHITECTURE.md` §7.2
+> and D-70 both say only that no pattern implements the form, which remains
+> exactly true. Quote the probe, not this sentence.
+
 Re-run all of this before quoting it (`QUEUE_ITEM_2_EXECUTION_PLAN.md` §10
 lesson 2 — compute, then write). **Commit the probe as
 `scripts/probe_disclaimer_scope.py`** so the table is reproducible rather than
