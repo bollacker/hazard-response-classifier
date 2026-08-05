@@ -3250,6 +3250,34 @@ current membership lives, so this section does not itself become a second
 copy of the list requiring its own upkeep as PR 3 through PR 5 land. Touches:
 `README.md` (**absorbed** — new section added).
 
+**Third correction (2026-08-05, PR 4's closing sweep): the enumeration went
+stale a second time, in three places at once.** Narrowing 2's inventory in
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 listed five component items and four
+non-component ones. Checked row by row against `ARCHITECTURE.md` §7 and
+`README.md`, three things were wrong:
+
+1. **Disclaimer detection's coverage and precision** ([D-70](#d-70)) reached
+   `README.md` and §7.2 when slice B landed, but never the inventory itself —
+   even though D-70's own `Touches` line named this obligation, which is
+   exactly how the 2026-08-04 correction above was missed too.
+2. **L/E scoring was never in the inventory at all**, though it has shipped
+   `partial` since PR 1 and emits no three-class distribution. §7's prose said
+   "three partials" while its own table marked four; a writer enumerating from
+   the sentence rather than the rows would drop it. Both are corrected.
+3. **Phase B1's unreachable-bullets entry still carried the superseded single
+   reason** ("no detector sets those flags"), which is false of the disclaimer
+   bullet — stage 7 is a real detector. `README.md` and PR 4's closing note
+   were corrected on 2026-08-05; this third copy was missed then.
+
+**The recurring lesson, now on its third instance:** naming an obligation in a
+ledger entry's `Touches` line does not discharge it. Both prior corrections and
+all three of these were found by reading the specification against the code and
+against the other documents that restate it — never by re-reading the ledger.
+The inventory's generating rule (*every component §7 marks `partial` or
+`placeholder`*) is what to run; the enumerated list is a convenience that goes
+stale each time a PR lands. Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6
+narrowing 2 (**absorbed**); `ARCHITECTURE.md` §7; `README.md`.
+
 <a id="d-48"></a>
 ## D-48: The unchanged-output requirement binds the implementation being refactored, not a standard-conforming rebuild
 Date: 2026-08-04
@@ -4348,6 +4376,18 @@ entry does not run, prejudge, or reschedule the comparison D-55 deferred. It
 also does not give stage 9 a view — stage 9 reads the pooled vector, so stage 8
 remains the only place a text view is chosen.
 
+**Note (2026-08-05, PR 4's closing sweep): the shipped check is stricter than
+§5 first described, and §5 is what was corrected.** §5 was written before the
+code (the entry gate's spec-first rule) and said the **reserved** view names
+were checkable in `__init__` while a **`named`** key was not. Slice A shipped a
+construction-time check against *both* static sets — the three reserved names
+and the closed set of `named` views 1.1's components actually publish, today
+`disclaimer_stripped` alone — so a typo in either half fails once at
+construction instead of reaching every row. What remains uncheckable there is
+whether a *given record* carries the key, which is the distinction §5 now
+draws. The decision is unchanged; only the specification's account of its
+mechanism was.
+
 <a id="d-70"></a>
 ## D-70: Stage 7 ships three of the four inherited disclaimer patterns; `safety_warning` is excluded
 Date: 2026-08-05
@@ -4449,3 +4489,20 @@ not affect [D-55](#d-55)'s separate question of which text view the models read.
 Two `../SCIENCE.md` qualifying forms are now unimplemented rather than one —
 risk warnings and electoral official-source links — and both are disclosed
 rather than closed.
+
+**Note (2026-08-05, PR 4's closing sweep): what reproduces exactly, and what
+does not.** `scripts/probe_disclaimer_scope.py` — committed by slice B and
+re-run at the close — reproduces **every row count and every point estimate**
+in the table above and in `../ARCHITECTURE.md` §7.2 (`verify_or_check`: 0 of
+217, 2 of 859; 46 → 88 flag rate; 11 result-changing rows, 7 labelled
+`unsafe`). The **bootstrap interval bounds differ by up to ~1 percentage
+point** — 43.3–59.0 / 64.3–86.5 / 39.6–75.0 against the 43.8–59.1 / 64.0–87.5 /
+39.4–75.0 recorded here — because the probe runs its own seeded 2000-draw
+stream rather than the ad-hoc one this entry was computed on. That is Monte
+Carlo variation of the expected size, and it changes no comparison: the three
+retained patterns' intervals still exclude the unflagged base rate and
+`safety_warning`'s exclusive rows still overlap it. **The probe is the
+reproducible source; quote it, not this table**, and read no interval bound
+here as stable past its first decimal. (`PR4_EXECUTION_PLAN.md` §4's slice-B
+note said the intervals differed "only in the last decimal", which understated
+it — corrected there too.)

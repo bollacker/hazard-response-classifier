@@ -121,10 +121,14 @@ D-47's own narrowing-2 correction records and fixes for a different
 document. `DECISIONS.md` D-50, D-51, and D-70 record the reasoning behind the
 three components currently shipping `partial` specifically.
 
-**Five limitations are not components and appear in no table**, so unlike the
-list above they are stated here directly (added 2026-08-04; `DECISIONS.md`
-D-54 through D-62, plus the disclaimer-coverage entry added 2026-08-05 under
-D-70):
+**Five limitations are stated here directly** rather than left to
+`ARCHITECTURE.md` §7's table (added 2026-08-04; `DECISIONS.md` D-54 through
+D-62, plus the disclaimer-coverage entry added 2026-08-05 under D-70). The
+first three and the last are not components at all and appear in no table; the
+**disclaimer** entry is the exception, and deliberately so — it *is* a §7
+component, but what its `partial` marking costs a reader of a result cannot be
+read off a maturity field (corrected 2026-08-05, PR 4's closing sweep, which
+found this sentence claiming all five were non-components):
 
 - **Some final-integration rules cannot be reached by the pipeline.** Three of
   `SCIENCE.md` phase B1's five bullets never fire from a real detection, for
@@ -205,6 +209,13 @@ judgments — not synthetic, and not model-generated — but four things follow:
 - **No approved success criteria exist**, so both the Legitimization and
   Enablement models are reported as *not evaluated* whatever their measured
   numbers.
+
+The scorer shipping today is also **not the selected structure yet**: PR 5
+builds it. Until then stage 9 wraps the baseline's two binary heads, ships
+`partial`, and emits **no three-class distribution at all** — every
+`distribution` field in a result is `null`, because two binary heads cannot
+produce one and synthesizing a plausible-looking substitute would be a
+fabricated number (`docs/ARCHITECTURE.md` §7 row 9, §4).
 
 No quality, coverage, or scientific-success claim is made for any component
 §7 marks `partial` or `placeholder`, per `SCIENCE.md` §Evidence and outputs'

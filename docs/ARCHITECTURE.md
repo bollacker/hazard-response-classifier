@@ -333,14 +333,25 @@ surface no release had built:
   first. What §6 does supply here is the prohibition: never fall back to
   `working` for a view that was asked for and not found.
 
-  The two halves split naturally: the **reserved** names (`original`,
-  `decoded`, `working`) are checkable in `__init__`; a **`named`** key is not,
-  since `TextViews.named` is filled per record. A configured `named` view
-  missing at run time is the case §6 governs — record it and let the integrator
-  fail the row, never substitute. In Release 1.1 that case is unreachable:
-  `disclaimer_stripped` is the only `named` view, stage 7 always publishes it
-  when it runs, and if stage 7 did not run the record was exhausted and stage 8
-  is skipped. Specify it; do not build machinery for it.
+  **What construction can check, corrected 2026-08-05 against the code slice A
+  shipped.** Two *static* sets are checkable in `__init__`: the **reserved**
+  names (`original`, `decoded`, `working`), which `TextViews` always carries,
+  and the closed set of **`named`** views 1.1's own components publish, which
+  today is `disclaimer_stripped` alone (stage 7). `EmbeddingComponent` rejects
+  anything outside their union at construction, so a typo in either half fails
+  once, before any record exists, rather than per row. What construction cannot
+  check is whether a *given record* carries a configured `named` key, since
+  `TextViews.named` is filled per record. That case is the one §6 governs —
+  record it and let the integrator fail the row, never substitute. In Release
+  1.1 it is unreachable: stage 7 always publishes `disclaimer_stripped` when it
+  runs, and if stage 7 did not run the record was exhausted and stage 8 is
+  skipped. Specify it; do not build machinery for it — the shipped lookup fails
+  loudly on a missing key instead, which is a non-path, not an implementation
+  of the rule above.
+
+  *(This paragraph previously said a `named` key was "not checkable in
+  `__init__`" at all. That described a weaker check than the one that shipped,
+  and would have let a typo in a `named` view name reach every row.)*
 - **Registry-native selection is the form a comparison uses.** §6 keys
   selection on `(stage, implementation_id)` and `Component.implementation` is a
   `ClassVar`, so two views are two implementations, not two configurations of
@@ -431,13 +442,21 @@ Rules that make replaceability real:
 | 9 | L and E scoring | **working** *(target)*; **partial** until PR 5 lands | Three-class multinomial per evaluated hazard. **Structure selected 2026-08-05 by [`planning/DECISIONS.md` D-68](planning/DECISIONS.md#d-68)** — a per-hazard flat multinomial softmax; queue item 2 is closed. PR 1's wrapped baseline is partial and reports `distribution=None` (§4); PR 5 replaces it |
 | 10 | Final integration | **working** | §9 |
 
-Three placeholders and **three** partials ship visibly (decoding joined them
+Three placeholders and **four** partials ship visibly (decoding joined them
 2026-08-04 under `planning/DECISIONS.md` D-51). `SCIENCE.md` §Evidence and
 outputs requires each to be reported as *not evaluated*, and D-47 requires the
 release's limitations document to enumerate exactly these — including
 decoding's stubbed failure trigger and stage 4's exact-only scope (D-50),
 both of which are shortfalls against a stated success criterion rather than
 absent components.
+
+**Corrected 2026-08-05, PR 4's closing sweep: this sentence said "three"
+partials while the table above marked four.** Stage 9 is the fourth — it ships
+`partial` today and reports `distribution=None`, and it stops being an
+inventory item only when PR 5 replaces it. The count matters because D-47's
+narrowing 2 generates the limitations inventory from *this table*, so a prose
+count that disagrees with it drops an item for anyone who enumerates from the
+sentence rather than the rows. Take the list from the table.
 
 ### 7.1 Prompt-repetition detection for 1.1
 

@@ -1,10 +1,16 @@
 # Status
 
-Last updated: 2026-08-05 — **Queue item 2 is complete and retired. Item 4 is
-the only live item left, and PR 4 is its next slice with a written plan and no
-gates** ([`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md); two new calls,
-[D-69](DECISIONS.md#d-69) and [D-70](DECISIONS.md#d-70), both absorbed —
-see Recently Completed).
+Last updated: 2026-08-05 — **PR 4 is complete and closed; PR 7 is the next
+slice of item 4** (D-56's sequencing: PR 4 → PR 7 → PR 6 → PR 5).
+[`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md) is now a record of what was
+built. PR 4 carried two real code changes rather than none —
+[D-69](DECISIONS.md#d-69)'s text-view seam and [D-70](DECISIONS.md#d-70)'s
+narrowing of stage 7 to three disclaimer patterns, an identified scoring
+change — plus the verification that the narrative and refusal placeholders
+behave as placeholders. Its closing sweep found five documentation defects,
+three of them stale copies of the D-47 limitations inventory (see Recently
+Completed). **Item 4 stays open**; three PRs remain. Queue item 2 is complete
+and retired.
 
 Item 2 selected Release 1.1's L/E structure: a **per-hazard flat three-class
 multinomial softmax** for both targets, locked as
@@ -46,7 +52,7 @@ full. What is left there is a non-blocking outbound request to the Standards
 team.
 
 **Next:** item 4 (build the 1.1 modular release) is the only live item.
-PRs 1, 2 and 3 are complete; **PR 4 is next**, then PR 7 → PR 6 → PR 5
+PRs 1, 2, 3 and 4 are complete; **PR 7 is next**, then PR 6 → PR 5
 ([D-56](DECISIONS.md#d-56)). *(Corrected 2026-08-05: this paragraph said PR 5
 was "gated behind item 2, which still needs the Standards team's fixed dataset
 — Ask A". Both halves are stale — [D-63](DECISIONS.md#d-63) removed that gate
@@ -541,7 +547,7 @@ one item or advance past an Awaiting User item on its own. See
 [D-68](DECISIONS.md#d-68)) are both complete, so what remains is
 implementation.
 
-PRs 1, 2 and 3 are landed. **PR 4 is next**, then PR 7 → PR 6 → PR 5
+PRs 1, 2, 3 and 4 are landed. **PR 7 is next**, then PR 6 → PR 5
 ([D-56](DECISIONS.md#d-56)). PR 5 now has a selected structure to build and
 waits on nothing external.
 
@@ -588,12 +594,21 @@ Detailed phased proposal:
    toward non-violating. The earlier note here that PR 4 "builds nothing new"
    is superseded by those two.
 
-   **Slices A, B, and C landed** (2026-08-05, see Recently Completed):
+   **PR 4 is complete** (2026-08-05): all four slices landed —
    `EmbeddingComponent` takes `text_view` as a construction argument, stage 7
-   now ships three of the four inherited disclaimer patterns, and the
-   placeholder/B1-reachability verification named in §5 is now pinned by
-   named tests rather than left as an inference from other tests passing.
-   **Slice D — the verification sweep and PR 4 close — remains.**
+   now ships three of the four inherited disclaimer patterns, the
+   placeholder/B1-reachability verification named in §5 is pinned by named
+   tests rather than left as an inference from other tests passing, and slice
+   D's sweep closed five documentation findings (see Recently Completed). Its
+   plan, [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md), is now a record of
+   what was built rather than live work. 433 tests, zero regressions,
+   `test_baseline_parity.py` unchanged.
+
+   **PR 7 (evaluator runner) is next** — input schema, run profile, batch
+   runner, CLI, and `failures.csv` — then PR 6, then PR 5
+   ([D-56](DECISIONS.md#d-56)). PR 7 inherits D-69's run-profile half: whether
+   a profile carries the model-input text view is its call, not PR 4's
+   (`../ARCHITECTURE.md` §5). **Item 4 stays open**; three PRs remain.
 
    **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
    blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
@@ -866,6 +881,73 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 4 slice D landed: the verification sweep, and PR 4 is
+  closed.** No code changed and the suite stayed at **433 tests, zero
+  regressions**, `test_baseline_parity.py` passing (D-48 holds — this PR reads
+  a baseline module and writes none). A sweep is a critique pass aimed at the
+  work just finished (`META_PLAN.md` §6, amended this same day), so altering
+  specifications rather than behavior is the expected shape of its output.
+
+  **Five findings, all closed in-session; three of them are the same failure
+  mode.**
+
+  - **`../ARCHITECTURE.md` §5 described a weaker check than slice A shipped.**
+    §5 was written before the code, per the entry gate, and said a `named` view
+    key "is not checkable in `__init__`". `EmbeddingComponent` in fact
+    validates *both* static sets at construction — the three reserved names and
+    the closed set of `named` views 1.1's components publish (today
+    `disclaimer_stripped` alone) — so a typo in either half fails once instead
+    of reaching every row. §5 corrected to describe the shipped two-level
+    check, with a dated note on [D-69](DECISIONS.md#d-69). **The decision is
+    unchanged; only the specification's account of its mechanism was wrong.**
+  - **D-47's limitations inventory was stale in three places at once** — found
+    by checking it row by row against `../ARCHITECTURE.md` §7 and `README.md`,
+    which is exactly the check PR 2's and PR 3's sweeps each found a gap on.
+    (1) Disclaimer coverage and precision ([D-70](DECISIONS.md#d-70)) reached
+    `README.md` and §7.2 when slice B landed but never the inventory itself.
+    (2) **L/E scoring has never been in the inventory at all**, though it has
+    shipped `partial` since PR 1 and emits `distribution=None` — the one
+    inventory item with a scheduled end, since PR 5 removes it. (3) Phase B1's
+    unreachable-bullets entry still carried the superseded single reason ("no
+    detector sets those flags"), which is false of the disclaimer bullet;
+    `README.md` and PR 4's own closing note were corrected on 2026-08-05 and
+    this third copy was missed then. All three closed in
+    `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6, with a third correction note on
+    D-47.
+  - **§7's prose said "three partials" while its own table marked four.** That
+    sentence is what a writer enumerating the inventory counts from, so it
+    silently dropped stage 9. Corrected, and the correction says to take the
+    list from the table.
+  - **D-70's bootstrap intervals do not reproduce to the last decimal.**
+    `scripts/probe_disclaimer_scope.py`, re-run at the close, reproduces every
+    row count and every point estimate exactly (`verify_or_check` 0 of 217 and
+    2 of 859; 46 → 88 flag rate; 11 result-changing rows, 7 labelled `unsafe`;
+    10 `spc_ele` official-source rows, 4 flagged). Interval **bounds** move by
+    up to ~1 percentage point on the probe's own seeded stream — ordinary Monte
+    Carlo variation that changes no comparison, but slice B's note had called
+    it "the last decimal". Corrected in both places; the probe is the quotable
+    source and no interval bound is stable past its first decimal.
+  - **PR 6 inherited an item that lived in only one document.**
+    `PR4_EXECUTION_PLAN.md` §8 routed "record which B1 bullet fired" to PR 6,
+    and `../ARCHITECTURE.md` §13's A-3 was the only place carrying it — not PR
+    6's own work list, which is what a PR 6 session reads. Added there.
+
+  **What was checked and was clean:** every PR 4 exit criterion maps to a named
+  test, re-verified against the test files rather than the plan's claims about
+  them; D-70's absorption matches the shipped `disclaimer.py` exactly;
+  `DISCLAIMER_PATTERNS` is untouched; both ledger index rows exist; and no exit
+  criterion met by scoping rather than by building lacks a ledger entry — D-54
+  covers two, D-55 and D-70 one each. **No new decision was needed**, so the
+  assumed-concurrence table gains no row: every correction above is an
+  absorption or enumeration fix to a specification already carrying a locked
+  decision, which is the same disposition PR 2's and PR 3's sweeps took.
+
+  **The lesson, now on its third instance and recorded on D-47:** naming an
+  obligation in a ledger entry's `Touches` line does not discharge it. D-70's
+  `Touches` line named the inventory; the inventory was not updated. Every one
+  of these was found by reading a specification against the code and against
+  the other documents restating it — none by re-reading the ledger.
 
 - 2026-08-05 — **PR 4 slice C landed: placeholder and B1-reachability
   verification.** No new component behavior — `integration.py` gained one

@@ -1,5 +1,13 @@
 # PR 4 execution plan — narrative, refusal, and disclaimer detection
 
+> **PR 4 is complete (2026-08-05). This document is now a record of what was
+> built, not live work** — the same status `PR1`/`PR2`/`PR3_EXECUTION_PLAN.md`
+> and `QUEUE_ITEM_2_EXECUTION_PLAN.md` carry. All four slices landed: A
+> `1c7fb15`, B `dc0ee22`, C `105add7`, D the closing sweep. 433 tests green,
+> `test_baseline_parity.py` unchanged (D-48 holds). **PR 7 is next**
+> ([D-56](DECISIONS.md#d-56): PR 4 → PR 7 → PR 6 → PR 5); queue item 4 stays
+> open, since three PRs remain. What slice D found is in §6.
+
 Written 2026-08-05, after PR 3 closed and queue item 2 retired. This is the
 working plan for `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4, the fourth slice of
 `STATUS.md` queue item 4. Written to be run from a clean session: everything a
@@ -61,12 +69,12 @@ specification, not the entry.
   ([D-68](DECISIONS.md#d-68)). Item 4 is the only live queue item and **PR 4 is
   the startable slice** (`STATUS.md` §Current Phase).
 - Branch `main`. The plan, D-69, D-70, and their absorption landed as
-  `7ec3d36`; **slices A, B, and C are complete** (`1c7fb15`, `dc0ee22`, and
-  slice C's commit — see `STATUS.md`).
-  **A fresh session starts at slice D** (§6) — read §3, §4, and §5 as records of
-  what was built, not as work to do.
+  `7ec3d36`; **all four slices are complete** (`1c7fb15`, `dc0ee22`, `105add7`,
+  and slice D's commit — see `STATUS.md`). ~~A fresh session starts at slice
+  D.~~ **Nothing here is live work as of 2026-08-05**; read §3–§6 as records of
+  what was built.
 - Baseline is green: **433 tests**, `pytest` from the repo root, ~22 s. Slice D
-  starts from 433.
+  started from 433 and ended at 433 — it changed no code.
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine — the pyenv shim needs the env.
 - No entry condition blocks PR 4. It needs neither the Standards team's data
@@ -300,8 +308,13 @@ link. 57 `spc_ele` rows, 12 flagged; 4 contain an official-source-style
 reference and only 2 of those are flagged, by unrelated patterns.
 
 > **Corrected 2026-08-05, slice B.** Everything in §4's table above reproduced
-> exactly — every row count and every point estimate, intervals differing only
-> in the last decimal from a different bootstrap RNG stream. **This sentence
+> exactly — every row count and every point estimate. *(**Corrected 2026-08-05,
+> slice D**: this note originally added "intervals differing only in the last
+> decimal from a different bootstrap RNG stream." The interval bounds actually
+> move by up to ~1 percentage point on the probe's own seeded stream, which is
+> ordinary Monte Carlo variation and changes no comparison — but "the last
+> decimal" overstated the agreement. See D-70's 2026-08-05 note; quote the
+> probe, not either table's intervals.)* **This sentence
 > did not**, because "official-source-style reference" was never defined:
 > `scripts/probe_disclaimer_scope.py` now pins an explicit (deliberately
 > generous) heuristic and finds **10** such `spc_ele` rows, **4** of them
@@ -513,6 +526,46 @@ reproduces §4's table, 413 + n tests green including `test_baseline_parity.py`.
 test, 413 + n tests green.
 
 ## 6. Slice D — Verification sweep and PR 4 close
+
+> **Complete** (2026-08-05). No code changed; five documents did. **433 tests
+> green, unchanged** — the sweep is a critique pass (`META_PLAN.md` §6), so it
+> was expected to alter specifications rather than behavior, and it did.
+> **Five findings, all closed in-session:**
+>
+> 1. **§5 described a weaker check than slice A shipped** (D-69's absorption,
+>    re-checked against the code as this section requires). §5 said a `named`
+>    view key "is not checkable in `__init__`"; `EmbeddingComponent` validates
+>    *both* static sets there — the three reserved names and the closed set of
+>    `named` views 1.1 publishes. §5 corrected, with a note on D-69. The
+>    decision is unchanged; its account of the mechanism was wrong.
+> 2. **The D-47 inventory was stale in three places at once**, found by
+>    checking it row by row against `ARCHITECTURE.md` §7 and `README.md`, as
+>    this section says to expect. Disclaimer coverage/precision (D-70) reached
+>    `README.md` and §7.2 but never the inventory; **L/E scoring has never been
+>    in it at all**, though it has shipped `partial` since PR 1 with
+>    `distribution=None`; and B1's unreachable-bullets entry still carried the
+>    superseded single reason corrected everywhere else on 2026-08-05. All
+>    three closed in `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6, with a third
+>    correction note on D-47.
+> 3. **§7's prose said "three partials" while its own table marked four.**
+>    That sentence is what a writer enumerating the inventory would count from,
+>    and it drops stage 9. Corrected.
+> 4. **D-70's bootstrap intervals do not reproduce to the last decimal.** The
+>    probe reproduces every count and point estimate exactly; interval bounds
+>    move up to ~1 point on its own seeded stream. No comparison changes, but
+>    §4's slice-B note overstated the agreement. Both corrected; the probe is
+>    the quotable source.
+> 5. **PR 6 inherited an item that lived in only one place.** §8 routed
+>    "record which B1 bullet fired" to PR 6, and `ARCHITECTURE.md` §13's A-3
+>    was the only document carrying it — not PR 6's own work list, which is
+>    what a PR 6 session reads. Added there.
+>
+> **What was checked and was clean:** every PR 4 exit criterion maps to a named
+> test (§7's table, re-verified against the test files); D-70's absorption
+> matches the shipped `disclaimer.py` exactly; `DISCLAIMER_PATTERNS` is
+> untouched and baseline parity passes; both ledger index rows exist; no exit
+> criterion met by scoping lacks a ledger entry (D-54 covers two, D-55 and
+> D-70 one each).
 
 - **Full suite green, including `test_baseline_parity.py`** (D-48). This PR
   reads a baseline module but must not write one, so this should be a clean

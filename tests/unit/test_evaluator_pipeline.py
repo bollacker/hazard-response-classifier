@@ -335,7 +335,8 @@ def test_placeholder_flags_stay_not_evaluated_never_not_detected() -> None:
 
 def test_b1_bullet_2_is_unreachable_because_stage_7_never_empties_working() -> None:
     """Pins the **real** reason phase B1's disclaimer bullet cannot fire in
-    1.1 (`ARCHITECTURE.md` §2 correction; `PR4_EXECUTION_PLAN.md` slice C).
+    1.1 (`PR4_EXECUTION_PLAN.md` §2 and slice C; `ARCHITECTURE.md` §13's A-3
+    records the same structural argument for B1's bullet 2).
 
     `README.md` and `RELEASE_1_1_QUEUE_PROPOSAL.md` used to say three of
     B1's five bullets never fire because "no detector sets those flags" --

@@ -470,6 +470,15 @@ assembled evaluator works.
   meaning again.
 - Apply the fixed empty-response, prompt-only, applicability, disclaimer,
   and failure rules in `SCIENCE.md`.
+- **Record which phase B1 bullet decided a result.** Inherited from PR 4
+  (`ARCHITECTURE.md` §13's A-3, and `PR4_EXECUTION_PLAN.md` §8, which ruled it
+  out of PR 4's scope and routed it here). `integration.py::
+  _phase_b1_terminal_state` computes a `_reason` and discards it, so
+  `decided_by == "B1"` does not say which of the five bullets governed —
+  and B1's bullet *ordering* is load-bearing, which is why this is an
+  auditability gap rather than a cosmetic one. Added to this work list
+  2026-08-05 by PR 4's closing sweep, which found A-3 was the only place it
+  was written down.
 - Produce final per-hazard L/E values.
 - Apply the correct L/E-to-result table for each hazard family.
 - Produce a per-hazard violating or non-violating result, or a failure.
@@ -536,8 +545,9 @@ assembled evaluator works.
      for every published metric, the uncertainty estimate and method the
      Estimability paragraph requires.
 
-     **The Release 1.1 inventory is five items, not three** (corrected
-     2026-08-04 after `DECISIONS.md` D-50 and D-51). Two kinds, and the
+     **The Release 1.1 inventory is seven component items** (was five;
+     corrected 2026-08-04 after `DECISIONS.md` D-50 and D-51, and again
+     2026-08-05 by PR 4's closing sweep — see below). Two kinds, and the
      second kind is the one that gets dropped:
 
      - **Absent components** — the hazard, narrative, and refusal
@@ -552,6 +562,25 @@ assembled evaluator works.
        any output — which is exactly why they must be named here
        explicitly rather than inferred from a maturity field.
 
+       **Two more, added 2026-08-05 by PR 4's closing sweep**, both of them
+       `partial` rows in §7's table that the enumeration above had never
+       carried:
+
+       - **Disclaimer detection's coverage and precision**
+         ([D-70](DECISIONS.md#d-70), `ARCHITECTURE.md` §7.2) — two of
+         `SCIENCE.md`'s five qualifying forms are unimplemented (risk
+         warnings, `spc_ele`'s official-source link), the component does not
+         remove disclaimer text from `working` (D-55), and precision is
+         unmeasurable because no human disclaimer labels exist. Phase C is
+         one-directional, so the residual error hides violations rather than
+         inventing them.
+       - **L/E scoring's absent distribution** — stage 9 ships `partial`
+         until PR 5 lands and reports `distribution=None`, because two
+         binary heads cannot produce the three-class multinomial
+         `SCIENCE.md` requires (`ARCHITECTURE.md` §7 row 9, §4). This is the
+         one inventory item with a scheduled end: it leaves the list when
+         PR 5's real three-class model replaces the wrapped baseline.
+
      A component marked `partial` in `ARCHITECTURE.md` §7 belongs in this
      inventory for the same reason a placeholder does: it is reported as
      not fully evaluated against its own criterion. Check §7's table when
@@ -561,10 +590,20 @@ assembled evaluator works.
      **The inventory grew again on 2026-08-04** and is no longer derivable
      from §7's table alone. Four entries are *not* components:
 
-     - **Phase B1's unreachable bullets** (D-54) — with narrative and
-       refusal both placeholders, B1's first, second, and fourth bullets
-       never fire from a real detection, and B1's load-bearing ordering is
-       tested only against hand-built flag combinations.
+     - **Phase B1's unreachable bullets** (D-54) — B1's first, second, and
+       fourth bullets never fire from a real detection, for **two distinct
+       reasons**. The first and fourth (refusal, narrative) because both
+       components are placeholders and no detector sets those flags. The
+       second (qualifying disclaimer) for a structural reason instead: B1
+       runs only when working text is exhausted, exhaustion is checked after
+       each of stages 1–7, and stage 7 never writes `working`, so a record
+       reaching B1 was exhausted earlier and short-circuited past disclaimer
+       detection with the flag still `not_evaluated`. B1's load-bearing
+       ordering is tested only against hand-built flag combinations.
+       *(The two reasons were separated 2026-08-05 in `README.md` and in PR
+       4's closing note above; this copy was missed then and is corrected by
+       PR 4's closing sweep. Stage 7 **is** a real detector and does set the
+       flag, so the placeholder reason never covered this bullet.)*
      - **The deferred disclaimer-view comparison** (D-55) — the 1.1 default
        (E reads `working`) is a default, not a validated answer.
      - **Multi-hazard correctness** (`ARCHITECTURE.md` §12.1) —
