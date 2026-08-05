@@ -39,8 +39,10 @@ all three before starting.**
 
 **Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
 production fitter, B the artifact, C the scoring component, D evaluation and
-reporting, E the sweep and close. **Slice 0 runs first and stops** — §3's gate
-questions are Kurt's, and G-1 changes what slice A fits on.
+reporting, E the sweep and close. **Slice 0 has already run** (2026-08-05, §4)
+— its numbers are on the record and §3's G-1 recommendation now rests on them.
+**A session still starts by getting G-1 answered**, because it decides what
+slice A fits on.
 
 ---
 
@@ -66,12 +68,13 @@ specification, not the entry.
 ## 1. Preconditions and standing constraints
 
 - **PR 4 is complete** (`c93baae`); PRs 1–4 are landed. Item 4 stays open.
-- **Sequencing.** [D-56](DECISIONS.md#d-56) orders PR 4 → PR 7 → PR 6 → PR 5,
-  so **PR 5 is scheduled last**. Its own entry conditions are all met and
-  `STATUS.md` records (2026-08-05) that the reason for its last position — a
-  data gate D-63 removed — no longer holds. **Whether PR 5 moves earlier is
-  Kurt's call, not this plan's**; nothing here assumes it does, and nothing in
-  PR 5 depends on PR 7 or PR 6 existing.
+- **Sequencing: PR 7 → PR 5 → PR 6** ([D-56](DECISIONS.md#d-56) places PR 7;
+  [D-71](DECISIONS.md#d-71), 2026-08-05, moves PR 5 ahead of PR 6). **PR 5 runs
+  second of the three remaining PRs.** It was last until D-71, on a reason —
+  the Standards-team data gate — that D-63 had already removed; what moved it
+  is that PR 6 must test *artifact round trips* while D-49 makes the artifact
+  format PR 5's deliverable. Nothing in PR 5 depends on PR 7 or PR 6 existing,
+  so a session may run it whenever PR 7 is done.
 - **Baseline is green: 433 tests**, `pytest` from the repo root, ~23 s.
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine.
@@ -171,13 +174,30 @@ model fitted on another. The three options:
    pre-registration deliberately fixed (§2.4 forbids adaptive expansion; §5
    reserves re-selection for a real evaluation set).
 
-**Recommendation: option 1, conditioned on slice 0's measurement.** Slice 0
-computes how much the two texts actually differ on the 859 interim rows. If the
-delta is small — few rows changed, small character deltas — option 1's assumed
-transfer is a bounded risk and the working-text requirement is satisfied
-outright. If it is large, that is itself the finding, and option 3 becomes
-arguable on evidence rather than on principle. **Bring the number to the
-decision; do not decide before slice 0 runs.**
+**Recommendation: option 1, and slice 0's measurement (§4) now supports it on
+both sides of the trade.**
+
+- **The cost of option 1 is near zero.** Refitting on working text loses no
+  rows (0 exhaust), deletes almost nothing (8 rows of 859 lose a span, median
+  reduction 0.0%), and disturbs no per-hazard balance (the change is even
+  across all 15 hazards). The transfer of D-68's selection to slightly
+  different features remains an assumption — that is real, and it is what the
+  `PREREGISTRATION_LE_STRUCTURE.md` §8 amendment records — but the features
+  differ by decoding, not by content removal, and no comparison on the ladder
+  turned on the input view.
+- **The cost of option 2 is not near zero.** A third of rows are decoded at
+  serve time, and the decoded forms are semantically different text —
+  leetspeak and obfuscation rendered into English. A model fitted on the raw
+  form has never seen the form it will be asked to score, on 285 of 859 rows.
+  Same length is not same embedding.
+- **Option 3 is not justified by this measurement.** Re-running the selection
+  buys certainty about a transfer whose risk the numbers show to be bounded,
+  and spends a budget `PREREGISTRATION_LE_STRUCTURE.md` §2.4 and §5 fixed
+  deliberately.
+
+**Still Kurt's call**, because the assumption in option 1 is a scientific one
+and `META_PLAN.md` §3 reserves those. What has changed is that it is now a
+decision with numbers under it.
 
 ### G-2 — Is the shipped artifact fitted on the fit split, or on all 859 rows?
 
@@ -207,6 +227,35 @@ metrics with uncertainty, reported as *not evaluated*), and its reversal scope.
 Recommended as a new entry at the close, drafted in slice E.
 
 ## 4. Slice 0 — Measure the train/serve text delta
+
+> **Complete** (2026-08-05), run early and out of order because G-1 blocks
+> slice A and the measurement is cheap. `scripts/probe_working_text_delta.py`
+> is committed and reproducible. **The result, on all 859 interim rows:**
+>
+> | | rows | |
+> |---|---:|---|
+> | working text identical to `response_text` | 568 | 66.1% |
+> | **differs** | **291** | **33.9%** |
+> | — decoding (stage 2) rewrote the text | 285 | |
+> | — repetition removal (stage 4) removed a span | **8** | 0.9% of all rows |
+> | — differs but **same length** (normalization only) | 266 | |
+> | **exhausts** (working empties, stages 1–7) | **0** | |
+>
+> Median and p90 character reduction on changed rows are **0.0%**; the maximum
+> is 23%. The change is spread evenly across all 15 hazards (15–25% of each),
+> which matters because the fit is per hazard.
+>
+> **How to read it.** The two risky failure modes are both absent: **nothing
+> is deleted** (8 rows lose a span; median reduction zero) and **nothing
+> exhausts**, so every row the selection was fitted on is a row the evaluator
+> would actually score — refitting on working text costs no data and no
+> per-hazard balance. What is *not* small is decoding: a third of rows are
+> rewritten, and the rewrites include leetspeak and obfuscated jailbreak text
+> rendered into plain English. A frozen BGE encoder represents those very
+> differently even at identical length, so "same length" must not be read as
+> "same features". **That asymmetry is the finding** — it is why the gap is
+> cheap to close and expensive to leave open, and it is what §3's G-1 should
+> be decided on.
 
 **Small, and it exists to answer G-1 with a number** (lesson: compute, then
 write). No production code.
@@ -479,7 +528,7 @@ it.
 
 | Question | Why it is not decidable here | Where it lands |
 |---|---|---|
-| **G-1** — fit on pipeline `working` text, on raw `response_text`, or re-run the selection? | `SCIENCE.md` requires working text; D-68's selection used raw text; re-running spends a budget the pre-registration fixed. A tradeoff between conformance, fidelity to the selection, and cost | `PREREGISTRATION_LE_STRUCTURE.md` §7/§8; a ledger entry; slice A |
+| **G-1** — fit on pipeline `working` text, on raw `response_text`, or re-run the selection? | `SCIENCE.md` requires working text; D-68's selection used raw text; re-running spends a budget the pre-registration fixed. **Measured** in slice 0: refitting costs no rows and almost no text, while not refitting leaves 285 of 859 rows scored in a decoded form the model never saw. §3 recommends option 1 on those numbers; the residual is a scientific assumption, which is Kurt's | `PREREGISTRATION_LE_STRUCTURE.md` §7/§8; a ledger entry; slice A |
 | **G-2** — is the shipped artifact fitted on the fit split or on all 859 rows? | Trades data for interpretability of the reported numbers. Recommendation: fit split, so the numbers describe the artifact | The artifact manifest; slice D's report framing |
 | **G-3** — how is the approved-criteria exit criterion discharged? | It cannot be met (D-63). Scoping a stated exit criterion requires a ledger entry with reversal scope, as D-54/D-55 did for PR 4 | A new `DECISIONS.md` entry, drafted in slice E |
 

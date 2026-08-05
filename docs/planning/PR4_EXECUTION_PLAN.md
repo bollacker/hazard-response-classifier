@@ -5,8 +5,11 @@
 > and `QUEUE_ITEM_2_EXECUTION_PLAN.md` carry. All four slices landed: A
 > `1c7fb15`, B `dc0ee22`, C `105add7`, D the closing sweep. 433 tests green,
 > `test_baseline_parity.py` unchanged (D-48 holds). **PR 7 is next**
-> ([D-56](DECISIONS.md#d-56): PR 4 → PR 7 → PR 6 → PR 5); queue item 4 stays
-> open, since three PRs remain. What slice D found is in §6.
+> (PR 4 → PR 7 → PR 5 → PR 6: [D-56](DECISIONS.md#d-56) places PR 7,
+> [D-71](DECISIONS.md#d-71) moved PR 5 ahead of PR 6 on 2026-08-05 — this
+> banner first cited the whole sequence to D-56, which decided only PR 7's
+> position); queue item 4 stays open, since three PRs remain. What slice D
+> found is in §6.
 
 Written 2026-08-05, after PR 3 closed and queue item 2 retired. This is the
 working plan for `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4, the fourth slice of
@@ -593,7 +596,8 @@ test, 413 + n tests green.
   with reversal scope; `PR4_EXECUTION_PLAN.md` marked as a record of what was
   built rather than live work, the way `PR1`/`PR2`/`PR3_EXECUTION_PLAN.md` and
   `QUEUE_ITEM_2_EXECUTION_PLAN.md` are. Note in the queue that **PR 7 is
-  next** (D-56's sequencing: PR 4 → PR 7 → PR 6 → PR 5).
+  next** (PR 4 → PR 7 → PR 5 → PR 6: D-56 places PR 7,
+  [D-71](DECISIONS.md#d-71) moved PR 5 ahead of PR 6 on 2026-08-05).
 - **Do not close item 4.** PR 4 is one slice of it; three PRs remain.
 
 ## 7. Exit criteria → how each is verified

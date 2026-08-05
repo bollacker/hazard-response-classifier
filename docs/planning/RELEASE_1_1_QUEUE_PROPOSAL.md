@@ -330,6 +330,13 @@ precondition is now also met.** Queue item 2's structure comparison completed
 on 2026-08-05 and selected a structure ([D-68](DECISIONS.md#d-68)); the item
 is retired. PR 5 waits on nothing external.
 
+**Sequenced after PR 7 and before PR 6** ([D-71](DECISIONS.md#d-71),
+2026-08-05). PR 6's exit criteria require testing artifact round trips, and
+[D-49](DECISIONS.md#d-49) makes the artifact *format* PR 5's deliverable — so
+PR 5 must land first for that criterion to be satisfiable. Execution plan:
+[`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md), whose three gate questions
+are open.
+
 What it still cannot do is claim either model scientifically successful:
 approved per-outcome criteria are a policy judgment no dataset substitutes
 for, so `SCIENCE.md` §Evidence and outputs' not-evaluated rule continues to
@@ -456,7 +463,13 @@ implementation the registry selects, including PR 1's wrapped baseline.
 
 ## PR 6 — Final integration and release validation
 
-**Sequenced after PR 7** (D-56). PR 6's exit criteria assume a runner exists.
+**Sequenced last: after PR 7** (D-56) **and after PR 5**
+([D-71](DECISIONS.md#d-71)). PR 6's exit criteria assume a runner exists, and
+they require testing **artifact round trips** — a format
+[D-49](DECISIONS.md#d-49) assigns to PR 5, so PR 6 cannot satisfy that
+criterion before PR 5 lands. PR 6's promotion call (D-58) and limitations
+document (D-47) also describe the release as shipped, which means after PR 5
+replaces the wrapped baseline scorer.
 
 ### Goal
 

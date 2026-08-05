@@ -304,6 +304,7 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-68](#d-68) | L/E structure is a per-hazard flat multinomial softmax (`L1`) — a **null** result | `../ARCHITECTURE.md` §12; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 | carried; closes queue item 2, D-37/D-49's format half |
 | [D-69](#d-69) | Model-input text view is selected at component construction; profile field is PR 7's | `../ARCHITECTURE.md` §5 | carried; backs D-55's "configuration change" rationale |
 | [D-70](#d-70) | Stage 7 ships three of four disclaimer patterns; `safety_warning` excluded | `../ARCHITECTURE.md` §7.2 | carried; identified scoring change, narrows D-19's successor rule's trigger |
+| [D-71](#d-71) | PR 5 is sequenced **before** PR 6: PR 7 → PR 5 → PR 6 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6; `STATUS.md` queue item 4 | carried; resolves a D-49 dependency inversion |
 
 ### Absorption gaps
 
@@ -4506,3 +4507,61 @@ reproducible source; quote it, not this table**, and read no interval bound
 here as stable past its first decimal. (`PR4_EXECUTION_PLAN.md` §4's slice-B
 note said the intervals differed "only in the last decimal", which understated
 it — corrected there too.)
+
+<a id="d-71"></a>
+## D-71: PR 5 is sequenced before PR 6 — PR 7 → PR 5 → PR 6
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.** Raised while planning PR 5, from
+checking PR 6's exit criteria against [D-49](#d-49).
+
+Decision: the remaining Release 1.1 sequence is **PR 7 → PR 5 → PR 6**. PR 5
+moves ahead of PR 6; PR 7 keeps its position at the front, which is
+[D-56](#d-56)'s call and unaffected.
+
+Rationale: two independent reasons, either sufficient.
+
+1. **PR 6 cannot satisfy an exit criterion that depends on PR 5.** D-49 defers
+   the 1.1 evaluator artifact out of PR 1 and splits it: the **format is
+   finalized in PR 5**, its **round-trip test is PR 6's**, where
+   `RELEASE_1_1_QUEUE_PROPOSAL.md`'s exit criteria already require tests
+   covering "artifact round trips". With PR 6 running first there is no format
+   to round-trip. D-49 anticipated exactly this and said so: "If PR 5 slips far
+   enough that an evaluator artifact is needed before it, this entry should be
+   revisited rather than cited."
+2. **PR 6's outputs would be stale on arrival.** PR 6 owns the
+   staging-promotion decision ([D-58](#d-58)) and triggers [D-47](#d-47)'s
+   limitations document. Run before PR 5, it would decide promotion for a
+   release whose L/E models are still PR 1's wrapped baseline, and publish an
+   inventory still carrying the "L/E scoring's absent distribution" entry that
+   PR 5 removes. Both are decisions about what the release *is*, so they should
+   be made about the release that ships.
+
+**A citation error this corrects.** `STATUS.md`, `PR4_EXECUTION_PLAN.md`, and
+several commit messages wrote the sequence as "PR 7 → PR 6 → PR 5 (D-56)". D-56
+decided only that **PR 7 comes before PR 6** and says nothing about PR 5. PR 5's
+last position came from `STATUS.md`'s 2026-08-04 escalation note, whose stated
+reason — that PR 5 was the only phase blocked on the Standards team's data —
+was removed by [D-63](#d-63) the same day and struck on 2026-08-05. So this
+entry reverses no prior decision; it corrects a queue order that had outlived
+its reason and was being attributed to an entry that never made it.
+
+Rejected alternatives: (1) leaving the order and having PR 6 defer its
+round-trip criterion — rejected because it would be the second deferral of the
+same criterion (D-49 was the first) and would leave the artifact untested by
+any PR; (2) moving PR 5 ahead of PR 7 as well — rejected because PR 7's own
+position rests on PR 6's criteria presupposing a runner (D-56), which PR 5 does
+not disturb, and because PR 7 is the only remaining PR that unblocks a
+*missing capability* rather than a *replacement*.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's and PR 6's sequencing notes
+(**absorbed**); `STATUS.md` queue item 4 and §Current Phase;
+`PR5_EXECUTION_PLAN.md` §1; [D-49](#d-49), whose PR 5/PR 6 split this makes
+executable in order.
+
+Boundary: this decides **order**, not scope. It changes nothing about what any
+PR builds, does not relax D-49's split (the format is still PR 5's and the
+round trip still PR 6's), and does not alter D-56's placement of PR 7. It also
+does not decide `PR5_EXECUTION_PLAN.md`'s three gate questions, which remain
+Kurt's and are unaffected by when PR 5 runs.

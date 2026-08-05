@@ -1,7 +1,12 @@
 # Status
 
 Last updated: 2026-08-05 — **PR 4 is complete and closed; PR 7 is the next
-slice of item 4** (D-56's sequencing: PR 4 → PR 7 → PR 6 → PR 5).
+slice of item 4, and the remaining order is PR 7 → PR 5 → PR 6**
+([D-56](DECISIONS.md#d-56) places PR 7; [D-71](DECISIONS.md#d-71) moved PR 5
+ahead of PR 6, since PR 6 must round-trip an artifact format D-49 makes PR 5's).
+**PR 5 now has an execution plan**
+([`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md)) whose slice 0 has already
+run; two of its three gate questions are open for Kurt.
 [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md) is now a record of what was
 built. PR 4 carried two real code changes rather than none —
 [D-69](DECISIONS.md#d-69)'s text-view seam and [D-70](DECISIONS.md#d-70)'s
@@ -52,8 +57,8 @@ full. What is left there is a non-blocking outbound request to the Standards
 team.
 
 **Next:** item 4 (build the 1.1 modular release) is the only live item.
-PRs 1, 2, 3 and 4 are complete; **PR 7 is next**, then PR 6 → PR 5
-([D-56](DECISIONS.md#d-56)). *(Corrected 2026-08-05: this paragraph said PR 5
+PRs 1, 2, 3 and 4 are complete; **PR 7 is next**, then PR 5 → PR 6
+([D-56](DECISIONS.md#d-56), [D-71](DECISIONS.md#d-71)). *(Corrected 2026-08-05: this paragraph said PR 5
 was "gated behind item 2, which still needs the Standards team's fixed dataset
 — Ask A". Both halves are stale — [D-63](DECISIONS.md#d-63) removed that gate
 on 2026-08-04, and item 2 closed on 2026-08-05 with
@@ -547,9 +552,10 @@ one item or advance past an Awaiting User item on its own. See
 [D-68](DECISIONS.md#d-68)) are both complete, so what remains is
 implementation.
 
-PRs 1, 2, 3 and 4 are landed. **PR 7 is next**, then PR 6 → PR 5
-([D-56](DECISIONS.md#d-56)). PR 5 now has a selected structure to build and
-waits on nothing external.
+PRs 1, 2, 3 and 4 are landed. **PR 7 is next**, then PR 5 → PR 6
+([D-56](DECISIONS.md#d-56), [D-71](DECISIONS.md#d-71)). PR 5 now has a
+selected structure to build, a written execution plan, and waits on nothing
+external.
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -605,36 +611,57 @@ Detailed phased proposal:
    `test_baseline_parity.py` unchanged.
 
    **PR 7 (evaluator runner) is next** — input schema, run profile, batch
-   runner, CLI, and `failures.csv` — then PR 6, then PR 5
-   ([D-56](DECISIONS.md#d-56)). PR 7 inherits D-69's run-profile half: whether
-   a profile carries the model-input text view is its call, not PR 4's
-   (`../ARCHITECTURE.md` §5). **Item 4 stays open**; three PRs remain.
+   runner, CLI, and `failures.csv` — **then PR 5, then PR 6**
+   ([D-56](DECISIONS.md#d-56), [D-71](DECISIONS.md#d-71)). PR 7 inherits
+   D-69's run-profile half: whether a profile carries the model-input text
+   view is its call, not PR 4's (`../ARCHITECTURE.md` §5). **Item 4 stays
+   open**; three PRs remain.
+
+   **PR 5 has a written plan:
+   [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md)** (2026-08-05). Six
+   slices — 0 measurement, A production fitter, B the 1.1 artifact, C the
+   scoring component, D evaluation and reporting, E the sweep and close.
+   Queue item 2 already did the selection half ([D-68](DECISIONS.md#d-68)),
+   so PR 5 is a build, not a study. **Slice 0 has already run** (see Recently
+   Completed): `scripts/probe_working_text_delta.py` measured the train/serve
+   text gap the plan's gate question G-1 turns on. **Two gate questions
+   remain open for Kurt** — G-1's answer given that measurement, and G-2
+   (whether the shipped artifact is fitted on the fit split or on all 859
+   rows). G-3, how PR 5's unmeetable approved-criteria exit criterion is
+   discharged, is drafted at PR 5's close.
 
    **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
    blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
    [D-62](DECISIONS.md#d-62), lock the calls; `RELEASE_1_1_QUEUE_PROPOSAL.md`,
    `../ARCHITECTURE.md`, and this file carry them. The sequence is now:
 
-   > PR 4 → **PR 7** (evaluator runner, D-56) → PR 6 → PR 5
+   > ~~PR 4 → **PR 7** (evaluator runner, D-56) → PR 6 → PR 5~~
+   > **PR 4 → PR 7** (evaluator runner, D-56) **→ PR 5 → PR 6**
+   > ([D-71](DECISIONS.md#d-71), 2026-08-05)
 
    PR 7 is numbered 7 and runs sixth because `META_PLAN.md` §5 forbids
    renumbering an identifier other documents already cite. ~~PR 5 moves last
    because it is the only phase that cannot start without the Standards
    team's data.~~
 
-   **PR 5's stated reason for being last went stale the same day it was
-   written; corrected 2026-08-05.** [D-63](DECISIONS.md#d-63) (2026-08-04)
-   established that the Standards team's data is not arriving, so PR 5 runs
-   against the Jailbreak v1.0 interim ground truth in `data/` and waits on
-   nothing external; [D-68](DECISIONS.md#d-68) (2026-08-05) then closed queue
-   item 2 and gave it a selected structure to build. **The order below is
-   unchanged** — PR 7 before PR 6 is D-56's locked call and stands on its own
-   reasoning (PR 6's exit criteria presuppose a runner), and nothing here
-   re-decides PR 5's position. What is corrected is only the *reason on
-   record* for it: PR 5 is last by an ordering set while it was blocked, not
-   because it is still blocked. **Whether PR 5 should now move earlier is an
-   open call for Kurt**, not one a session should make on its own —
-   `META_PLAN.md` §5 forbids silently reordering the queue.
+   **PR 5 moved ahead of PR 6 on 2026-08-05, locked as
+   [D-71](DECISIONS.md#d-71).** Two reasons, either sufficient. PR 6's exit
+   criteria require testing **artifact round trips**, and
+   [D-49](DECISIONS.md#d-49) makes the artifact *format* PR 5's while making
+   the *round trip* PR 6's — so PR 6 running first has nothing to round-trip.
+   And PR 6 owns the staging-promotion call ([D-58](DECISIONS.md#d-58)) and
+   triggers [D-47](DECISIONS.md#d-47)'s limitations document, both of which
+   would describe a release whose L/E models are still PR 1's wrapped baseline
+   if PR 5 had not run.
+
+   **Two corrections that came with it.** PR 5's old reason for being last —
+   the Standards-team data gate — was removed by [D-63](DECISIONS.md#d-63) on
+   2026-08-04, the same day it was written, and PR 5 has since gained a
+   selected structure ([D-68](DECISIONS.md#d-68), 2026-08-05); it waits on
+   nothing external. And the sequence was being cited to D-56 in this file and
+   others, when **D-56 decided only that PR 7 comes before PR 6** and said
+   nothing about PR 5 — so D-71 reverses no decision, it corrects an order that
+   had outlived its reason.
 
    What each PR now owes, in short: **PR 4** is mostly verification —
    narrative and refusal stay placeholders (D-54) and the disclaimer view stays
@@ -782,6 +809,16 @@ without committing to either original option. The interim-L/E arrangement
 option 2 described is already in place — PR 1 wraps the baseline as a
 `partial` implementation — so PR 6 can run on it whenever it is reached.
 
+> **Superseded 2026-08-05 as to the order** — the current sequence is
+> **PR 7 → PR 5 → PR 6** ([D-71](DECISIONS.md#d-71)). Left as written, per
+> `META_PLAN.md` §1's retire-in-place rule: this paragraph is the record of
+> what was decided on 2026-08-04 and why. Two of its claims did not survive.
+> Its sequence is attributed to D-56, which decided only that **PR 7 comes
+> before PR 6**; and "PR 6 can run on [the wrapped baseline] whenever it is
+> reached" is what D-71 rejects — PR 6 must round-trip an artifact format
+> [D-49](DECISIONS.md#d-49) assigns to PR 5, and its promotion call and
+> limitations document should describe the release as shipped.
+
 The superseded options, kept for the record:
 
 1. ~~Run PRs 1–4 and stop until the dataset lands.~~
@@ -813,6 +850,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **L/E structure selected** (2026-08-05): both targets use a per-hazard flat three-class multinomial softmax (`L1 · W1 · S1 · H3 · V1 · P1`). Locked as **[D-68](DECISIONS.md#d-68)** | In force | `../ARCHITECTURE.md` §12; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list; `PREREGISTRATION_LE_STRUCTURE.md` §6's payload row; queue item 2's closure. **This is a null result** — no structure beat the incumbent, and on L the winner scores *below* it (0.4336 vs 0.4840); it wins only because every higher-scoring candidate is a two-head structure that cannot emit the required three-class distribution. Dissent does not restore a better option: reverting reopens §12's slot and leaves PR 5 with nothing to build, since the incumbent is structurally barred by `SCIENCE.md`. The arguable calls are the seven §8 amendments the selection rests on, not the arithmetic |
 | **Text view is selected at component construction** (2026-08-05): stage 8 takes the view as an argument, default `working`, resolved view recorded in the result; no `RunConfig` field, no second registered implementation until the comparison runs; §5's "selected by configuration" claim corrected. Locked as **[D-69](DECISIONS.md#d-69)** | In force | `../ARCHITECTURE.md` §5; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 work list and exit criteria; `PR4_EXECUTION_PLAN.md` §3 and slice A; `evaluator/components/embedding.py`. **Reverting leaves D-55's stated rationale unbacked** — that decision was made on the premise that the deferred comparison is a configuration change, which was not true of the code. Dissent costs ~20 lines and pushes the seam to PR 7, not the comparison |
 | **Stage 7 ships three of four disclaimer patterns** (2026-08-05): `safety_warning` excluded as bare risk-word matching, not a disclaimer form. Locked as **[D-70](DECISIONS.md#d-70)** | In force | `../ARCHITECTURE.md` §7 row 7 and new §7.2; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4; `evaluator/components/disclaimer.py`; `README.md`'s inventory. **This is an identified scoring change and the row Riki is most likely to want to argue with.** Reverting re-flags 42 of 217 Specialized Advice rows and moves ~5% of the family back toward non-violating on evidence that showed no enrichment over the unflagged base rate and was false-positive on all eleven rows where it changed a result. The baseline is untouched either way; the counter-argument is that `SCIENCE.md` does list "warn about risks" as qualifying, so 1.1 now has two unimplemented forms rather than one |
+| **PR 5 sequenced before PR 6** (2026-08-05): the remaining order is PR 7 → PR 5 → PR 6. Locked as **[D-71](DECISIONS.md#d-71)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6 sequencing notes; this file's queue item 4 and §Current Phase; `PR5_EXECUTION_PLAN.md` §1. **Ordering only — no PR's scope changes**, so reverting costs the order and nothing built. What reverting re-creates is the inversion D-71 fixed: PR 6's "artifact round trips" exit criterion depends on the artifact format [D-49](DECISIONS.md#d-49) assigns to PR 5, and PR 6's promotion call (D-58) and limitations document (D-47) would describe a release whose L/E models PR 5 has not yet replaced. Note that D-56 never decided PR 5's position — the old "PR 7 → PR 6 → PR 5 (D-56)" formula over-attributed |
 | **`META_PLAN.md` §6 amended** (2026-08-05): a verification sweep is a critique pass, not bookkeeping — routed to Opus at high effort, with a preference for a fresh context that did not write the specification being checked. Justified by PR 2's and PR 3's sweeps each finding a D-47 absorption gap on a check expected to be clean, and by queue item 2's five selection-rule defects | In force | `META_PLAN.md` §6. Process bookkeeping, not science — the same lowest-stakes footing as the §5 amendment. Reverting sends PR closes back to the cheapest model, which is what the three cited findings argue against |
 | **Coverage under D-45 unavailability** (2026-08-04): a candidate that cannot score a row is measured without it, coverage reported, paired comparisons on the shared rows. Locked as **[D-67](DECISIONS.md#d-67)** | In force | `PREREGISTRATION_LE_STRUCTURE.md` §3 and §8; `experiments/comparison_metrics.py`. **A recorded departure from `SCIENCE.md` §Evidence and outputs' same-rows requirement** — reverting means either counting an unanswered row as wrong (which re-invents what D-45 removed) or letting the weakest candidate shrink the row set every other candidate is judged on. Binds mainly on `R` and `H3`; `R` cannot be selected anyway |
 | **Decision-debt sweep** (2026-08-04): nine calls clearing PR 4–PR 6. **[D-54](DECISIONS.md#d-54)** narrative + refusal stay placeholders, PR 4's criteria scoped; **[D-55](DECISIONS.md#d-55)** E reads `working`; **[D-56](DECISIONS.md#d-56)** PR 7 added; **[D-57](DECISIONS.md#d-57)** hazard scope from the artifact; **[D-58](DECISIONS.md#d-58)** pre-staging prototype; **[D-59](DECISIONS.md#d-59)** pre-registered structure selection; **[D-60](DECISIONS.md#d-60)** no prompt input; **[D-61](DECISIONS.md#d-61)** single-threaded contract; **[D-62](DECISIONS.md#d-62)** no continuous score. Grouped: made in one sweep, on one footing | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4/5/6/7; `ARCHITECTURE.md` §2, §5, §6, §7 rows 5–6, §11, §12; this file's queue items 2 and 4. **D-54 and D-55 are shortfalls against a `SCIENCE.md` success criterion**; **D-58 and D-62 are scope removals**; the rest are contracts a rebuild would have to restate rather than reverse |
@@ -903,6 +941,45 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 5 planned, resequenced ahead of PR 6, and its first gate
+  question measured.** Three things, in one session, none of them PR 5
+  execution:
+
+  - **[`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md) written.** Six slices.
+    Item 2 already did the selection half (D-68), so PR 5 is a build: move the
+    selected structure out of `experiments/` into production, define and write
+    the 1.1 artifact ([D-49](DECISIONS.md#d-49)), replace stage 9, and report
+    per-outcome numbers that stay *not evaluated*. The plan raises three gate
+    questions rather than choosing: **G-1** which text the models are fitted
+    on, **G-2** fit-split-only versus all 859 rows, **G-3** how the unmeetable
+    approved-criteria exit criterion is discharged (it needs a ledger entry,
+    as D-54/D-55 did for PR 4).
+  - **Resequenced to PR 7 → PR 5 → PR 6**, locked as
+    [D-71](DECISIONS.md#d-71). Found by checking PR 6's exit criteria against
+    D-49: PR 6 must test "artifact round trips" while D-49 makes the format
+    PR 5's, so the old order asked PR 6 to round-trip something that did not
+    exist. Second reason: PR 6's promotion call (D-58) and limitations
+    document (D-47) would otherwise describe a release whose L/E models PR 5
+    has not yet replaced. **D-56 never decided PR 5's position** — the
+    "PR 7 → PR 6 → PR 5 (D-56)" formula in this file and others
+    over-attributed, and PR 5's last position actually came from the
+    2026-08-04 escalation note whose data-gate reason D-63 removed the same
+    day.
+  - **Slice 0 ran early, to answer G-1 with a measurement**
+    (`scripts/probe_working_text_delta.py`, committed and reproducible). The
+    selection was fitted on raw `response_text`; the evaluator scores
+    `texts.working`. On all 859 interim rows: **291 rows (33.9%) differ**, but
+    the composition is what matters — **285 are decoding rewrites**, only
+    **8 rows lose a span to prompt-repetition removal**, 266 of the 291 are
+    *the same length* (normalization only), and **zero rows exhaust**, so no
+    fitted row is one the evaluator would never score. Median and p90
+    character reduction are 0.0%; the maximum is 23%. The change is spread
+    evenly across all 15 hazards, which matters because the fit is per hazard.
+    **Deletion is negligible; decoding is not** — the decoded rows include
+    leetspeak and obfuscated jailbreak text rendered into plain English, which
+    a frozen BGE encoder represents very differently even at identical length.
+    G-1's answer is Kurt's; the numbers are on the record either way.
 
 - 2026-08-05 — **PR 4 slice D landed: the verification sweep, and PR 4 is
   closed.** No code changed and the suite stayed at **433 tests, zero
