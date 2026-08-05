@@ -305,6 +305,8 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-69](#d-69) | Model-input text view is selected at component construction; profile field is PR 7's | `../ARCHITECTURE.md` §5 | carried; backs D-55's "configuration change" rationale |
 | [D-70](#d-70) | Stage 7 ships three of four disclaimer patterns; `safety_warning` excluded | `../ARCHITECTURE.md` §7.2 | carried; identified scoring change, narrows D-19's successor rule's trigger |
 | [D-71](#d-71) | PR 5 is sequenced **before** PR 6: PR 7 → PR 5 → PR 6 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6; `STATUS.md` queue item 4 | carried; resolves a D-49 dependency inversion |
+| [D-72](#d-72) | 1.1's L/E models are fitted on pipeline **working text**; D-68's selection (raw text) is not re-run | `PREREGISTRATION_LE_STRUCTURE.md` §1, §7, §8 | carried; closes a `SCIENCE.md` training shortfall, adds a recorded assumption |
+| [D-73](#d-73) | The shipped artifact is fitted on the **fit split only**; the dev slice stays held out | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5 | carried; makes PR 5's reported numbers describe the shipped model |
 
 ### Absorption gaps
 
@@ -4565,3 +4567,108 @@ PR builds, does not relax D-49's split (the format is still PR 5's and the
 round trip still PR 6's), and does not alter D-56's placement of PR 7. It also
 does not decide `PR5_EXECUTION_PLAN.md`'s three gate questions, which remain
 Kurt's and are unaffected by when PR 5 runs.
+
+<a id="d-72"></a>
+## D-72: Release 1.1's L/E models are fitted on pipeline working text, not the raw response text the selection used
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.** Raised as gate G-1 in
+`PR5_EXECUTION_PLAN.md` §3, from reading `experiments/features.py` against
+`../SCIENCE.md`'s training requirement.
+
+Decision: PR 5 fits both production models on the **`working` view stages 1–7
+produce** — decoded, with repeated prompt spans removed — matching what the
+evaluator scores at serve time. The structure selection behind
+[D-68](#d-68) was run on the interim frame's raw `response_text`, and **is not
+re-run**: its ranking is carried across the change of input view as a recorded
+assumption.
+
+Rationale: `../SCIENCE.md` §Legitimization Training and §Enablement Training
+both require training "on human ground truth using working text filtered
+through the preceding components", and `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's
+work list restates it. `SCIENCE.md` governs on a behavioral conflict
+(`META_PLAN.md` §1.1), so option (2) below would have shipped a standing
+shortfall against a training requirement *and* a live train/serve skew.
+
+**The measurement that made this cheap**, `scripts/probe_working_text_delta.py`
+over all 859 interim rows: 291 rows (33.9%) differ between the two views, but
+**285 of those are decoding rewrites and only 8 rows lose a span** to
+prompt-repetition removal; 266 of the 291 are the same length; median and p90
+character reduction are 0.0% (max 23%); **no row exhausts**, so every row the
+selection was fitted on is a row the evaluator would actually score; and the
+change is spread evenly across all fifteen hazards, which matters because the
+fit is per hazard. Refitting therefore loses no rows, no text of consequence,
+and no per-hazard balance.
+
+**The asymmetry is the argument.** Deletion is negligible, but decoding is not
+semantically small: the rewritten rows include leetspeak and obfuscated
+jailbreak text rendered into plain English, which a frozen BGE encoder
+represents very differently at identical length. Not refitting would leave 285
+of 859 rows scored in a form the model had never seen.
+
+**The residual, stated plainly:** that D-68's *ranking* survives the change of
+input view is an assumption, not a measurement. The probe bounds it; it does
+not test it. `PREREGISTRATION_LE_STRUCTURE.md` §7 now carries this, and a
+re-issued pre-registration should compare candidates on the view the release
+scores.
+
+Rejected alternatives: (1) fitting on raw `response_text` to reproduce the
+selected configuration exactly — rejected on the skew above, and because it
+would add a second standing shortfall against a `SCIENCE.md` training
+requirement alongside [D-65](#d-65); (2) re-running the selection on
+working-text features — rejected because it spends a comparison budget
+`PREREGISTRATION_LE_STRUCTURE.md` §2.4 fixed and §5 reserves for a real
+evaluation set, to buy certainty about a risk the probe shows is bounded.
+
+Touches: `PREREGISTRATION_LE_STRUCTURE.md` §1, §7, §8 (**absorbed** — the
+selection's text view is now stated, the limitation is listed, and the
+departure is logged as a dated amendment); `PR5_EXECUTION_PLAN.md` §3 and
+slice A; `scripts/probe_working_text_delta.py`, which is the evidence;
+[D-47](#d-47)'s inventory, which gains nothing here — this closes a shortfall
+rather than creating one.
+
+Boundary: this decides **which text the models are fitted on**. It does not
+change which text they *read* at serve time — that is [D-55](#d-55)'s
+`working` default and [D-69](#d-69)'s selection seam, both unchanged and both
+already `working`. It does not reopen D-68's structure, and it does not license
+re-running the comparison.
+
+<a id="d-73"></a>
+## D-73: Release 1.1's shipped artifact is fitted on the fit split only
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05. **Riki's concurrence assumed on Kurt's
+direction, not confirmed on record.** Raised as gate G-2 in
+`PR5_EXECUTION_PLAN.md` §3, decided together with [D-72](#d-72).
+
+Decision: the artifact PR 5 ships is fitted on the **fit half of
+`data/interim_split_v1.json` alone** — 635 rows for E, 563 for L after phase
+A's enablement-only exclusions — never refitted on all 859 rows for release.
+The dev slice stays held out.
+
+Rationale: it is the only arrangement under which the per-outcome numbers PR 5
+reports and the model PR 5 ships are **the same object**. A release refitted on
+fit + dev would be described by no measurement at all, and the report would
+silently be about a sibling model. With ~42 rows per hazard cell the extra 35%
+of rows is not nothing — but both models are reported *not evaluated*
+regardless (`../SCIENCE.md` §Evidence and outputs, no approved criteria), so
+what the numbers are *for* is interpretation, and interpretability of a number
+that describes the shipped artifact is worth more than a marginally better
+undescribed one.
+
+Rejected alternative: refitting on all 859 rows for the release, with the dev
+numbers reported as indicative of the smaller fit. Rejected because "indicative
+of" is exactly the kind of unstated inferential step `PREREGISTRATION_LE_STRUCTURE.md`
+§5 and [D-66](#d-66) exist to prevent, and because it consumes the only held-out
+slice this release has.
+
+Touches: `PREREGISTRATION_LE_STRUCTURE.md` §1 and §5 (**absorbed**);
+`PR5_EXECUTION_PLAN.md` §3, slice B's manifest provenance, and slice D's report
+framing.
+
+Boundary: this governs **the released 1.1 artifact**. It does not bind a future
+release fitted on real Standards data, where the split, its size, and the
+touch budget are all re-decided (`PREREGISTRATION_LE_STRUCTURE.md` §5), and it
+makes no claim that the dev slice is an evaluation set — under D-66 it remains
+dev-class, and held out is not approved.

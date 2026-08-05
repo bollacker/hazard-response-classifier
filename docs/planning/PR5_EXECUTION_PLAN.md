@@ -40,9 +40,10 @@ all three before starting.**
 **Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
 production fitter, B the artifact, C the scoring component, D evaluation and
 reporting, E the sweep and close. **Slice 0 has already run** (2026-08-05, §4)
-— its numbers are on the record and §3's G-1 recommendation now rests on them.
-**A session still starts by getting G-1 answered**, because it decides what
-slice A fits on.
+and **§3's gate questions G-1 and G-2 are answered and absorbed**
+([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73)): fit on pipeline working
+text, fit split only. **A session starts at slice A.** G-3 stays open and
+blocks only the close.
 
 ---
 
@@ -139,13 +140,26 @@ It is the record of how D-68 was reached and its tests pin that record; the
 production module is a separate implementation that must be shown to agree with
 it (slice A's equivalence test).
 
-## 3. Entry gate — three questions for Kurt
+## 3. Entry gate — answered
 
-Per `META_PLAN.md` §3, these are stopped on rather than chosen. **G-1 blocks
-slice A. G-2 blocks slice B. G-3 blocks only the close**, so slices A–D can
-proceed while it is open.
+> **G-1 and G-2 were decided by Kurt on 2026-08-05 and absorbed into
+> `PREREGISTRATION_LE_STRUCTURE.md` before any code**, as the entry gate
+> requires. **G-1: fit on pipeline working text** ([D-72](DECISIONS.md#d-72)).
+> **G-2: fit split only** ([D-73](DECISIONS.md#d-73)). **G-3 remains open** and
+> blocks only the close. Nothing below is live work except G-3 — read G-1 and
+> G-2 as the record of what was decided and why, not as questions to re-derive.
+> **A session starts at slice A.**
 
-### G-1 — Which text are the 1.1 models fitted on? *(blocking)*
+Per `META_PLAN.md` §3, these were stopped on rather than chosen.
+
+### G-1 — Which text are the 1.1 models fitted on? — **answered: working text**
+
+> **Decided 2026-08-05 (Kurt), locked as [D-72](DECISIONS.md#d-72) and absorbed
+> into `PREREGISTRATION_LE_STRUCTURE.md` §1, §7 and §8 before any code.** Fit on
+> the `working` view stages 1–7 produce; **the selection is not re-run**, and
+> that its ranking survives the change of input view is a recorded assumption,
+> now listed in §7 as something the procedure did not establish. The rest of
+> this section is the evidence behind that call.
 
 `SCIENCE.md` §Legitimization Training and §Enablement Training both say the
 model "is trained on human ground truth using **working text filtered through
@@ -199,7 +213,12 @@ both sides of the trade.**
 and `META_PLAN.md` §3 reserves those. What has changed is that it is now a
 decision with numbers under it.
 
-### G-2 — Is the shipped artifact fitted on the fit split, or on all 859 rows?
+### G-2 — Fit split, or all 859 rows? — **answered: fit split only**
+
+> **Decided 2026-08-05 (Kurt), locked as [D-73](DECISIONS.md#d-73) and absorbed
+> into `PREREGISTRATION_LE_STRUCTURE.md` §1 and §5.** The artifact ships fitted
+> on the fit half alone — 635 rows for E, 563 for L — and the dev slice stays
+> held out, so slice D's numbers describe the model that ships.
 
 `PREREGISTRATION_LE_STRUCTURE.md` §1 divides the data 635/224 (E) and 563/200
 (L, after excluding `prv`/`sxc_prn` under phase A). Two defensible answers:
@@ -288,6 +307,20 @@ Build to D-68 and `PREREGISTRATION_LE_STRUCTURE.md` §6. New module —
 suggested `src/hazard_classifier/evaluator/training/multinomial.py` or a
 top-level `le_model.py`; do not extend `model.py` (§1).
 
+- **Fit on the working-text view, on the fit split only** — G-1's and G-2's
+  answers, now `PREREGISTRATION_LE_STRUCTURE.md` §1. Two practical
+  consequences:
+  - **A fresh embedding pass is required.** `experiments/features.py`'s cache
+    is keyed on the exact content embedded (`_content_sha256`), so passing
+    working text is a cache miss and re-embeds automatically rather than
+    silently reusing the raw-text vectors — the cache is safe here, but the
+    pass costs one BGE run over the rows and needs the model already cached
+    locally (`allow_download=False`, D-6). Do it once, outside any fit loop.
+  - **The split labels are `"train"`/`"eval"`, not `"fit"`/`"dev"`.**
+    `interim_data.load_interim(split="train")` is the fit half the
+    pre-registration calls *fit*; `"eval"` is what it calls the *dev* slice.
+    The vocabularies differ and the code's wins — mixing them silently fits
+    on the held-out rows, which is the one mistake D-73 exists to prevent.
 - **Fit per `(target, hazard)` cell**, both targets, exactly the estimator
   D-68 selected. **Reproduce `MultinomialSoftmax` parameter for parameter** —
   `LogisticRegression(C=1.0, class_weight="balanced", solver="lbfgs",
@@ -524,14 +557,18 @@ it.
 
 ## Open Questions
 
-**Three, all in §3, all for Kurt, and G-1 blocks the first line of code.**
+**One open, and it blocks only the close.** Two of the three were answered on
+2026-08-05 and absorbed the same day, before any code — the order the entry
+gate requires. Recorded here because a fresh session's first instinct on
+finding a settled question in a plan is to re-derive it.
 
-| Question | Why it is not decidable here | Where it lands |
+| Question | Answer | Where it now lives |
 |---|---|---|
-| **G-1** — fit on pipeline `working` text, on raw `response_text`, or re-run the selection? | `SCIENCE.md` requires working text; D-68's selection used raw text; re-running spends a budget the pre-registration fixed. **Measured** in slice 0: refitting costs no rows and almost no text, while not refitting leaves 285 of 859 rows scored in a decoded form the model never saw. §3 recommends option 1 on those numbers; the residual is a scientific assumption, which is Kurt's | `PREREGISTRATION_LE_STRUCTURE.md` §7/§8; a ledger entry; slice A |
-| **G-2** — is the shipped artifact fitted on the fit split or on all 859 rows? | Trades data for interpretability of the reported numbers. Recommendation: fit split, so the numbers describe the artifact | The artifact manifest; slice D's report framing |
-| **G-3** — how is the approved-criteria exit criterion discharged? | It cannot be met (D-63). Scoping a stated exit criterion requires a ledger entry with reversal scope, as D-54/D-55 did for PR 4 | A new `DECISIONS.md` entry, drafted in slice E |
+| **G-1** — fit on pipeline `working` text, on raw `response_text`, or re-run the selection? | **Working text.** The selection is *not* re-run; that its ranking survives the change of view is a recorded assumption. Slice 0 bounded the risk: 8 of 859 rows lose any text, none exhaust, the difference is overwhelmingly decoding rather than deletion — while *not* refitting would leave 285 rows scored in a decoded form the model never saw | [D-72](DECISIONS.md#d-72); `PREREGISTRATION_LE_STRUCTURE.md` §1, §7, §8; slice A |
+| **G-2** — fit split, or all 859 rows? | **Fit split only** — 635 rows for E, 563 for L. The dev slice stays held out, so slice D's numbers describe the artifact that ships rather than a differently-fitted sibling | [D-73](DECISIONS.md#d-73); `PREREGISTRATION_LE_STRUCTURE.md` §1, §5; slice B's manifest, slice D's framing |
+| **G-3** — how is the approved-criteria exit criterion discharged? | **Open.** It cannot be met (D-63). Scoping a stated exit criterion requires a ledger entry with reversal scope, as D-54/D-55 did for PR 4 | A new `DECISIONS.md` entry, drafted in slice E |
 
 Nothing else in PR 5 is open. The structure, the payload format, the data, the
-split, and the not-evaluated reporting rule are all settled by D-68, D-63
-through D-66, and `SCIENCE.md` — and none of them should be re-derived.
+split, the input view, and the not-evaluated reporting rule are all settled by
+D-68, D-63 through D-66, D-72, D-73, and `SCIENCE.md` — and none of them should
+be re-derived.

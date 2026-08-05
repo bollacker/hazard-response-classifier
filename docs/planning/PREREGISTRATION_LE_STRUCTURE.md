@@ -45,6 +45,9 @@ worth having. It does not claim the rule is uninformed by the data's shape.
 | Split | `data/interim_split_v1.json`, built by `scripts/build_interim_split.py` |
 | Split version | `interim-v1`, seed `20260804`, 25% of prompt groups held out |
 | Fit / dev | 635 / 224 rows; 180 prompt groups, 48 held out |
+| **Text embedded — selection** | the frame's raw **`response_text`** (`experiments/features.py`), with no decoding pass and no prompt-repetition removal. *Recorded 2026-08-05 (§8); this document had never stated it* |
+| **Text fitted — Release 1.1 artifact** | the **`working` view** stages 1–7 produce, per `SCIENCE.md` §Legitimization/Enablement Training ([D-72](DECISIONS.md#d-72)). **Not the same text the selection ran on** — see §7 |
+| **Split half fitted — Release 1.1 artifact** | the **fit half only** ([D-73](DECISIONS.md#d-73)), so the dev slice stays unconsumed and PR 5's reported numbers describe the shipped artifact |
 
 **Grouping is on normalized prompt text, not `seed_prompt_id`**
 ([D-64](DECISIONS.md#d-64)). The source has 30 seed prompts, each mapping to
@@ -240,6 +243,12 @@ Binding whenever a fixed Standards-team evaluation set arrives.
 - The real evaluation set is touched **once** for the finally selected
   structure. A second touch invalidates it as a held-out set and requires a
   new split.
+- **The interim dev slice is not consumed by fitting either** (added
+  2026-08-05, [D-73](DECISIONS.md#d-73)). Release 1.1's artifact is fitted on
+  the fit half alone, so the 224/200 dev rows remain a held-out slice for the
+  shipped model and every per-outcome number PR 5 reports describes **that**
+  model rather than a differently-fitted one. Still dev-class under
+  [D-66](DECISIONS.md#d-66): held out is not the same as approved.
 
 ---
 
@@ -288,6 +297,15 @@ For the release's limitations disclosure (D-47 inventory, `README.md`).
 - **Per-hazard claims are weak.** 224 dev rows across 15 hazards is roughly 15
   rows per hazard; per-hazard intervals will be wide and should be reported
   with them, never as point estimates.
+- **The selection was measured on different text than Release 1.1 fits on**
+  (added 2026-08-05; §1, §8). Candidates were compared on raw `response_text`;
+  the shipped models are fitted on the `working` view stages 1–7 produce, as
+  `SCIENCE.md` requires ([D-72](DECISIONS.md#d-72)). **That D-68's ranking
+  survives the change of input view is an assumption this procedure did not
+  test.** `scripts/probe_working_text_delta.py` bounds it — 8 of 859 rows lose
+  any text, none exhaust, and the difference is overwhelmingly decoding rather
+  than deletion — but bounding is not testing. A re-issued pre-registration
+  (§5) should run its comparison on the view the release actually scores.
 
 ---
 
@@ -468,3 +486,53 @@ visible, so both are recorded rather than decided:
    on both targets. To be settled (count the basis, or define criterion 2
    as decision-function-only explicitly) before any selection in which
    `L2` is eligible.
+
+**2026-08-05 — the selection was run on raw `response_text`; Release 1.1's
+models are fitted on pipeline working text (§1, §7).** Raised while planning
+PR 5, from reading `experiments/features.py` against `SCIENCE.md`
+§Legitimization Training and §Enablement Training, which both require training
+"on human ground truth using **working text filtered through the preceding
+components**". This document's §1 names the source CSV, the split, and the row
+eligibility rules, but **never states which text view is embedded** — and the
+harness embeds the frame's `response_text` directly, with no decoding pass and
+no prompt-repetition removal. §2.1's hard constraints cover the estimator and
+the prompt, not the input view, and §7 did not list it.
+
+**What changed:** §1 gains the statement that the *selection* was measured on
+raw `response_text`; §7 gains the corresponding limitation. **The comparison
+itself is not re-run** — §5's touch budget and [D-66](DECISIONS.md#d-66)
+reserve re-selection for a real evaluation set under a re-issued
+pre-registration, and §2.4 forbids adaptive expansion.
+
+**What Release 1.1 does instead:** PR 5 fits its production models on the
+working text stages 1–7 produce, per `SCIENCE.md`, and carries the residual as
+an assumption — that D-68's *ranking* survives the change of input view, which
+this procedure did not test. Kurt's call, locked as
+[D-72](DECISIONS.md#d-72).
+
+**Why the residual is judged bounded, and by what:**
+`scripts/probe_working_text_delta.py` measures the two texts on all 859 rows.
+291 differ (33.9%), but **285 of those are decoding rewrites and only 8 rows
+lose a span** to repetition removal; 266 of the 291 are the same length; median
+and p90 character reduction are 0.0%; and **no row exhausts**, so refitting
+loses no rows and no per-hazard balance. The change is spread evenly across all
+fifteen hazards. What is *not* small is the semantic effect of decoding —
+leetspeak and obfuscated text rendered into English embeds very differently at
+identical length — which is the argument for fitting on working text rather
+than against it.
+
+**2026-08-05 — the shipped artifact is fitted on the fit split only (§1, §5).**
+Decided with the above and locked as [D-73](DECISIONS.md#d-73). §1 divides the
+data 635/224 (E) and 563/200 (L, after phase A's exclusions) but does not say
+which half the *released* model is fitted on, because this document governed a
+comparison rather than a release.
+
+**What changed:** §1 gains the rule that Release 1.1's artifact is fitted on
+the fit half alone, and §5 gains its consequence — the dev slice stays
+unconsumed by fitting, so every per-outcome number PR 5 reports describes **the
+artifact that ships** rather than a differently-fitted sibling. The alternative
+(refit on all 859 rows for the release) was rejected because it buys ~35% more
+rows for a model whose per-hazard cells are ~42 rows each, at the cost that no
+reported number describes the shipped object — and with both models reported
+*not evaluated* regardless, interpretability of the numbers is worth more here
+than the extra rows.

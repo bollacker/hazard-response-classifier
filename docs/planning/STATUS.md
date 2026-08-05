@@ -622,13 +622,15 @@ Detailed phased proposal:
    slices — 0 measurement, A production fitter, B the 1.1 artifact, C the
    scoring component, D evaluation and reporting, E the sweep and close.
    Queue item 2 already did the selection half ([D-68](DECISIONS.md#d-68)),
-   so PR 5 is a build, not a study. **Slice 0 has already run** (see Recently
-   Completed): `scripts/probe_working_text_delta.py` measured the train/serve
-   text gap the plan's gate question G-1 turns on. **Two gate questions
-   remain open for Kurt** — G-1's answer given that measurement, and G-2
-   (whether the shipped artifact is fitted on the fit split or on all 859
-   rows). G-3, how PR 5's unmeetable approved-criteria exit criterion is
-   discharged, is drafted at PR 5's close.
+   so PR 5 is a build, not a study. **Slice 0 has run and the entry gate is
+   clear** (see Recently Completed): the train/serve text gap is measured
+   (`scripts/probe_working_text_delta.py`), and **G-1 and G-2 are decided and
+   absorbed** — fit on pipeline **working text**
+   ([D-72](DECISIONS.md#d-72)), **fit split only**
+   ([D-73](DECISIONS.md#d-73)). **A PR 5 session starts at slice A.** One gate
+   remains, G-3 — how PR 5's unmeetable approved-criteria exit criterion is
+   discharged — and it blocks only the close, where its ledger entry is
+   drafted.
 
    **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
    blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
@@ -850,6 +852,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **L/E structure selected** (2026-08-05): both targets use a per-hazard flat three-class multinomial softmax (`L1 · W1 · S1 · H3 · V1 · P1`). Locked as **[D-68](DECISIONS.md#d-68)** | In force | `../ARCHITECTURE.md` §12; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 work list; `PREREGISTRATION_LE_STRUCTURE.md` §6's payload row; queue item 2's closure. **This is a null result** — no structure beat the incumbent, and on L the winner scores *below* it (0.4336 vs 0.4840); it wins only because every higher-scoring candidate is a two-head structure that cannot emit the required three-class distribution. Dissent does not restore a better option: reverting reopens §12's slot and leaves PR 5 with nothing to build, since the incumbent is structurally barred by `SCIENCE.md`. The arguable calls are the seven §8 amendments the selection rests on, not the arithmetic |
 | **Text view is selected at component construction** (2026-08-05): stage 8 takes the view as an argument, default `working`, resolved view recorded in the result; no `RunConfig` field, no second registered implementation until the comparison runs; §5's "selected by configuration" claim corrected. Locked as **[D-69](DECISIONS.md#d-69)** | In force | `../ARCHITECTURE.md` §5; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4 work list and exit criteria; `PR4_EXECUTION_PLAN.md` §3 and slice A; `evaluator/components/embedding.py`. **Reverting leaves D-55's stated rationale unbacked** — that decision was made on the premise that the deferred comparison is a configuration change, which was not true of the code. Dissent costs ~20 lines and pushes the seam to PR 7, not the comparison |
 | **Stage 7 ships three of four disclaimer patterns** (2026-08-05): `safety_warning` excluded as bare risk-word matching, not a disclaimer form. Locked as **[D-70](DECISIONS.md#d-70)** | In force | `../ARCHITECTURE.md` §7 row 7 and new §7.2; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 4; `evaluator/components/disclaimer.py`; `README.md`'s inventory. **This is an identified scoring change and the row Riki is most likely to want to argue with.** Reverting re-flags 42 of 217 Specialized Advice rows and moves ~5% of the family back toward non-violating on evidence that showed no enrichment over the unflagged base rate and was false-positive on all eleven rows where it changed a result. The baseline is untouched either way; the counter-argument is that `SCIENCE.md` does list "warn about risks" as qualifying, so 1.1 now has two unimplemented forms rather than one |
+| **PR 5's two fitting calls** (2026-08-05): **[D-72](DECISIONS.md#d-72)** the models are fitted on pipeline **working text**, not the raw `response_text` D-68's selection used, and the selection is **not** re-run; **[D-73](DECISIONS.md#d-73)** the shipped artifact is fitted on the **fit split only**. Grouped: decided together, on one footing, each with its own reversal scope | In force | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5, §7, §8; `PR5_EXECUTION_PLAN.md` §3, slices A/B/D. **D-72 closes a `SCIENCE.md` training shortfall and opens a stated assumption in its place** — that D-68's ranking survives the change of input view, which the procedure did not test; reverting means either re-running the selection (spending a budget §2.4 fixed) or accepting that 285 of 859 rows are scored in a form the model never saw. `scripts/probe_working_text_delta.py` is the evidence and reproduces it. **D-73 costs ~35% of the rows** for a per-hazard fit already at ~42 rows/cell; reverting it buys them back and makes every reported number describe a model that is not the one shipped |
 | **PR 5 sequenced before PR 6** (2026-08-05): the remaining order is PR 7 → PR 5 → PR 6. Locked as **[D-71](DECISIONS.md#d-71)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6 sequencing notes; this file's queue item 4 and §Current Phase; `PR5_EXECUTION_PLAN.md` §1. **Ordering only — no PR's scope changes**, so reverting costs the order and nothing built. What reverting re-creates is the inversion D-71 fixed: PR 6's "artifact round trips" exit criterion depends on the artifact format [D-49](DECISIONS.md#d-49) assigns to PR 5, and PR 6's promotion call (D-58) and limitations document (D-47) would describe a release whose L/E models PR 5 has not yet replaced. Note that D-56 never decided PR 5's position — the old "PR 7 → PR 6 → PR 5 (D-56)" formula over-attributed |
 | **`META_PLAN.md` §6 amended** (2026-08-05): a verification sweep is a critique pass, not bookkeeping — routed to Opus at high effort, with a preference for a fresh context that did not write the specification being checked. Justified by PR 2's and PR 3's sweeps each finding a D-47 absorption gap on a check expected to be clean, and by queue item 2's five selection-rule defects | In force | `META_PLAN.md` §6. Process bookkeeping, not science — the same lowest-stakes footing as the §5 amendment. Reverting sends PR closes back to the cheapest model, which is what the three cited findings argue against |
 | **Coverage under D-45 unavailability** (2026-08-04): a candidate that cannot score a row is measured without it, coverage reported, paired comparisons on the shared rows. Locked as **[D-67](DECISIONS.md#d-67)** | In force | `PREREGISTRATION_LE_STRUCTURE.md` §3 and §8; `experiments/comparison_metrics.py`. **A recorded departure from `SCIENCE.md` §Evidence and outputs' same-rows requirement** — reverting means either counting an unanswered row as wrong (which re-invents what D-45 removed) or letting the weakest candidate shrink the row set every other candidate is judged on. Binds mainly on `R` and `H3`; `R` cannot be selected anyway |
@@ -979,7 +982,20 @@ further concurrence — Riki directed it.
     **Deletion is negligible; decoding is not** — the decoded rows include
     leetspeak and obfuscated jailbreak text rendered into plain English, which
     a frozen BGE encoder represents very differently even at identical length.
-    G-1's answer is Kurt's; the numbers are on the record either way.
+  - **G-1 and G-2 decided the same day, and absorbed before any code.**
+    **[D-72](DECISIONS.md#d-72): fit on pipeline working text**, on the
+    strength of that asymmetry — refitting costs nothing measurable, while not
+    refitting leaves 285 rows scored in a form the model never saw. The
+    selection is **not** re-run, so D-68's ranking is carried across the change
+    of input view as a **stated assumption**, now listed in
+    `PREREGISTRATION_LE_STRUCTURE.md` §7 as something the procedure did not
+    establish. **[D-73](DECISIONS.md#d-73): the shipped artifact is fitted on
+    the fit split only**, so the dev slice stays held out and PR 5's reported
+    numbers describe the model that ships rather than a differently-fitted
+    sibling. Both absorbed into `PREREGISTRATION_LE_STRUCTURE.md` §1, §5, §7
+    and two dated §8 amendments — the spec-first order the entry gate
+    requires. **PR 5's entry gate is now clear; only G-3 remains, at the
+    close.**
 
 - 2026-08-05 — **PR 4 slice D landed: the verification sweep, and PR 4 is
   closed.** No code changed and the suite stayed at **433 tests, zero
