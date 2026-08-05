@@ -564,13 +564,12 @@ Detailed phased proposal:
    including two new real-BGE integration tests and `test_baseline_parity.py`
    unchanged (D-48 still holds).
 
-   **PR 3 (hazard detection and multi-hazard routing) is in progress.** Its
-   plan is [`PR3_EXECUTION_PLAN.md`](PR3_EXECUTION_PLAN.md) — written
-   2026-08-04 to be runnable from a clean session. **Slice A is complete**
-   (2026-08-04, see Recently Completed): `open_run` and the new
-   `validate_supplied_hazard` cover `ARCHITECTURE.md` §2's conditions (1)
-   and (2). **Slice B (verify the already-built routing mechanics end to
-   end, plus close) is next and last for PR 3.**
+   **PR 3 is complete** (2026-08-04): slices A and B, both landed in this
+   session (see Recently Completed). Its plan,
+   [`PR3_EXECUTION_PLAN.md`](PR3_EXECUTION_PLAN.md), is now a record of what
+   was built rather than live work, the same way `PR1_EXECUTION_PLAN.md` and
+   `PR2_EXECUTION_PLAN.md` are. **PR 4 (narrative, refusal, and disclaimer
+   detection) is next**, with no execution plan written for it yet.
 
  Deliver working decoding,
    Legitimization, Enablement, and final integration; partial
@@ -750,6 +749,52 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-04 — **PR 3 slice B landed: verification sweep, PR 3 closed.**
+  No new component behavior — `PR3_EXECUTION_PLAN.md` §2 had already found
+  almost all of PR 3's own "Work" list built as a side effect of PR 1's
+  architecture; this slice proved those claims survive contact with a real
+  stage-3 component and the real pipeline, not only hand-built fixtures.
+
+  New `tests/unit/test_evaluator_pr3_hazard_routing.py` (5 tests): a
+  registry-swapped `DetectsPrvStub` for stage 3 (hazard detection) —
+  mirroring `test_evaluator_scoring_pipeline.py`'s replaceability tests —
+  that actually populates `detected_hazards`/`evaluated_hazards` together,
+  closing the one structural gap §2 named (every prior test set both
+  fields by hand). Through it: two separate `HazardJudgment`s with their
+  own provisional/final records, `hazard_source` correctly `"supplied"` vs
+  `"detected"` read from the assembled record, and one shared embedding
+  call for two evaluated hazards. A rollup test through the full pipeline
+  (not `integrate()` in isolation) using a `ConstantProvider` pinned at a
+  value found by direct exploration against the fixture classifier (2.2,
+  landing `hte` at L2/E0 — violating — and `prv` at E0 — non_violating)
+  confirms `overall_result == "violating"` survives real embeddings and
+  scoring. An end-to-end confirmation that `prv`'s `final_l` is `"N/A"`
+  through the real pipeline, not a hand-built provisional. A concrete
+  contrast test (`cse` vs `sxc_prn`, same provisional L2/E0 judgment,
+  different family table) makes `ARCHITECTURE.md` §12.1's disclosed
+  multi-hazard exposure a passing, visible test rather than only prose —
+  not fixing it, per the joint decision that withdrew cross-hazard
+  completeness.
+
+  `tests/integration/test_evaluator_real_bge.py` extended with a real,
+  non-mocked two-hazard case (`hte`, `prv`, the golden artifact's own
+  trained hazards — no new fixture training needed): one shared embedding
+  call, `prv` forced to `N/A`, both hazards reaching a real result.
+
+  **298 tests total, zero regressions**, including `test_baseline_parity.py`
+  (D-48 unchanged — this PR never touched a baseline module).
+
+  **D-47 limitations inventory confirmed clean, not fixed.** Checked
+  `ARCHITECTURE.md` §7 row 3 and `README.md`'s Release 1.1 evaluator status
+  section directly rather than assuming (PR 2 slice B found a real gap on
+  a check that looked clean, twice) — hazard detection is still correctly
+  named `placeholder`, unchanged by this PR, and `README.md` points at §7
+  as the single source rather than re-enumerating, so no drift to fix.
+
+  **Slice A's mechanism locked as `DECISIONS.md` D-53**, per the plan's own
+  instruction (§4): implemented exactly as `PR3_EXECUTION_PLAN.md` §3.1
+  proposed, no conflict found, no better shape surfaced.
 
 - 2026-08-04 — **PR 3 slice A landed: run-entry hazard/scope validation.**
   `evaluator/run.py`'s `open_run` widened to a required `supported_hazards`

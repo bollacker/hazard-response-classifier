@@ -24,7 +24,7 @@ Release 1.1 requires a new joint decision, not a citation of the old entry.
 Entries are retired by superseding them in place, never by deletion. The index
 below is the map; every D-number that has ever existed appears in it.
 
-Numbering: new decisions start at **D-53**. D-38 through D-44 were drafted
+Numbering: new decisions start at **D-54**. D-38 through D-44 were drafted
 during the 2026-08-02/03 science-contract work and withdrawn before approval;
 those numbers are not reused.
 
@@ -272,6 +272,7 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-50](#d-50) | 1.1 ships exact-only prompt-repetition detection | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2; `../ARCHITECTURE.md` §7.1 | carried |
 | [D-51](#d-51) | Decoding-failure trigger stubbed; decoder is `partial` | `evaluator/components/decoding.py`; `../ARCHITECTURE.md` §7 | carried |
 | [D-52](#d-52) | Ambiguous-reference recording removed from 1.1 | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 2 work list | carried |
+| [D-53](#d-53) | Run-entry hazard/scope validation mechanism | `src/hazard_classifier/evaluator/run.py` (`open_run`, `validate_supplied_hazard`) | carried |
 
 ### Absorption gaps
 
@@ -3478,3 +3479,59 @@ Boundary: this removes a *recording* requirement. It does not restrict how a
 component may use the prompt — `../SCIENCE.md` §Technical restrictions still
 permits disambiguation — and does not prevent a future release from adding
 the capability with a real specification behind it.
+
+<a id="d-53"></a>
+## D-53: Run-entry hazard/scope validation mechanism
+Date: 2026-08-04
+Status: locked
+Approved by: implemented as `PR3_EXECUTION_PLAN.md` §3.1 proposed, with no
+conflict found against `../ARCHITECTURE.md` §2's literal text and no change
+needed to the proposed shape (`STATUS.md` PR 3 slice A, 2026-08-04) — recorded
+per the plan's own instruction (§4) to record the mechanism if it holds up
+through implementation.
+
+Decision: `../ARCHITECTURE.md` §2 names three rejection conditions but not the
+exact function shapes or how they interact. This is the mechanism slice A
+built:
+
+- `open_run(config, registry, supported_hazards)` checks conditions (2) and
+  (3) once, run-wide, before returning a `RunContext`: every hazard in
+  `config.hazard_scope` must be a member of `supported_hazards` (the
+  artifact's frozen hazard set — D-23; callers pass `classifier.trained_
+  hazards`, not a new artifact loader — D-49 unaffected), and every selected
+  `(stage, implementation)` pair must be registered.
+- A separate function, `validate_supplied_hazard(supplied_hazard,
+  run_context)`, checks condition (1) once per response, before
+  `pipeline.run_pipeline` runs for it — not from inside `pipeline.py`, which
+  stays free of scientific/configuration decision logic. It normalizes the
+  supplied value via `schema.normalize_hazard` (D-27: strip and
+  hyphen-to-underscore, no case folding — carried for 1.1) and then requires
+  membership in `run_context.hazard_scope`.
+- Because `open_run` already validates `hazard_scope` against the artifact,
+  condition (1)'s three-way "missing, unrecognized, or outside scope"
+  phrasing collapses to two checks in `validate_supplied_hazard`: blank, or
+  not a member of `hazard_scope`. Every hazard actually in scope is, by
+  construction, both a real code and one the artifact supports.
+- `hazard_scope` is validated against the artifact once in `open_run`, never
+  per response — re-checking it per response would be wasted, repeated work
+  and would blur which check produced a given `RunRejectedError`.
+
+Rationale: this is an implementation choice within what `../ARCHITECTURE.md`
+§2 already requires, not a re-derivation of already-locked ground —
+recorded because implementing it exactly as proposed found no better shape
+and no conflict, which is the plan's own bar for whether it earns an entry.
+Rejected alternative: re-validating `hazard_scope` against the artifact on
+every response instead of once at `open_run` — rejected as the wasted-work,
+ambiguous-error-source trap `PR3_EXECUTION_PLAN.md` §3.1 named explicitly.
+
+Touches: `src/hazard_classifier/evaluator/run.py` (`open_run`,
+`validate_supplied_hazard`); `tests/unit/test_evaluator_run.py` (both new
+checks, isolated); every existing `open_run` caller, updated to pass
+`supported_hazards` (`tests/unit/test_evaluator_scoring_pipeline.py`,
+`test_evaluator_pipeline.py`, `test_evaluator_pr2_text_flow.py`,
+`tests/integration/test_evaluator_real_bge.py`).
+
+Boundary: this entry is provenance for *how* conditions (1) and (2) are
+checked. `../ARCHITECTURE.md` §2 states *what* must be rejected and still
+governs on any conflict (`META_PLAN.md` §1.1) — this entry does not restate
+or reinterpret it.
