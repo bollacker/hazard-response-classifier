@@ -776,6 +776,9 @@ Wiring that carries model judgments into the fixed step:
 - Phase B1 reads `Flags` and `exhausted_at`, matching its bullets in order.
   The order is load-bearing: refusal and disclaimer outrank prompt-repetition
   and narrative, so an unordered implementation gives L1 where L0 is correct.
+  Both inputs are record-level, so **B1 is evaluated once per record, before
+  the per-hazard loop** — §4 carries why that is a correctness property and
+  not an optimization.
 - Phase D's "missing judgment" test is `provisional_e is None` (always a
   failure) or `provisional_l is None` where L is neither N/A by phase A nor
   fixed at L0 by phase C.
@@ -1007,11 +1010,15 @@ tables.
 Release 1.1 — B1 runs only when working text is exhausted, exhaustion is checked
 after each of stages 1–7, and stage 7 never writes `working`, so any record
 reaching B1 short-circuited past stage 7 with `sa_disclaimer` still
-`not_evaluated`. And the record does not currently say *which* B1 bullet fired:
-`_phase_b1_terminal_state` computes a reason and discards it, leaving
-`decided_by == "B1"`. Recording it is an auditability improvement owed to
-`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6, whose exit criteria cover every fixed
-finalization rule.
+`not_evaluated`. ~~And the record does not currently say *which* B1 bullet
+fired: `_phase_b1_terminal_state` computes a reason and discards it, leaving
+`decided_by == "B1"`.~~ **Closed 2026-08-05 by PR 6 slice A**
+([D-79](planning/DECISIONS.md#d-79)): §4's `b1_bullet` records it, and
+`results.jsonl` carries it at view version 3. The second fact stands and the
+field is what makes it checkable rather than inferred — this bullet, along with
+`refusal` and `narrative`, cannot be produced by a Release 1.1 run at all, so
+only `prompt_repetition` and `blank_payload` are reachable outside a test's
+hand-built flags.
 
 This does not make §3.1's three-valued flags redundant. They are no longer an
 input to B1's decision, but they remain how the record distinguishes
