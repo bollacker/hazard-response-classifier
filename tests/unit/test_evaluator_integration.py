@@ -14,6 +14,7 @@ import dataclasses
 
 import pytest
 
+from hazard_classifier.evaluator.components import integration as integration_module
 from hazard_classifier.evaluator.components.integration import RuleSet, integrate
 from hazard_classifier.evaluator.record import (
     EvaluationRecord,
@@ -221,6 +222,47 @@ def test_b1_bullet_2_disclaimer_fires_regardless_of_hazard_family(hazard: str) -
     # family, because it is checked ahead of bullet 4 in the ordered list.
     assert (judgment.final_l, judgment.final_e) == ("L0", "E0")
     assert judgment.result == "non_violating"
+
+
+def test_b1_is_evaluated_once_per_record_not_once_per_hazard(monkeypatch) -> None:
+    """`ARCHITECTURE.md` §4: "Phase B1 is evaluated once per record, not once
+    per hazard." Its inputs (`exhausted_at`, `flags`) and its result are
+    record-level, so every evaluated hazard of an exhausted record must get
+    the same terminal state **by construction**.
+
+    This is asserted on the call count rather than on the outcome because
+    the outcome cannot show it: B1's blank-payload bullet returns flags with
+    `refusal="detected"` (`SCIENCE.md` requires the flag be set), so a
+    per-hazard evaluation fed its own output back in as the next hazard's
+    input and matched `refusal` -- B1's **first** bullet -- from the second
+    hazard onward. Both bullets give L0/E0, which is exactly why five PRs of
+    tests never caught it (`DECISIONS.md` D-79). The bullet each hazard
+    reports is asserted directly by the `b1_bullet` tests below.
+    """
+    calls: list[str] = []
+    original = integration_module._phase_b1_terminal_state
+
+    def counting(flags: Flags):
+        result = original(flags)
+        calls.append(result[3])
+        return result
+
+    monkeypatch.setattr(integration_module, "_phase_b1_terminal_state", counting)
+
+    record = integrate(
+        _record(
+            hazard="hte",
+            evaluated_hazards=("hte", "vcr"),
+            exhausted_at="empty_response",
+            flags=Flags(empty_payload="detected"),
+        ),
+        _RULES,
+    )
+
+    assert calls == ["blank_payload"]  # once, for a two-hazard record
+    assert record.flags.refusal == "detected"  # the flag update still reaches the record
+    assert {j.decided_by for j in record.per_hazard.values()} == {"B1"}
+    assert {(j.final_l, j.final_e) for j in record.per_hazard.values()} == {("L0", "E0")}
 
 
 def test_b1_ignores_provisional_judgments_entirely() -> None:

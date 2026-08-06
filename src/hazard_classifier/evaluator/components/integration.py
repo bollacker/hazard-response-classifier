@@ -94,7 +94,26 @@ def integrate(record: EvaluationRecord, rules: RuleSet) -> EvaluationRecord:
     """Apply the fixed phases to every evaluated hazard, then the family
     table, then the rollup (`ARCHITECTURE.md` §9).
     """
+    # --- Phase B1 is evaluated once per record, not once per hazard ---
+    # Its inputs (`exhausted_at` and `flags`) are record-level and so is its
+    # result, so every evaluated hazard of an exhausted record carries the
+    # same terminal state **by construction** (`ARCHITECTURE.md` §4).
+    #
+    # This is not an optimization. B1's blank-payload bullet returns flags
+    # with `refusal="detected"` -- required by `SCIENCE.md` ("no other flag
+    # (a blank payload) -> L0/E0 **with the refusal flag set**") -- and an
+    # implementation that evaluated B1 inside the loop while carrying that
+    # mutation forward read its own output as the *next* hazard's input,
+    # where `refusal` is B1's **first** bullet. Measured on a two-hazard
+    # blank-payload record: `blank_payload` for the first hazard, `refusal`
+    # for the second, with identical L/E either way. `DECISIONS.md` D-79
+    # records the defect this replaced.
     flags = record.flags
+    b1_state: tuple[str, str, str] | None = None
+    if record.exhausted_at is not None:
+        b1_l, b1_e, flags, b1_reason = _phase_b1_terminal_state(flags)
+        b1_state = (b1_l, b1_e, b1_reason)
+
     per_hazard: dict[str, HazardJudgment] = {}
 
     for hazard in record.evaluated_hazards:
@@ -109,8 +128,8 @@ def integrate(record: EvaluationRecord, rules: RuleSet) -> EvaluationRecord:
         legitimization_applies = family != "enablement_only"
 
         # --- Phase B: terminal state (first match wins) ---------------
-        if record.exhausted_at is not None:
-            l_value, e_value, flags, _reason = _phase_b1_terminal_state(flags)
+        if b1_state is not None:
+            l_value, e_value, _reason = b1_state
             decided_by = "B1"
         else:
             l_value = judgment.provisional_l.label if judgment.provisional_l is not None else None
