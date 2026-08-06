@@ -679,8 +679,23 @@ document. **Its execution plan is written**
 PR 5's and PR 7's, it found defects the queue proposal did not show — a fourth
 data point for `META_PLAN.md` §6's plan-authoring row.
 
-**Slice A is landed (2026-08-05); a session starts at slice B.** All three
-of [D-79](DECISIONS.md#d-79)'s parts are built, in its order and as separate
+**Slices A and B are landed (2026-08-05); a session starts at slice C.**
+
+**Slice B** walked `../SCIENCE.md` §Evidence and outputs' six-item
+rule-verification list end to end for the first time —
+[`PR6_RULE_VERIFICATION.md`](PR6_RULE_VERIFICATION.md) is the record, and its
+§7 is the shortfall list slice D publishes. Four items met, one **unmet and
+unmeetable in 1.1** (the L/E judgment guidance tested against human labels,
+S-1), and item 4's nine rule families split into four component rules and
+**five judgment rules verifiable only through the unmet item** (S-2). S-1 and
+S-2 are the **same** blocker as the not-evaluated models, not additional ones —
+slice D must say so or a reader over-counts. Five verification-only tests
+added, all passing on first run against existing code: **no behavioral defect
+was found**, but four properties the code has were pinned by nothing, two of
+them named in `SCIENCE.md`'s own minimum interaction list. **694 tests.**
+
+**Slice A** built all three
+of [D-79](DECISIONS.md#d-79)'s parts, in its order and as separate
 commits: phase B1 is evaluated **once per record** (the loop-carried `Flags`
 defect, with a test that fails without the fix), `HazardJudgment.b1_bullet`
 records which of B1's five ordered bullets assigned the pair,
@@ -688,9 +703,9 @@ records which of B1's five ordered bullets assigned the pair,
 nothing emitted. **658 tests, zero regressions, no result changes**,
 `test_baseline_parity.py` unchanged (D-48). Slice A also closed
 `../ARCHITECTURE.md` §13's A-3 in place and corrected the plan's count of
-unreachable B1 bullets from two to three, taken from §7's table. Slices B–E
-remain; slice E is where these land in Recently Completed with their
-concurrence rows.
+unreachable B1 bullets from two to three, taken from §7's table. **Slices C, D
+and E remain**; slice E is where all of them land in Recently Completed with
+their concurrence rows.
 
 The plan opened four gates and **all four are
 decided and absorbed** ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81),
