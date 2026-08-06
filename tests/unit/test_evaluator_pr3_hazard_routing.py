@@ -153,7 +153,7 @@ class DetectsPrvStub:
             outcome="ran",
             facts={"detected_hazards": detected},
             text_out=None,
-            error=None,
+            errors=(),
         )
         return dataclasses.replace(
             record,

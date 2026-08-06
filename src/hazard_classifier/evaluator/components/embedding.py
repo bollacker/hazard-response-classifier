@@ -200,7 +200,7 @@ class EmbeddingComponent:
                 TEXT_VIEW_FACT: self.text_view,
             },
             text_out=None,
-            error=None,
+            errors=(),
         )
 
         return dataclasses.replace(record, observations=record.observations + (observation,))

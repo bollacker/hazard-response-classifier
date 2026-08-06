@@ -137,7 +137,7 @@ class PromptRepetitionDetector:
             outcome="ran",
             facts={"removed_span": detected},
             text_out=new_working if changed else None,
-            error=None,
+            errors=(),
         )
 
         return dataclasses.replace(

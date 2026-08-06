@@ -822,8 +822,8 @@ across schemes:
 
 ## Awaiting User
 
-Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot);
-one item added 2026-08-05 by PR 5 slice C.
+Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot); one
+item added and decided 2026-08-05 ([D-76](DECISIONS.md#d-76)).
 **Nothing here blocks anything.** D-63 removed the last external gate, and
 queue item 2 has since closed ([D-68](DECISIONS.md#d-68), 2026-08-05); PR 5
 waits on nothing external and has a selected structure to build. One
@@ -865,39 +865,14 @@ scope; two of them are shortfalls against a `SCIENCE.md` success criterion and
 land in the limitations document rather than being met. The `META_PLAN.md` §5
 amendment is process bookkeeping. See the assumed-concurrence table.
 
-### Should a component observation carry every error, or only the first?
+### ~~Should a component observation carry every error, or only the first?~~ — decided
 
-Added 2026-08-05 by PR 5 slice C. **This blocks nothing** — not slice D, not
-slice E, not PR 6. It is here because closing it changes a specification, and
-`META_PLAN.md` §3 puts that in front of Kurt rather than inside a slice.
-
-`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's work list inherits an item from PR 7's
-closing sweep: *"Record every per-hazard `ComponentError` the scoring stage
-produces, not just the first."* Slice C replaced the component and **did not
-close it**, because the constraint is not the component's:
-`../ARCHITECTURE.md` §4 defines `ComponentObservation.error` as a **single**
-`ComponentError | None`. Stage 9 accumulates one error per failing
-`(target, hazard)` and can only put one on its observation.
-
-**What it costs today.** In a multi-hazard record where two hazards fail, only
-the first failing hazard's error survives on the observation, so
-`views.failure_rows` attributes the second row's `stage` to
-`final_integration` — the honest fallback for "no component reported a
-problem" — rather than to `scoring`. It understates *detail* and never the
-*fact* of a failure: `HazardJudgment.failure_reason` is the authoritative text
-and phase D writes it for every failing hazard, and the failure row is emitted
-from `judgment.result == "failure"`, not from the observation. Hazard
-detection is a placeholder in 1.1, so multi-hazard records only arise from a
-caller supplying them.
-
-**The question.** Change `ComponentObservation.error` to
-`errors: tuple[ComponentError, ...]` — a §4 amendment touching all ten
-components and their tests, roughly twenty construction sites — or leave the
-gap recorded and let PR 6 or a later release carry it? Recommended: **make the
-change**, because §4's shape is what forces every component to discard
-information it already has, and `failures.csv` is the view an operator uses to
-find out *what* went wrong. But it is a specification change on a release
-already in flight, and the cost/benefit is Kurt's call.
+**Raised and answered 2026-08-05.** Kurt accepted the amendment; it is locked
+as [D-76](DECISIONS.md#d-76) and built. `ComponentObservation.errors` is a
+tuple, `../ARCHITECTURE.md` §4 carries it, and
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's inherited work item is closed. See
+Recently Completed. Left here as the record of what was asked, per
+`META_PLAN.md` §1's retire-in-place rule.
 
 ### Item 4 entry gate — cleared; one sequencing call remains
 
@@ -969,6 +944,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **A rejection names every offending row; `--check-input` added** (2026-08-05): §2's condition (1) is unchanged — still run-level, still aborts before any row is scored, still writes nothing — but the message now names **every** offending row and its resolved scope, and `hrc-run --check-input` reports the same list without scoring. Locked as **[D-75](DECISIONS.md#d-75)** | In force | `../ARCHITECTURE.md` §2's enforcement paragraph; `../howto/hrc-run.md`; `evaluator/runner.py`, `evaluator/entrypoint.py`, `cli/run.py`; `PR7_EXECUTION_PLAN.md`'s Open Questions. **Ergonomics only, and the cheapest row here to reverse** — no rejection condition changes, so dissent costs one CLI flag, one entry point, and a fuller error message; `hrc-run` with no flag behaves as it did. The row worth Riki's eye is the *rejected* alternative recorded inside it: routing a bad supplied hazard to `failures.csv` and continuing, which is what most benchmark harnesses do and what §2 forbids. Choosing that instead means amending §2, which would make the supplied hazard a per-row data condition rather than part of the run's input contract, and would let a run silently score a subset of what it was handed |
 | **PR 5's two fitting calls** (2026-08-05): **[D-72](DECISIONS.md#d-72)** the models are fitted on pipeline **working text**, not the raw `response_text` D-68's selection used, and the selection is **not** re-run; **[D-73](DECISIONS.md#d-73)** the shipped artifact is fitted on the **fit split only**. Grouped: decided together, on one footing, each with its own reversal scope | In force | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5, §7, §8; `PR5_EXECUTION_PLAN.md` §3, slices A/B/D. **D-72 closes a `SCIENCE.md` training shortfall and opens a stated assumption in its place** — that D-68's ranking survives the change of input view, which the procedure did not test; reverting means either re-running the selection (spending a budget §2.4 fixed) or accepting that 285 of 859 rows are scored in a form the model never saw. `scripts/probe_working_text_delta.py` is the evidence and reproduces it. **D-73 costs ~35% of the rows** for a per-hazard fit already at ~42 rows/cell; reverting it buys them back and makes every reported number describe a model that is not the one shipped |
 | **PR 5 sequenced before PR 6** (2026-08-05): the remaining order is PR 7 → PR 5 → PR 6. Locked as **[D-71](DECISIONS.md#d-71)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6 sequencing notes; this file's queue item 4 and §Current Phase; `PR5_EXECUTION_PLAN.md` §1. **Ordering only — no PR's scope changes**, so reverting costs the order and nothing built. What reverting re-creates is the inversion D-71 fixed: PR 6's "artifact round trips" exit criterion depends on the artifact format [D-49](DECISIONS.md#d-49) assigns to PR 5, and PR 6's promotion call (D-58) and limitations document (D-47) would describe a release whose L/E models PR 5 has not yet replaced. Note that D-56 never decided PR 5's position — the old "PR 7 → PR 6 → PR 5 (D-56)" formula over-attributed |
+| **A component observation records every error** (2026-08-05): `ComponentObservation.error` becomes `errors: tuple[ComponentError, ...]`. Locked as **[D-76](DECISIONS.md#d-76)** | In force | `../ARCHITECTURE.md` §4 (**absorbed**); `evaluator/record.py`, every component, `pipeline.py`, `runner.py`, `views.py`; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's work list, which it closes. **Auditability only — no result changes.** The per-hazard verdict comes from phase D via `HazardJudgment.failure_reason`, and a `failures.csv` row is emitted from `judgment.result == "failure"`, never from an observation; what changed is that the row can now name the stage that caused it instead of falling back to `final_integration`. Reverting means restoring the single field, re-losing every failing hazard's error but the first in a multi-hazard record, and re-opening a gap two consecutive sweeps recorded. It also bumps `RESULT_VIEW_VERSION` 1 → 2, so a consumer of `results.jsonl` sees `errors` (a list) where it saw `error` (an object or null) — the one externally visible cost |
 | **`META_PLAN.md` §6 amended again** (2026-08-05): a **plan authoring** row added — Opus at high effort, on the evidence that PR 4's, PR 5's and PR 7's plans each found defects by reading modules against the specifications describing them (six findings, four of them now locked decisions). Without the row the nearest match was fix-proposal → Sonnet 5 | In force | `META_PLAN.md` §6. Process bookkeeping, not science — same footing as the §5, §1.2 and sweep amendments. Recorded here rather than as a ledger entry per §1.1's rule against restating a specification's content. Reverting routes plan authoring to the cheapest matching row, which is what the six findings argue against |
 | **`META_PLAN.md` §6 amended** (2026-08-05): a verification sweep is a critique pass, not bookkeeping — routed to Opus at high effort, with a preference for a fresh context that did not write the specification being checked. Justified by PR 2's and PR 3's sweeps each finding a D-47 absorption gap on a check expected to be clean, and by queue item 2's five selection-rule defects | In force | `META_PLAN.md` §6. Process bookkeeping, not science — the same lowest-stakes footing as the §5 amendment. Reverting sends PR closes back to the cheapest model, which is what the three cited findings argue against |
 | **Coverage under D-45 unavailability** (2026-08-04): a candidate that cannot score a row is measured without it, coverage reported, paired comparisons on the shared rows. Locked as **[D-67](DECISIONS.md#d-67)** | In force | `PREREGISTRATION_LE_STRUCTURE.md` §3 and §8; `experiments/comparison_metrics.py`. **A recorded departure from `SCIENCE.md` §Evidence and outputs' same-rows requirement** — reverting means either counting an unanswered row as wrong (which re-invents what D-45 removed) or letting the weakest candidate shrink the row set every other candidate is judged on. Binds mainly on `R` and `H3`; `R` cannot be selected anyway |
@@ -1060,6 +1036,37 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **[D-76](DECISIONS.md#d-76): a component observation records
+  every error it produced.** Kurt accepted the §4 amendment slice C raised
+  under Awaiting User. `ComponentObservation.error` becomes
+  `errors: tuple[ComponentError, ...]`; `../ARCHITECTURE.md` §4 carries it,
+  and `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's inherited work item — *"record
+  every per-hazard `ComponentError`, not just the first"* — is closed.
+  **628 tests, zero regressions**, `test_baseline_parity.py` unchanged.
+
+  **The defect, stated as what an operator saw.** Stage 9 fails once per
+  failing `(target, hazard)`, so a two-hazard record can produce four errors
+  and could record one. `views.failure_rows` then found nothing for the
+  second failing hazard and fell back to `stage="final_integration"` — its
+  honest answer for "no component reported a problem for this hazard" — so
+  `failures.csv`, the view an operator reads to find out *what* went wrong,
+  **named the wrong stage**. Two consecutive sweeps recorded the gap before
+  it was closed.
+
+  **No result changed, and the fix should not be overread.** The *fact* of a
+  failure was always complete: `HazardJudgment.failure_reason` is
+  authoritative per hazard, phase D writes it for every failing one, and a
+  failure row is emitted from `judgment.result == "failure"`, never from an
+  observation. What changed is how much of the *cause* survives into the view.
+
+  **One externally visible cost, versioned rather than silent.**
+  `results.jsonl` now renders `errors` (a list, empty when a stage had
+  nothing to report) where it rendered `error` (an object or null), so
+  `views.RESULT_VIEW_VERSION` goes **1 → 2**. `PREDICTION_ROWS_VERSION` and
+  `FAILURES_VERSION` are deliberately *not* bumped — neither view's columns
+  changed, and moving them in sympathy would make a future change to one look
+  like a change to all three (§11: every view is versioned separately).
 
 - 2026-08-05 — **PR 5 slice C: stage 9 emits a real three-class
   distribution.** `MultinomialPerHazardScorer` (`multinomial_per_hazard`,

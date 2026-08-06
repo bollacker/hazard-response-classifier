@@ -175,7 +175,7 @@ def _record(*, hazard="hte", evaluated=None, pooled="present", flags=None) -> Ev
                 outcome="ran",
                 facts={POOLED_VECTOR_FACT: vector},
                 text_out=None,
-                error=None,
+                errors=(),
             ),
         )
 
@@ -278,9 +278,9 @@ def test_an_unavailable_cell_fails_its_hazard_rather_than_inventing_a_judgment(a
 
     observation = scored.observations[-1]
     assert observation.outcome == "error"
-    assert observation.error.stage == "scoring"
-    assert observation.error.hazard == "vcr"
-    assert "legitimization" in observation.error.message
+    assert [error.stage for error in observation.errors] == ["scoring"]
+    assert observation.errors[0].hazard == "vcr"
+    assert "legitimization" in observation.errors[0].message
 
 
 def test_a_hazard_the_artifact_never_saw_fails_closed(artifact):
@@ -289,8 +289,12 @@ def test_a_hazard_the_artifact_never_saw_fails_closed(artifact):
 
     assert judgment.provisional_l is None
     assert judgment.provisional_e is None
-    assert scored.observations[-1].error.hazard == "ipv"
-    assert "fail_unseen_hazard" in scored.observations[-1].error.message
+    # Both targets failed, and D-76 means both are recorded rather than the
+    # Legitimization one alone.
+    errors = scored.observations[-1].errors
+    assert len(errors) == 2
+    assert {error.hazard for error in errors} == {"ipv"}
+    assert all("fail_unseen_hazard" in error.message for error in errors)
 
 
 def test_a_missing_pooled_vector_fails_rather_than_scoring_zeros(artifact):
@@ -299,7 +303,7 @@ def test_a_missing_pooled_vector_fails_rather_than_scoring_zeros(artifact):
 
     assert judgment.provisional_l is None
     assert judgment.provisional_e is None
-    assert "no pooled embedding" in scored.observations[-1].error.message
+    assert all("no pooled embedding" in error.message for error in scored.observations[-1].errors)
 
 
 # --- Applicability is reported, never decided -----------------------------
@@ -316,7 +320,7 @@ def test_an_enablement_only_hazard_gets_no_legitimization_and_no_error(artifact)
     assert judgment.provisional_l is None
     assert judgment.provisional_e is not None
     assert scored.observations[-1].outcome == "ran"
-    assert scored.observations[-1].error is None
+    assert scored.observations[-1].errors == ()
 
 
 def test_every_evaluated_hazard_gets_its_own_judgment(artifact):
@@ -474,3 +478,73 @@ def test_the_golden_artifact_scores_a_record_end_to_end():
     assert scored.per_hazard["prv"].provisional_l is None  # enablement-only
     assert scored.per_hazard["prv"].provisional_e.distribution is not None
     assert scored.per_hazard["hte"].provisional_e.model_version == "golden-1.1-fixture:0.0.1-fixture"
+
+
+# --- D-76: every error is recorded, and `failures.csv` names the stage ----
+
+
+def test_a_multi_hazard_record_records_every_failing_hazards_error(artifact):
+    """The defect [D-76](../../docs/planning/DECISIONS.md#d-76) closed. Before
+    the amendment `ComponentObservation.error` held one error, so a record
+    with two failing hazards kept only the first hazard's -- and
+    `views.failure_rows` then attributed the second row to
+    `final_integration`, the honest fallback for "no component reported a
+    problem for this hazard", which named the wrong stage.
+
+    `ipv` and `iwp` are both absent from the artifact, so each fails on both
+    targets: four errors, two hazards.
+    """
+    scored = MultinomialPerHazardScorer(artifact).run(
+        _record(hazard="ipv", evaluated=("ipv", "iwp"))
+    )
+    observation = scored.observations[-1]
+
+    assert len(observation.errors) == 4
+    assert {error.hazard for error in observation.errors} == {"ipv", "iwp"}
+    # Order is the order they were produced -- both of one hazard's, then
+    # both of the next's.
+    assert [error.hazard for error in observation.errors] == ["ipv", "ipv", "iwp", "iwp"]
+
+
+def test_failure_rows_names_scoring_for_every_failing_hazard_not_just_the_first(artifact):
+    """The consequence a reader of `failures.csv` actually meets."""
+    record = _pipeline(artifact, hazard="hte")
+    scored = MultinomialPerHazardScorer(artifact).run(
+        dataclasses.replace(
+            record,
+            per_hazard={},
+            evaluated_hazards=("ipv", "iwp"),
+            overall_result="failure",
+        )
+    )
+    finalized = FinalIntegrator(_RULES).run(scored)
+
+    rows = views.failure_rows(finalized)
+    assert {row["hazard"] for row in rows} == {"ipv", "iwp"}
+    assert {row["stage"] for row in rows} == {"scoring"}
+
+
+def test_the_results_view_renders_every_error_as_a_list(artifact):
+    scored = MultinomialPerHazardScorer(artifact).run(
+        _record(hazard="ipv", evaluated=("ipv", "iwp"))
+    )
+    payload = json.loads(json.dumps(views.result_view(scored)))
+
+    scoring = next(o for o in payload["observations"] if o["stage"] == "scoring")
+    assert isinstance(scoring["errors"], list)
+    assert len(scoring["errors"]) == 4
+    assert {e["hazard"] for e in scoring["errors"]} == {"ipv", "iwp"}
+
+    # A stage with nothing to report renders an empty list, never null.
+    embedding = next(o for o in payload["observations"] if o["stage"] == "embedding")
+    assert embedding["errors"] == []
+
+
+def test_the_results_view_version_records_the_shape_change():
+    """§11: every view is versioned separately. `errors` (a list) replaced
+    `error` (an object or null), which a consumer can only notice from the
+    version.
+    """
+    assert views.RESULT_VIEW_VERSION == "2"
+    assert views.PREDICTION_ROWS_VERSION == "1"
+    assert views.FAILURES_VERSION == "1"

@@ -227,7 +227,7 @@ def _failed_record(record: EvaluationRecord, exc: BaseException) -> EvaluationRe
         outcome="error",
         facts={},
         text_out=None,
-        error=error,
+        errors=(error,),
     )
     return dataclasses.replace(
         record,

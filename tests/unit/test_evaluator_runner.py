@@ -94,7 +94,7 @@ class _MissingEnablementScorer:
             outcome="ran",
             facts={},
             text_out=None,
-            error=None,
+            errors=(),
         )
         return dataclasses.replace(
             record, per_hazard=per_hazard, observations=record.observations + (observation,)
@@ -375,7 +375,7 @@ def test_a_mixed_batch_scores_the_good_rows_and_fails_only_the_bad_one(tmp_path)
                 outcome="ran",
                 facts={},
                 text_out=None,
-                error=None,
+                errors=(),
             )
             return dataclasses.replace(
                 record, per_hazard=per_hazard, observations=record.observations + (observation,)
@@ -573,7 +573,7 @@ def test_failure_rows_names_the_component_stage_when_one_reported_an_error() -> 
                 outcome="error",
                 facts={},
                 text_out=None,
-                error=ComponentError(stage="scoring", message="unavailable", hazard="hte"),
+                errors=(ComponentError(stage="scoring", message="unavailable", hazard="hte"),),
             ),
         ),
     )

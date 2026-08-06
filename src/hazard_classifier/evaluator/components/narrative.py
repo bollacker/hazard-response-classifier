@@ -30,6 +30,6 @@ class NarrativeDetectionPlaceholder:
             outcome="not_evaluated",
             facts={},
             text_out=None,
-            error=None,
+            errors=(),
         )
         return dataclasses.replace(record, observations=record.observations + (observation,))

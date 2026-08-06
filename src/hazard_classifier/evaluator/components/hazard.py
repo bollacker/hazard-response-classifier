@@ -28,7 +28,7 @@ class HazardDetectionPlaceholder:
             outcome="not_evaluated",
             facts={},
             text_out=None,
-            error=None,
+            errors=(),
         )
         # `detected_hazards` is left untouched (empty unless another stage
         # ever populates it) -- a placeholder returns no additional hazards.

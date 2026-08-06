@@ -93,7 +93,7 @@ class Decoder:
                 "failure_check": "stub_always_success",
             },
             text_out=decoded_text if changed else None,
-            error=None,
+            errors=(),
         )
 
         return dataclasses.replace(

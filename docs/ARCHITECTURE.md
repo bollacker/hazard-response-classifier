@@ -282,8 +282,24 @@ ComponentObservation
   outcome: "ran" | "skipped_short_circuit" | "not_evaluated" | "error"
   facts: dict[str, object]          # what this stage detected, stage-specific
   text_out: str | None              # working text after this stage, if changed
-  error: ComponentError | None
+  errors: tuple[ComponentError, ...]  # every error, in the order produced
 ```
+
+**`errors` is a tuple, not one optional error** (amended 2026-08-05,
+[`planning/DECISIONS.md` D-76](planning/DECISIONS.md#d-76)). A stage can fail
+more than once in a single run: stage 9 produces one error per failing
+`(target, hazard)`, so a record with two evaluated hazards can carry four. A
+single-error field made every such component discard information it already
+had, and `failures.csv` then attributed the lost rows to `final_integration`
+— its honest fallback for "no component reported a problem for this hazard" —
+rather than to the stage that actually failed. A component with nothing to
+report records the empty tuple.
+
+**This never affected a result, and does not now.** The per-hazard verdict
+comes from phase D via `HazardJudgment.failure_reason`, and a `failures.csv`
+row is emitted from `judgment.result == "failure"`, never from an
+observation. What the amendment buys is that the row can name the stage that
+caused it.
 
 ```
 Flags

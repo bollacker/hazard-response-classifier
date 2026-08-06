@@ -217,7 +217,7 @@ class FinalIntegrator:
                 "overall_result": integrated.overall_result,
             },
             text_out=None,
-            error=None,
+            errors=(),
         )
         return dataclasses.replace(
             integrated, observations=integrated.observations + (observation,)

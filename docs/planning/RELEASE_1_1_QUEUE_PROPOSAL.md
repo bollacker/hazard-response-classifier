@@ -387,18 +387,23 @@ replaces.
   **not evaluated** — approved per-outcome criteria still do not exist.
 - Train and version models separately from scoring.
 - Lock the model version used by each run.
-- **Record every per-hazard `ComponentError` the scoring stage produces, not
-  just the first.** Inherited from PR 7's closing sweep (2026-08-05), which
-  met it while building `failures.csv`. `components/scoring.py` accumulates
-  errors across every evaluated hazard into one list and writes `errors[0]`
-  onto its single observation, so a multi-hazard record loses every failing
-  hazard's error but the first — and `views.failure_rows` then attributes
-  those rows to `final_integration` rather than to `scoring`. It understates
-  detail and never the fact of a failure (`HazardJudgment.failure_reason` is
-  the authoritative text), so it is an auditability gap rather than a wrong
-  result. Routed here because PR 5 replaces this component; PR 7 does not
-  change components. Recorded in `evaluator/views.py::_first_component_error`
-  where a reader of the view meets it.
+- ~~**Record every per-hazard `ComponentError` the scoring stage produces, not
+  just the first.**~~ **Done 2026-08-05, as [D-76](DECISIONS.md#d-76).**
+  Inherited from PR 7's closing sweep, which met it while building
+  `failures.csv`: the scoring stage accumulates one error per failing
+  `(target, hazard)` and could write only one onto its observation, so a
+  multi-hazard record lost every failing hazard's error but the first — and
+  `views.failure_rows` then attributed those rows to `final_integration`
+  rather than to `scoring`.
+
+  **The component was never the constraint.** PR 5 slice C replaced it and the
+  defect survived, because `ARCHITECTURE.md` §4 defined
+  `ComponentObservation.error` as a *single* optional error. Closing the item
+  therefore meant amending §4 — `errors: tuple[ComponentError, ...]`, across
+  all ten components — which Kurt accepted. It was an auditability gap and
+  never a wrong result: `HazardJudgment.failure_reason` remains the
+  authoritative per-hazard text, and a failure row is emitted from
+  `judgment.result == "failure"`, never from an observation.
 - Return a provisional L judgment and a three-class multinomial distribution
   over L0, L1, and L2 when Legitimization applies.
 - Return a provisional E judgment and a three-class multinomial distribution

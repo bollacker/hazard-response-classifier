@@ -42,7 +42,14 @@ from typing import Any
 
 from .record import EvaluationRecord
 
-RESULT_VIEW_VERSION = "1"
+# Bumped 1 -> 2 on 2026-08-05 by `docs/planning/DECISIONS.md` D-76: each
+# observation now renders `errors` (a list) where it rendered `error` (an
+# object or null). That is a breaking change to this view's shape, and §11
+# versions each view separately precisely so a consumer can tell.
+# `PREDICTION_ROWS_VERSION` and `FAILURES_VERSION` are deliberately **not**
+# bumped -- neither view's columns changed, and moving them in sympathy
+# would make a future change to one look like a change to all three.
+RESULT_VIEW_VERSION = "2"
 PREDICTION_ROWS_VERSION = "1"
 # §11: "every view is versioned separately". This one starts at 1
 # independently of the other two rather than inheriting their number --
@@ -146,15 +153,14 @@ def result_view(record: EvaluationRecord) -> dict[str, Any]:
                     if key != "pooled_vector"
                 },
                 "text_out": observation.text_out,
-                "error": (
-                    None
-                    if observation.error is None
-                    else {
-                        "stage": observation.error.stage,
-                        "message": observation.error.message,
-                        "hazard": observation.error.hazard,
-                    }
-                ),
+                # Every error the stage produced, in order (D-76). A list
+                # rather than an optional object: a stage can fail once per
+                # `(target, hazard)`, and the earlier single-error field
+                # discarded all but the first.
+                "errors": [
+                    {"stage": error.stage, "message": error.message, "hazard": error.hazard}
+                    for error in observation.errors
+                ],
             }
             for observation in record.observations
         ],
@@ -229,33 +235,25 @@ def _first_component_error(record: EvaluationRecord, hazard: str):
     do its job for this hazard is the cause, and anything after it is a
     consequence.
 
-    **A recorded limitation of stage 9, not of this view.**
-    `components/scoring.py` stores only `errors[0]` on its single
-    observation, so when both Legitimization and Enablement are unavailable
-    for one hazard only the first is visible here.
+    **Searches every error on every observation** (`ARCHITECTURE.md` §4,
+    `docs/planning/DECISIONS.md` D-76). Until that amendment an observation
+    carried a single optional error, so a stage that failed more than once --
+    stage 9 fails once per `(target, hazard)` -- kept only the first, and in a
+    multi-hazard record every failing hazard's error but the first was lost.
+    This function then found nothing for those hazards and `failure_rows`
+    fell back to `stage="final_integration"`, its honest answer for "no
+    component reported a problem for this hazard", which named the wrong
+    stage. Two consecutive sweeps recorded that gap before it was closed.
 
-    *(Sharpened 2026-08-05 by PR 7's closing sweep, which found the sentence
-    above understated its own scope.* `scoring.py` collects errors across
-    **every evaluated hazard** into one list and keeps `errors[0]`, so in a
-    multi-hazard record only the *first failing hazard's* error survives at
-    all. A second failing hazard's row therefore reports
-    `stage="final_integration"` -- the honest fallback for "no component
-    reported a problem for this hazard" -- rather than `scoring`. Routed to
-    PR 5's work list, which replaces this component.*)*
-
-    Either way it understates the *detail* available, never the fact of the
-    failure: the authoritative text in the row is
-    `HazardJudgment.failure_reason`, which phase D writes per component, and
-    the row itself is emitted from `judgment.result == "failure"`, not from
-    the observation. Changing `scoring.py` to record every error would be a
-    component change, which PR 7 does not make
-    (`PR7_EXECUTION_PLAN.md` §10); this is the finding, recorded where a
-    reader of the view will meet it.
+    It was never a wrong *result*, only a lost cause: the authoritative text
+    in the row is `HazardJudgment.failure_reason`, which phase D writes per
+    component, and the row itself is emitted from
+    `judgment.result == "failure"`, never from an observation.
     """
     for observation in record.observations:
-        error = observation.error
-        if error is not None and error.hazard == hazard:
-            return error
+        for error in observation.errors:
+            if error.hazard == hazard:
+                return error
     return None
 
 

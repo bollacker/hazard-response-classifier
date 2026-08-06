@@ -163,7 +163,7 @@ class DisclaimerDetector:
             outcome="ran",
             facts={"matched_patterns": sorted(set(reasons))},
             text_out=None,
-            error=None,
+            errors=(),
         )
 
         return dataclasses.replace(

@@ -146,7 +146,7 @@ class HazardJudgment:
 @dataclasses.dataclass(frozen=True)
 class ComponentError:
     """Not spelled out field-by-field in `ARCHITECTURE.md` beyond its name
-    and its use (`ComponentObservation.error`, and §6's no-fallback rule:
+    and its use (`ComponentObservation.errors`, and §6's no-fallback rule:
     "it records a per-hazard `ComponentError`"). This is the minimal shape
     that use requires: which stage raised it, a human-readable message, and
     the hazard it's scoped to when the error is hazard-specific rather than
@@ -164,6 +164,20 @@ class ComponentObservation:
     """`ARCHITECTURE.md` §4: one entry per stage that ran, in execution
     order, recording what it did -- never what it decided (§6: "assigns no
     final result, applies no exception, makes no applicability decision").
+
+    **`errors` is a tuple, not one optional error**
+    (`docs/planning/DECISIONS.md` D-76). A stage can fail more than once in a
+    single run -- stage 9 produces one error per failing `(target, hazard)`,
+    so a two-hazard record can carry four -- and the earlier single-error
+    field made every such component discard errors it had already built.
+    `views.failure_rows` then attributed the lost rows to
+    `final_integration`, its fallback for "no component reported a problem
+    for this hazard", rather than to the stage that actually failed.
+
+    A component with nothing to report records `()`. There is deliberately
+    **no default**: "did this stage fail?" is something every construction
+    site should answer explicitly, exactly as the `error=None` it replaces
+    required.
     """
 
     stage: str
@@ -173,10 +187,11 @@ class ComponentObservation:
     outcome: Literal["ran", "skipped_short_circuit", "not_evaluated", "error"]
     facts: Mapping[str, object]
     text_out: str | None
-    error: ComponentError | None
+    errors: tuple[ComponentError, ...]
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "facts", _frozen_mapping(self.facts))
+        object.__setattr__(self, "errors", tuple(self.errors))
 
 
 @dataclasses.dataclass(frozen=True)

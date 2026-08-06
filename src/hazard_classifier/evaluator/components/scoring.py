@@ -109,10 +109,10 @@ class BaselineTwoHeadScorer:
             outcome="error" if errors else "ran",
             facts={"scored_hazards": tuple(record.evaluated_hazards)},
             text_out=None,
-            # A record-level observation carries at most one error; the
-            # per-hazard detail is what the integrator's phase D actually
-            # acts on, via each HazardJudgment's own failure_reason.
-            error=errors[0] if errors else None,
+            # Every error, one per failing `(target, hazard)` -- D-76. This
+            # component is why §4's field is a tuple: it can fail twice for
+            # one hazard (both targets unavailable) and again for the next.
+            errors=tuple(errors),
         )
 
         return dataclasses.replace(
@@ -273,14 +273,11 @@ class MultinomialPerHazardScorer:
                 "model_version": self.model_version,
             },
             text_out=None,
-            # A record-level observation carries at most one error
-            # (`ARCHITECTURE.md` §4). The per-hazard detail is what the
-            # integrator's phase D acts on, via each HazardJudgment's own
-            # failure_reason. Recording *every* error is PR 5 work this
-            # component inherits and does not close -- see
-            # `views.py::_first_component_error`, which is where a reader of
-            # the view meets the consequence.
-            error=errors[0] if errors else None,
+            # Every error, one per failing `(target, hazard)` -- D-76. This
+            # component is why §4's field is a tuple: it can fail twice for
+            # one hazard (both targets unavailable) and again for the next,
+            # and a single-error field made it discard all but the first.
+            errors=tuple(errors),
         )
 
         return dataclasses.replace(

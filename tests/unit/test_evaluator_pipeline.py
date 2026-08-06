@@ -71,7 +71,7 @@ class StubComponent:
             outcome="ran",
             facts={},
             text_out=working if self.empties_text else None,
-            error=None,
+            errors=(),
         )
         return dataclasses.replace(record, texts=new_texts, observations=record.observations + (observation,))
 
@@ -97,7 +97,7 @@ class _FinalIntegrationStub:
             outcome="ran",
             facts={},
             text_out=None,
-            error=None,
+            errors=(),
         )
         return dataclasses.replace(
             record,

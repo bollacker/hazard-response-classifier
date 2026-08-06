@@ -174,7 +174,7 @@ def test_the_observation_carries_matched_patterns_and_nothing_that_reads_as_a_ju
     # as a judgment has to come through this assertion first.
     assert set(observation.facts) == {"matched_patterns"}
     assert observation.text_out is None
-    assert observation.error is None
+    assert observation.errors == ()
     assert record.per_hazard == {}  # no judgment created anywhere
 
 

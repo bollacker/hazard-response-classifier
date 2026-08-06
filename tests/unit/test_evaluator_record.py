@@ -120,7 +120,7 @@ def test_component_observation_facts_is_a_read_only_mapping() -> None:
         outcome="ran",
         facts={"decoded": True},
         text_out="decoded text",
-        error=None,
+        errors=(),
     )
 
     assert isinstance(observation.facts, MappingProxyType)

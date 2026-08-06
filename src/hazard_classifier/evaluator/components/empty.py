@@ -29,7 +29,7 @@ class EmptyResponseDetector:
             outcome="ran",
             facts={"empty": is_empty},
             text_out=None,  # SCIENCE.md §Empty-response detection: changes no text
-            error=None,
+            errors=(),
         )
 
         return dataclasses.replace(

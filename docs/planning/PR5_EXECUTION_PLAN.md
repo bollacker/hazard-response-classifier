@@ -79,7 +79,7 @@ specification, not the entry.
 - **Baseline is green: 525 tests**, `pytest` from the repo root, ~23 s.
   (Corrected 2026-08-05 at slice A: 433 was PR 4's count, written before PR 7
   landed 92 more. Slice A takes it to **576** in ~40 s — see §5 — slice B to
-  **600**, and slice C to **624** in ~43 s.)
+  **600**, slice C to **624**, and D-76 to **628** in ~43 s.)
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine.
 - The data exists and is frozen: `data/interim_split_v1.json` (`interim-v1`,
@@ -510,7 +510,7 @@ provenance set.
 
 ## 7. Slice C — The scoring component
 
-> **Complete** (2026-08-05). **624 tests, zero regressions**,
+> **Complete** (2026-08-05). **628 tests, zero regressions**,
 > `test_baseline_parity.py` unchanged. `MultinomialPerHazardScorer`
 > (`multinomial_per_hazard`, **working**) sits alongside
 > `BaselineTwoHeadScorer` (`baseline_two_head`, still **partial**, still
@@ -541,18 +541,21 @@ provenance set.
 > `ResolvedRun.classifier` is renamed `artifact`, since it is a
 > `HazardResponseClassifier` only half the time now.
 >
-> **One PR 5 work item this slice did *not* close, stated so it is not lost.**
-> `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 inherits from PR 7's sweep: *"Record
-> every per-hazard `ComponentError` the scoring stage produces, not just the
-> first."* The new scorer has the same shape as the old one because the
-> constraint is not the component's — `ComponentObservation.error` is a
-> **single** `ComponentError | None` in `ARCHITECTURE.md` §4, so recording
-> every error means changing that field to a tuple across all ten components
-> and their tests. That is a §4 amendment, not a slice-C detail, and
-> `META_PLAN.md` §3 puts a specification change in front of Kurt rather than
-> inside a slice. It remains an auditability gap and never a wrong result:
-> `HazardJudgment.failure_reason` is the authoritative per-hazard text and is
-> written by phase D for every failing hazard.
+> **One PR 5 work item slice C surfaced and could not close alone — now
+> closed.** `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 inherits from PR 7's sweep:
+> *"Record every per-hazard `ComponentError` the scoring stage produces, not
+> just the first."* The new scorer had the same shape as the old one because
+> **the constraint was never the component's** — `ComponentObservation.error`
+> was a single `ComponentError | None` in `ARCHITECTURE.md` §4. Slice C
+> raised it under `STATUS.md` §Awaiting User rather than amending a
+> specification inside a slice (`META_PLAN.md` §3); **Kurt accepted, and it is
+> locked as [D-76](DECISIONS.md#d-76) and built** —
+> `errors: tuple[ComponentError, ...]` across all ten components,
+> `views.failure_rows` searching every error, and
+> `views.RESULT_VIEW_VERSION` bumped 1 → 2 because `results.jsonl`'s shape
+> changed. **628 tests.** It was an auditability gap and never a wrong result:
+> `HazardJudgment.failure_reason` remains the authoritative per-hazard text
+> and phase D writes it for every failing hazard.
 >
 > **Not done here, and correctly so:** `README.md`'s per-outcome reporting.
 > §8 owns replacing that paragraph with numbers; slice C corrected only what

@@ -96,7 +96,7 @@ def _skip_to_final_integration(
                 outcome="skipped_short_circuit",
                 facts={},
                 text_out=None,
-                error=None,
+                errors=(),
             )
         )
 

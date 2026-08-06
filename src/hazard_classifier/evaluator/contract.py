@@ -5,7 +5,7 @@ protocol every stage implements; `ComponentError`; `Maturity`.
 module table assigns `ComponentError` to this file, but `Component.run`'s
 own signature needs `EvaluationRecord` from `record.py`, and §3.2 also
 requires `record.py` to import nothing from `evaluator/` at all --
-including `ComponentError`, which `ComponentObservation.error` needs. Both
+including `ComponentError`, which `ComponentObservation.errors` needs. Both
 constraints can't hold if `ComponentError` is defined here. Resolved by
 defining it once in `record.py` (where the field that needs it actually
 lives) and re-exporting it here, so `from

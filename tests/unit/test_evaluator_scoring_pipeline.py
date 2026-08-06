@@ -363,7 +363,7 @@ def test_every_component_can_be_swapped_for_a_stub_without_editing_another(
                 outcome="not_evaluated",
                 facts={},
                 text_out=None,
-                error=None,
+                errors=(),
             )
             return dataclasses.replace(record, observations=record.observations + (observation,))
 

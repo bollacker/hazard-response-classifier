@@ -31,7 +31,7 @@ agenda. All entries from D-47 onward except D-53 are in this mode.
 Entries are retired by superseding them in place, never by deletion. The index
 below is the map; every D-number that has ever existed appears in it.
 
-Numbering: new decisions start at **D-71**. D-38 through D-44 were drafted
+Numbering: new decisions start at **D-77**. D-38 through D-44 were drafted
 during the 2026-08-02/03 science-contract work and withdrawn before approval;
 those numbers are not reused.
 
@@ -309,6 +309,7 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-73](#d-73) | The shipped artifact is fitted on the **fit split only**; the dev slice stays held out | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5 | carried; makes PR 5's reported numbers describe the shipped model |
 | [D-74](#d-74) | The run profile carries `text_view` as a **construction parameter**, not a selection field | `../ARCHITECTURE.md` §5 | carried; closes D-69's deferred half, conditional on an end-to-end test |
 | [D-75](#d-75) | A run rejection names **every** offending row, and `hrc-run --check-input` reports them without scoring | `../ARCHITECTURE.md` §2; `howto/hrc-run.md` | carried; ergonomics only — §2's all-or-nothing rejection is unchanged |
+| [D-76](#d-76) | A component observation records **every** error it produced (`errors`), not only the first | `../ARCHITECTURE.md` §4 | carried; auditability only — no result changes, `failures.csv` stops naming the wrong stage |
 
 ### Absorption gaps
 
@@ -4828,3 +4829,76 @@ three conditions are untouched, condition (1) is still run-level, and a
 rejection still aborts before any row is scored and still writes no output
 file. It also does not make `--check-input` a precondition of running:
 `hrc-run` with no flag behaves exactly as before, only with a fuller message.
+
+
+<a id="d-76"></a>
+## D-76: A component observation records **every** error it produced, not only the first
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05, on the amendment PR 5 slice C raised under
+`STATUS.md` §Awaiting User. **Riki's concurrence assumed on Kurt's direction,
+not confirmed on record.**
+
+Decision: `ComponentObservation` carries
+`errors: tuple[ComponentError, ...]` in place of
+`error: ComponentError | None`. A component that produces no error records
+the empty tuple; one that produces several records all of them, in the order
+it produced them. `../ARCHITECTURE.md` §4 is the specification and carries
+the change; `results.jsonl` renders an `errors` list, and
+`views.failure_rows` finds a hazard's error by searching every observation's
+errors rather than only its first.
+
+Rationale: the single-error field forced every component to **discard
+information it already had**. Stage 9 is the case that surfaced it — it
+accumulates one error per failing `(target, hazard)` and could put only one
+on its observation — so in a multi-hazard record every failing hazard's
+error but the first was lost, and `views.failure_rows` then attributed those
+rows to `final_integration` (its honest fallback for "no component reported
+a problem for this hazard") rather than to `scoring`. That is an
+auditability defect precisely where auditability is the point:
+`failures.csv` is the view an operator reads to find out *what* went wrong,
+and it was naming the wrong stage.
+
+**What was never wrong, and is worth stating so the fix is not overread.**
+The *fact* of a failure was always correct and always complete.
+`HazardJudgment.failure_reason` is the authoritative per-hazard text, phase D
+writes it for every failing hazard, and a failure row is emitted from
+`judgment.result == "failure"` — never from an observation. No result
+changed; what changed is how much of the cause survives into the view.
+
+**Why now rather than later.** The gap was found by PR 7's closing sweep and
+routed to PR 5 as "record every per-hazard `ComponentError`, not just the
+first", on the reasoning that PR 5 replaces the scoring component. Slice C
+then found that the component was never the constraint — the record shape
+was — so the item could not be closed by the slice it was routed to without
+amending a specification. Doing it here keeps the amendment attached to the
+work that revealed it, rather than leaving a known-wrong view to be
+rediscovered by a sixth sweep.
+
+Rejected alternatives: (1) leaving the gap recorded and carrying it into PR 6
+or a later release — rejected because a view that names the wrong stage is a
+worse failure mode than one that omits detail, and because the inventory of
+"things a sweep must re-check" is already this project's most reliable source
+of staleness; (2) keeping `error` and adding `errors` beside it — rejected as
+two normative statements of one fact in one dataclass, which is `META_PLAN.md`
+§1.1's last bullet applied to code; (3) having stage 9 write its extra errors
+into `facts` — rejected because it would make `views.py` read a
+stage-specific fact key, coupling the view to one component's internals to
+work around the contract rather than fixing it.
+
+Touches: `../ARCHITECTURE.md` §4 (**absorbed** — `ComponentObservation`'s
+field list is the specification and now reads `errors`);
+`src/hazard_classifier/evaluator/record.py`; every component in
+`evaluator/components/`, plus `pipeline.py` and `runner.py`, which construct
+observations; `src/hazard_classifier/evaluator/views.py` (`result_view`'s
+`errors` list, `_first_component_error`, `failure_rows`);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's work list, which this closes;
+`STATUS.md` §Awaiting User, which this empties.
+
+Boundary: this decides **how many errors an observation can carry**. It does
+not change what counts as an error, when a component records one, or what an
+error means downstream — `ARCHITECTURE.md` §6's no-fallback rule and D-45's
+unfittable-is-unavailable rule are untouched. It does not make an error an
+exception: `ComponentError` remains a record field, and no component raises
+(§5). And it does not change any result: the per-hazard verdict still comes
+from phase D, never from an observation.
