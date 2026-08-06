@@ -397,7 +397,14 @@ order, and the order is the point.**
 - **Assert the field survives into `results.jsonl`**, the way PR 5 slice C had
   to for `distribution`: a field that exists on the record and not in the view
   is not an audit record.
-- **Two of B1's five bullets cannot fire in Release 1.1** and the new field
+- ~~**Two of B1's five bullets cannot fire in Release 1.1**~~ **Three** —
+  corrected by slice A against `ARCHITECTURE.md` §7's table and §13's A-3,
+  which are what this sentence's own parenthetical already named: `refusal`
+  and `narrative` because both detectors are placeholders, and `sa_disclaimer`
+  for A-3's structural reason. Only `prompt_repetition` and `blank_payload`
+  are reachable in a real 1.1 run. This is §12 lesson 5 landing inside the
+  plan that states it — the count was written in front of the list rather than
+  taken from it. The new field
   makes that visible for the first time. `ARCHITECTURE.md` §13's A-3 and
   `README.md` already record why — refusal and narrative because both
   detectors are placeholders, the disclaimer bullet for the structural reason

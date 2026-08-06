@@ -679,7 +679,20 @@ document. **Its execution plan is written**
 PR 5's and PR 7's, it found defects the queue proposal did not show — a fourth
 data point for `META_PLAN.md` §6's plan-authoring row.
 
-**A session starts at slice A.** The plan opened four gates and **all four are
+**Slice A is landed (2026-08-05); a session starts at slice B.** All three
+of [D-79](DECISIONS.md#d-79)'s parts are built, in its order and as separate
+commits: phase B1 is evaluated **once per record** (the loop-carried `Flags`
+defect, with a test that fails without the fix), `HazardJudgment.b1_bullet`
+records which of B1's five ordered bullets assigned the pair,
+`RESULT_VIEW_VERSION` is **3**, and `decided_by` no longer declares the `"A"`
+nothing emitted. **658 tests, zero regressions, no result changes**,
+`test_baseline_parity.py` unchanged (D-48). Slice A also closed
+`../ARCHITECTURE.md` §13's A-3 in place and corrected the plan's count of
+unreachable B1 bullets from two to three, taken from §7's table. Slices B–E
+remain; slice E is where these land in Recently Completed with their
+concurrence rows.
+
+The plan opened four gates and **all four are
 decided and absorbed** ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81),
 2026-08-05): continuous integration **removed** from `SCIENCE.md`'s
 verification list rather than scoped; the phase-B1 audit field and the narrowed
