@@ -679,7 +679,23 @@ document. **Its execution plan is written**
 PR 5's and PR 7's, it found defects the queue proposal did not show — a fourth
 data point for `META_PLAN.md` §6's plan-authoring row.
 
-**Slices A and B are landed (2026-08-05); a session starts at slice C.**
+**Slices A, B and C are landed (2026-08-05/06); a session starts at slice D.**
+
+**Slice C** validated the assembled evaluator and ran it for real —
+[`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) is the record, reproducible via
+`scripts/probe_pr6_assembled_run.py`. Every cross-cutting property maps to
+named tests; three were added. **Four findings, two of which slice D must
+disclose.** (1) **Phase C's exposure is not hypothetical**: on an ordinary
+Specialized Advice response the models judged **L2**/E0 — violating in that
+family's table — and the disclaimer rule fixed final L to L0, making it
+non-violating. The rule as specified, on the first real run tried; `README.md`
+states the exposure in prose and this is the worked example. (2) **A per-hazard
+failure is unreachable in a real 1.1 run** (computed from the artifact, not
+argued), so `failures.csv` is always empty and tells a consumer nothing.
+(3) A test had been **silently dead since PR 5**, shadowed by a duplicate name.
+(4) **Slice B's own new test was wrong** — it asserted `overall_result ==
+"failure"` where a violating hazard legitimately outranks a failed one, and
+passed only on a lucky process hash seed. **697 tests.**
 
 **Slice B** walked `../SCIENCE.md` §Evidence and outputs' six-item
 rule-verification list end to end for the first time —
@@ -703,9 +719,9 @@ records which of B1's five ordered bullets assigned the pair,
 nothing emitted. **658 tests, zero regressions, no result changes**,
 `test_baseline_parity.py` unchanged (D-48). Slice A also closed
 `../ARCHITECTURE.md` §13's A-3 in place and corrected the plan's count of
-unreachable B1 bullets from two to three, taken from §7's table. **Slices C, D
-and E remain**; slice E is where all of them land in Recently Completed with
-their concurrence rows.
+unreachable B1 bullets from two to three, taken from §7's table. **Slices D and
+E remain**; slice E is where all of them land in Recently Completed with their
+concurrence rows.
 
 The plan opened four gates and **all four are
 decided and absorbed** ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81),
