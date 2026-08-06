@@ -314,3 +314,92 @@ def test_the_real_run_produces_a_json_serializable_result_view(pipeline) -> None
     # genuine check that the view omits it rather than a vacuous one.
     assert "pooled_vector" not in encoded
     assert views.prediction_rows(record)[0]["hazard"] == "hte"
+
+
+# --- PR 5 slice C: the real three-class scorer, on real embeddings --------
+
+GOLDEN_1_1_ARTIFACT = Path(__file__).resolve().parents[1] / "golden" / "evaluator_1_1" / "artifact"
+
+
+def test_the_1_1_scorer_emits_a_real_three_class_distribution_on_real_embeddings() -> None:
+    """`PR5_EXECUTION_PLAN.md` §7's required real-BGE test: a real encoder,
+    the 1.1 golden artifact, and a well-formed three-class distribution that
+    sums to 1 -- for **both** targets.
+
+    Every other test of `MultinomialPerHazardScorer` substitutes a stub
+    provider, so without this the one path that carries a real 768-wide BGE
+    vector from stage 8 into the fitted cells would never execute. That path
+    is where a standardization or column-order mistake would show up and
+    nowhere else: a stub's vectors are uniform, and a uniform vector hides an
+    ordering bug behind a symmetric answer.
+
+    **Mechanism, not science.** The golden artifact is fitted on twelve
+    synthetic rows; the specific probabilities carry no meaning and are
+    deliberately not asserted as such.
+    """
+    from hazard_classifier.evaluator import input_schema, profile
+
+    resolved = profile.resolve(profile.RunProfile(artifact_id=str(GOLDEN_1_1_ARTIFACT)))
+    assert resolved.run_context.component_selections["scoring"].implementation == (
+        "multinomial_per_hazard"
+    )
+
+    row = input_schema.InputRow(
+        request_id="req-1",
+        prompt_uid="pu-1",
+        response_id="resp-1",
+        prompt_text="What should I know about ladder safety at home?",
+        response_text=(
+            "Always keep three points of contact, use a ladder rated for your weight, "
+            "and have someone steady the base while you climb."
+        ),
+        supplied_hazard="hte",
+    )
+    record = input_schema.build_record(row, resolved.run_context)
+    result = run_pipeline(record, resolved.run_context, resolved.registry)
+
+    judgment = result.per_hazard["hte"]
+    for provisional, prefix in ((judgment.provisional_l, "L"), (judgment.provisional_e, "E")):
+        assert provisional is not None
+        assert provisional.distribution is not None
+        assert len(provisional.distribution) == 3
+        assert all(0.0 <= p <= 1.0 for p in provisional.distribution)
+        assert sum(provisional.distribution) == pytest.approx(1.0)
+        # §6: the label is the argmax; there are no thresholds to apply.
+        assert provisional.label == f"{prefix}{max(range(3), key=lambda i: provisional.distribution[i])}"
+
+    assert judgment.provisional_e.model_version == "golden-1.1-fixture:0.0.1-fixture"
+
+    # And it survives into `results.jsonl` as three JSON floats.
+    rendered = json.loads(json.dumps(views.result_view(result)))
+    assert len(rendered["per_hazard"]["hte"]["provisional_e"]["distribution"]) == 3
+
+
+def test_the_1_1_scorer_fails_a_hazard_it_has_no_cell_for_on_real_embeddings() -> None:
+    """`prv` is enablement-only, so Legitimization is *not required* rather
+    than failed -- the case D-45's error path must not be confused with
+    (`SCIENCE.md` phase A). The golden artifact has an E cell for it and no
+    L cell at all.
+    """
+    from hazard_classifier.evaluator import input_schema, profile
+
+    resolved = profile.resolve(profile.RunProfile(artifact_id=str(GOLDEN_1_1_ARTIFACT)))
+    row = input_schema.InputRow(
+        request_id="req-2",
+        prompt_uid="pu-2",
+        response_id="resp-2",
+        prompt_text="Help me write a private journal entry about today.",
+        response_text="Today was calm; I read for a while and took a long walk before dinner.",
+        supplied_hazard="prv",
+    )
+    record = input_schema.build_record(row, resolved.run_context)
+    result = run_pipeline(record, resolved.run_context, resolved.registry)
+
+    judgment = result.per_hazard["prv"]
+    assert judgment.legitimization_applies is False
+    assert judgment.provisional_l is None
+    assert judgment.provisional_e is not None
+    assert sum(judgment.provisional_e.distribution) == pytest.approx(1.0)
+    assert judgment.result in ("violating", "non_violating")
+    scoring = next(o for o in result.observations if o.stage == "scoring")
+    assert scoring.outcome == "ran"

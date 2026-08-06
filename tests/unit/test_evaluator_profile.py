@@ -357,3 +357,115 @@ def test_profile_text_view_flows_to_the_embedded_text_and_into_results_jsonl() -
     embedding_observation = next(o for o in rendered["observations"] if o["stage"] == "embedding")
     assert embedding_observation["facts"]["text_view"] == "disclaimer_stripped"
     json.dumps(rendered)  # the view stays JSON-serializable
+
+
+# --- Artifact-format dispatch (PR 5 slice C, `PR5_EXECUTION_PLAN.md` §7) ---
+
+GOLDEN_1_1_ARTIFACT = Path(__file__).resolve().parents[1] / "golden" / "evaluator_1_1" / "artifact"
+
+
+def test_resolve_artifact_loads_the_baseline_format() -> None:
+    from hazard_classifier.model import HazardResponseClassifier
+
+    assert isinstance(profile.resolve_artifact(GOLDEN_ARTIFACT), HazardResponseClassifier)
+
+
+def test_resolve_artifact_loads_the_1_1_format() -> None:
+    """Dispatch is on the 1.1 manifest's declared `format`, which the
+    baseline manifest does not have -- a marker, not a guess at directory
+    contents.
+    """
+    from hazard_classifier.evaluator.artifact import EvaluatorArtifact
+
+    loaded = profile.resolve_artifact(GOLDEN_1_1_ARTIFACT)
+    assert isinstance(loaded, EvaluatorArtifact)
+    assert loaded.artifact_id == "golden-1.1-fixture"
+
+
+def test_stage_9s_implementation_follows_the_artifact() -> None:
+    """§7: the 1.1 scorer is *registered*, not substituted -- both remain
+    distinct `(stage, implementation_id)` entries -- but only the one whose
+    model the artifact actually carries can score, so `build_registry`
+    selects it from the artifact rather than from a flag.
+    """
+    baseline = profile.build_registry(
+        profile.resolve_artifact(GOLDEN_ARTIFACT),
+        provider=_CapturingProvider(),
+        pooling=_StubPooling(),
+    )
+    assert baseline.component_selection["scoring"] == "baseline_two_head"
+
+    evaluator = profile.build_registry(
+        profile.resolve_artifact(GOLDEN_1_1_ARTIFACT),
+        provider=_CapturingProvider(),
+        pooling=_StubPooling(),
+    )
+    assert evaluator.component_selection["scoring"] == "multinomial_per_hazard"
+
+
+def test_the_1_1_scorer_reads_hazard_families_from_the_artifact() -> None:
+    """D-23: the frozen `rules.json`, never installed config."""
+    built = profile.build_registry(
+        profile.resolve_artifact(GOLDEN_1_1_ARTIFACT),
+        provider=_CapturingProvider(),
+        pooling=_StubPooling(),
+    )
+    integrator = built.registry.get(
+        "final_integration", built.component_selection["final_integration"]
+    )
+    assert "prv" in integrator.rules.enablement_only_hazards
+    assert "spc_hlt" in integrator.rules.specialized_advice_hazards
+
+
+def test_hazard_scope_defaults_to_the_1_1_artifacts_supported_set() -> None:
+    """D-57, on the 1.1 format: the default scope is `rules.json`'s supported
+    set, which slice B derives from the fitted cells.
+    """
+    resolved = profile.resolve(
+        profile.RunProfile(artifact_id=str(GOLDEN_1_1_ARTIFACT)),
+        provider=_CapturingProvider(),
+        pooling=_StubPooling(),
+    )
+    assert resolved.run_context.hazard_scope == frozenset({"hte", "prv"})
+    assert resolved.run_context.component_selections["scoring"].implementation == (
+        "multinomial_per_hazard"
+    )
+
+
+def test_a_scope_wider_than_the_1_1_artifact_supports_is_rejected() -> None:
+    with pytest.raises(RunRejectedError) as excinfo:
+        profile.resolve(
+            profile.RunProfile(
+                artifact_id=str(GOLDEN_1_1_ARTIFACT), hazard_scope=frozenset({"hte", "vcr"})
+            ),
+            provider=_CapturingProvider(),
+            pooling=_StubPooling(),
+        )
+    assert "vcr" in str(excinfo.value)
+
+
+def test_a_1_1_run_produces_a_three_class_distribution_end_to_end() -> None:
+    """The seam §7 exists to close: a profile, an artifact, and a record in;
+    a real distribution out, carried into `results.jsonl`.
+    """
+    row = input_schema.InputRow(
+        request_id="req-1",
+        prompt_uid="pu-1",
+        response_id="resp-1",
+        prompt_text="What should I know here?",
+        response_text="Here is a full, authored answer with substantive detail.",
+        supplied_hazard="hte",
+    )
+    resolved = profile.resolve(
+        profile.RunProfile(artifact_id=str(GOLDEN_1_1_ARTIFACT)),
+        provider=_CapturingProvider(),
+        pooling=_StubPooling(),
+    )
+    record = input_schema.build_record(row, resolved.run_context)
+    result = pipeline.run_pipeline(record, resolved.run_context, resolved.registry)
+
+    rendered = views.result_view(result)
+    judgment = rendered["per_hazard"]["hte"]["provisional_e"]
+    assert len(judgment["distribution"]) == 3
+    assert judgment["model_version"] == "golden-1.1-fixture:0.0.1-fixture"
+    json.dumps(rendered)

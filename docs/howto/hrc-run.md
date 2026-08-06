@@ -7,10 +7,13 @@ scorer. No labels, no retraining.
 > **Read [`../../README.md` §Release 1.1 evaluator status](../../README.md#release-11-evaluator-status)
 > before using any output.** Release 1.1 is a **pre-staging prototype**
 > (`DECISIONS.md` D-58): three of its ten stages are visible placeholders,
-> four more ship `partial`, and no component has an approved success
+> three more ship `partial`, and no component has an approved success
 > criterion, so every one of them is reported as *not evaluated* under
-> `SCIENCE.md` §Evidence and outputs. The results this command writes support
-> no quality claim in either direction.
+> `SCIENCE.md` §Evidence and outputs. **That includes the L and E models,
+> which now emit a real three-class distribution and are still not
+> evaluated** — the structure they use was selected on a null result (D-68),
+> and a distribution summing to 1 is arithmetic, not evidence. The results
+> this command writes support no quality claim in either direction.
 
 `hrc-run` is a **fourth** CLI, not a change to the three baseline ones
 (`DECISIONS.md` D-48). `hrc-predict` is the baseline's unlabeled scorer and
@@ -47,16 +50,16 @@ A JSON file, because it is provenance you should be able to diff:
 {
   "artifact_id": "/path/to/artifact",
   "hazard_scope": ["hte", "prv"],
-  "component_selection": {"scoring": "baseline_two_head"},
+  "component_selection": {"hazard_detection": "placeholder"},
   "text_view": "working"
 }
 ```
 
 | Field | Required | Meaning |
 |---|---|---|
-| `artifact_id` | yes | Artifact directory to score against. In Release 1.1 this is a **baseline** artifact (`DECISIONS.md` D-49 defers the 1.1 artifact format to PR 5) |
-| `hazard_scope` | no | The run's active hazard set. Omit it and it **defaults to the artifact's own frozen trained set** (D-57), which is what makes the default unrejectable. A narrower set is allowed; a wider one is a run rejection |
-| `component_selection` | no | `stage -> implementation_id` overrides; every stage not named keeps its default. Selection is resolved through the registry, never by importing a component (`ARCHITECTURE.md` §6) |
+| `artifact_id` | yes | Artifact directory to score against — **either format**. A Release 1.1 evaluator artifact (`scripts/build_release_artifact.py`, `ARCHITECTURE.md` §10.1) scores with the real three-class model; a baseline artifact scores with PR 1's wrapped two-head model, which reports `distribution: null`. The formats are told apart by the 1.1 manifest's `format` field |
+| `hazard_scope` | no | The run's active hazard set. Omit it and it **defaults to the artifact's own frozen supported set** (D-57), which is what makes the default unrejectable. A narrower set is allowed; a wider one is a run rejection |
+| `component_selection` | no | `stage -> implementation_id` overrides; every stage not named keeps its default. Selection is resolved through the registry, never by importing a component (`ARCHITECTURE.md` §6). **Stage 9 is the exception**: its implementation follows the artifact, because the other scorer has no model in that artifact to score with |
 | `text_view` | no | Which text view stage 8 embeds, default `working` (D-74, D-55). `disclaimer_stripped` is the only other view any 1.1 component publishes |
 
 The resolved hazard scope, the artifact id, the rule version, and every

@@ -39,10 +39,10 @@ all three before starting.**
 
 **Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
 production fitter, B the artifact, C the scoring component, D evaluation and
-reporting, E the sweep and close. **Slices 0, A and B have run** (all
-2026-08-05, §4–§6) and **§3's gate questions G-1 and G-2 are answered and
+reporting, E the sweep and close. **Slices 0, A, B and C have run** (all
+2026-08-05, §4–§7) and **§3's gate questions G-1 and G-2 are answered and
 absorbed** ([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73)): fit on
-pipeline working text, fit split only. **A session starts at slice C.** G-3
+pipeline working text, fit split only. **A session starts at slice D.** G-3
 stays open and blocks only the close.
 
 ---
@@ -78,8 +78,8 @@ specification, not the entry.
   so a session may run it whenever PR 7 is done.
 - **Baseline is green: 525 tests**, `pytest` from the repo root, ~23 s.
   (Corrected 2026-08-05 at slice A: 433 was PR 4's count, written before PR 7
-  landed 92 more. Slice A takes it to **576** in ~40 s — see §5 — and slice B
-  to **600** in ~45 s.)
+  landed 92 more. Slice A takes it to **576** in ~40 s — see §5 — slice B to
+  **600**, and slice C to **624** in ~43 s.)
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine.
 - The data exists and is frozen: `data/interim_split_v1.json` (`interim-v1`,
@@ -509,6 +509,55 @@ round trip; no `thresholds.json`; no pickle anywhere; manifest carries the full
 provenance set.
 
 ## 7. Slice C — The scoring component
+
+> **Complete** (2026-08-05). **624 tests, zero regressions**,
+> `test_baseline_parity.py` unchanged. `MultinomialPerHazardScorer`
+> (`multinomial_per_hazard`, **working**) sits alongside
+> `BaselineTwoHeadScorer` (`baseline_two_head`, still **partial**, still
+> registered — it remains the only implementation exercising §4's
+> `distribution=None` path).
+>
+> **Verified end to end on the real artifact**, not only on fixtures:
+> `hrc-run` over interim dev rows with `artifacts/release_1_1_le` produced
+> real distributions for both targets, `argmax` labels, and phase C firing
+> correctly — e.g. an `spc_lgl` row whose provisional L was `L1`
+> (0.137/0.863/0.001) and whose **final** L was fixed at `L0` with
+> `decided_by == "C"`, the provisional judgment and its distribution
+> untouched. That is §7's second trap, observed rather than argued.
+>
+> **What the maturity flip did and did not buy.** Stage 9 is `working` in
+> `ARCHITECTURE.md` §7 row 9, and "L/E scoring's absent distribution" is out
+> of D-47's inventory in `RELEASE_1_1_QUEUE_PROPOSAL.md`, `README.md`, and
+> `ARCHITECTURE.md` §7's prose count (which is back to **three** partials —
+> it has now been wrong in both directions, and the section says so). **Both
+> models are still *not evaluated***: that follows from having no approved
+> per-outcome criteria, which no maturity field can supply.
+>
+> **The wiring slice B left here.** `profile.resolve_artifact` now loads
+> either format, dispatching on the 1.1 manifest's `format` field, and
+> `build_registry` selects stage 9's implementation **from the artifact**
+> rather than from a flag — the other scorer has no model in that artifact to
+> score with, so the mismatch is unrepresentable instead of a per-row failure.
+> `ResolvedRun.classifier` is renamed `artifact`, since it is a
+> `HazardResponseClassifier` only half the time now.
+>
+> **One PR 5 work item this slice did *not* close, stated so it is not lost.**
+> `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 inherits from PR 7's sweep: *"Record
+> every per-hazard `ComponentError` the scoring stage produces, not just the
+> first."* The new scorer has the same shape as the old one because the
+> constraint is not the component's — `ComponentObservation.error` is a
+> **single** `ComponentError | None` in `ARCHITECTURE.md` §4, so recording
+> every error means changing that field to a tuple across all ten components
+> and their tests. That is a §4 amendment, not a slice-C detail, and
+> `META_PLAN.md` §3 puts a specification change in front of Kurt rather than
+> inside a slice. It remains an auditability gap and never a wrong result:
+> `HazardJudgment.failure_reason` is the authoritative per-hazard text and is
+> written by phase D for every failing hazard.
+>
+> **Not done here, and correctly so:** `README.md`'s per-outcome reporting.
+> §8 owns replacing that paragraph with numbers; slice C corrected only what
+> the flip made *false* ("the scorer shipping today is not the selected
+> structure yet"), leaving the reporting to slice D.
 
 Replace stage 9's implementation. New class alongside `BaselineTwoHeadScorer`,
 new `implementation` id (`multinomial_per_hazard`), **registered rather than

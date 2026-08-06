@@ -582,10 +582,11 @@ one item or advance past an Awaiting User item on its own. See
 [D-68](DECISIONS.md#d-68)) are both complete, so what remains is
 implementation.
 
-PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**. **PR 5 is
-in progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0, A and B
+PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**, and as of
+PR 5 slice C it **scores with the real three-class model**. **PR 5 is in
+progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0, A, B and C
 are complete and it waits on nothing external; a session starts at its
-**slice C** (the scoring component).
+**slice D** (evaluation and reporting).
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -648,18 +649,19 @@ Detailed phased proposal:
    **PR 5 (L/E training, scoring, and evaluation) is in progress.** Execution
    plan: [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md). Slice 0 (the
    working-text measurement behind [D-72](DECISIONS.md#d-72)), **slice A (the
-   production fitter)** and **slice B (the 1.1 artifact)** are complete;
-   slices C–E remain, and gate G-3 blocks only the close. Nothing new was
-   decided in either slice — they build D-68's structure, on D-72's text, over
-   D-73's rows, and write the payload
+   production fitter)**, **slice B (the 1.1 artifact)** and **slice C (the
+   scoring component)** are complete; slices D and E remain, and gate G-3
+   blocks only the close. Nothing new was decided in any of them — they build
+   D-68's structure, on D-72's text, over D-73's rows, and write the payload
    [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) §6
    already fixed. Slice A's central claim is **verified rather than stated**:
    on the real fit split's working-text features the production fitter and
    `experiments.candidates.MultinomialSoftmax` agree exactly
    (`max|diff| = 0.0`, both targets, identical unavailable-cell sets). Slice B
    closes [D-49](DECISIONS.md#d-49), and `../ARCHITECTURE.md` §10.1 now
-   describes the payload as built. **600 tests, zero regressions**,
-   `test_baseline_parity.py` unchanged.
+   describes the payload as built. Slice C makes **stage 9 `working`** and
+   removes the one D-47 inventory item that had a scheduled end. **624 tests,
+   zero regressions**, `test_baseline_parity.py` unchanged.
 
    **PR 7 has a written plan:
    [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
@@ -820,7 +822,8 @@ across schemes:
 
 ## Awaiting User
 
-Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot).
+Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot);
+one item added 2026-08-05 by PR 5 slice C.
 **Nothing here blocks anything.** D-63 removed the last external gate, and
 queue item 2 has since closed ([D-68](DECISIONS.md#d-68), 2026-08-05); PR 5
 waits on nothing external and has a selected structure to build. One
@@ -861,6 +864,40 @@ stated in the entry itself. **D-50 through D-52** (one grouped row) set PR 2's
 scope; two of them are shortfalls against a `SCIENCE.md` success criterion and
 land in the limitations document rather than being met. The `META_PLAN.md` §5
 amendment is process bookkeeping. See the assumed-concurrence table.
+
+### Should a component observation carry every error, or only the first?
+
+Added 2026-08-05 by PR 5 slice C. **This blocks nothing** — not slice D, not
+slice E, not PR 6. It is here because closing it changes a specification, and
+`META_PLAN.md` §3 puts that in front of Kurt rather than inside a slice.
+
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's work list inherits an item from PR 7's
+closing sweep: *"Record every per-hazard `ComponentError` the scoring stage
+produces, not just the first."* Slice C replaced the component and **did not
+close it**, because the constraint is not the component's:
+`../ARCHITECTURE.md` §4 defines `ComponentObservation.error` as a **single**
+`ComponentError | None`. Stage 9 accumulates one error per failing
+`(target, hazard)` and can only put one on its observation.
+
+**What it costs today.** In a multi-hazard record where two hazards fail, only
+the first failing hazard's error survives on the observation, so
+`views.failure_rows` attributes the second row's `stage` to
+`final_integration` — the honest fallback for "no component reported a
+problem" — rather than to `scoring`. It understates *detail* and never the
+*fact* of a failure: `HazardJudgment.failure_reason` is the authoritative text
+and phase D writes it for every failing hazard, and the failure row is emitted
+from `judgment.result == "failure"`, not from the observation. Hazard
+detection is a placeholder in 1.1, so multi-hazard records only arise from a
+caller supplying them.
+
+**The question.** Change `ComponentObservation.error` to
+`errors: tuple[ComponentError, ...]` — a §4 amendment touching all ten
+components and their tests, roughly twenty construction sites — or leave the
+gap recorded and let PR 6 or a later release carry it? Recommended: **make the
+change**, because §4's shape is what forces every component to discard
+information it already has, and `failures.csv` is the view an operator uses to
+find out *what* went wrong. But it is a specification change on a release
+already in flight, and the cost/benefit is Kurt's call.
 
 ### Item 4 entry gate — cleared; one sequencing call remains
 
@@ -1023,6 +1060,52 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 5 slice C: stage 9 emits a real three-class
+  distribution.** `MultinomialPerHazardScorer` (`multinomial_per_hazard`,
+  **working**) is registered alongside PR 1's `BaselineTwoHeadScorer`
+  (`baseline_two_head`, still **partial**), which stays because it is the only
+  implementation exercising `../ARCHITECTURE.md` §4's `distribution=None`
+  path. **624 tests, zero regressions**, `test_baseline_parity.py` unchanged.
+
+  **Verified end to end on the real artifact, not only on fixtures.**
+  `hrc-run` over interim dev rows with a freshly built
+  `artifacts/release_1_1_le` produced real distributions for both targets and
+  `argmax` labels — and phase C firing correctly on an `spc_lgl` row whose
+  *provisional* L was `L1` (0.137/0.863/0.001) while its **final** L was fixed
+  at `L0` with `decided_by == "C"`, the provisional judgment and its
+  distribution untouched. That is the plan's own §7 trap, observed rather than
+  argued.
+
+  **The maturity flip and the inventory removal both landed.** Stage 9 is
+  `working` in `../ARCHITECTURE.md` §7 row 9, and "L/E scoring's absent
+  distribution" is out of [D-47](DECISIONS.md#d-47)'s inventory in
+  [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md),
+  `../../README.md`, and §7's own prose count — which is back to **three**
+  partials, having now been wrong in *both* directions, and which now says so
+  where the count lives. **What did not change: both models are still reported
+  *not evaluated*.** That follows from having no approved per-outcome
+  criteria, which no maturity field can supply, and [D-68](DECISIONS.md#d-68)
+  remains a null result.
+
+  **The wiring slice B deferred here.** `profile.resolve_artifact` loads
+  either format, dispatching on the 1.1 manifest's declared `format`, and
+  `build_registry` selects stage 9's implementation **from the artifact**
+  rather than from a flag — the other scorer has no model in that artifact to
+  score with, so the mismatch is unrepresentable rather than a per-row failure.
+  `ResolvedRun.classifier` is renamed `artifact`; it is a
+  `HazardResponseClassifier` only half the time now.
+
+  **One PR 5 work item slice C did *not* close**, recorded so it is not lost:
+  *"Record every per-hazard `ComponentError` the scoring stage produces, not
+  just the first"* (inherited from PR 7's sweep). The constraint is not the
+  component's — `ComponentObservation.error` is a **single** optional error in
+  `../ARCHITECTURE.md` §4, so recording every one means changing that field to
+  a tuple across all ten components and their tests. That is a §4 amendment
+  and belongs in front of Kurt (`META_PLAN.md` §3), not inside a slice. It
+  stays an auditability gap and never a wrong result:
+  `HazardJudgment.failure_reason` is the authoritative per-hazard text and
+  phase D writes it for every failing hazard. **See Awaiting User.**
 
 - 2026-08-05 — **PR 5 slice B: the 1.1 evaluator artifact.** The deliverable
   [D-49](DECISIONS.md#d-49) deferred out of PR 1 and into PR 5, built to

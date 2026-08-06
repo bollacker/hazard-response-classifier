@@ -130,18 +130,21 @@ which components those are and why**, not restated here: it changes as PR 3
 through PR 5 land, and a hand-copied list in a second file is one more place
 that can fall out of sync with it — the same kind of gap `DECISIONS.md`
 D-47's own narrowing-2 correction records and fixes for a different
-document. **Four** components currently ship `partial`; `DECISIONS.md` D-50, D-51,
-and D-70 record the reasoning behind three of them (prompt repetition,
-decoding, disclaimer detection). The fourth is **L/E scoring**, which has
-no entry of its own: it is PR 1's wrapped baseline reporting
-`distribution=None` because two binary heads cannot produce the three-class
-multinomial `docs/SCIENCE.md` requires (`ARCHITECTURE.md` §4, §7 row 9), and
-it is the one item here with a scheduled end — it leaves the list when PR 5
-lands the real three-class model. *(Corrected 2026-08-05 by PR 7's closing
-sweep. This paragraph said "three", and dropped stage 9 — the same
-undercount, dropping the same item, that PR 4's sweep corrected in
-`ARCHITECTURE.md` §7's own prose. Take the list from §7's table, never from
-a prose count.)*
+document. **Three** components currently ship `partial` — prompt repetition,
+decoding, and disclaimer detection — and `DECISIONS.md` D-50, D-51, and D-70
+record the reasoning behind each. *(This count has been wrong twice, in
+opposite directions: PR 7's closing sweep corrected it from "three" to "four"
+after it dropped **L/E scoring**, and PR 5 slice C returned it to three by
+making stage 9 `working`. Take the list from §7's table, never from a prose
+count.)*
+
+**L/E scoring left this list on 2026-08-05**, when PR 5 landed the real
+three-class model: stage 9 now emits a genuine multinomial over L0/L1/L2 and
+E0/E1/E2 for every evaluated hazard, and decides by `argmax`. It was the one
+item here with a scheduled end. **That changes what stage 9 *produces*, and
+nothing about what is *known* about it** — see the next section: both models
+are still reported as *not evaluated*, and the structure they use was selected
+on a null result.
 
 **Five limitations are stated here directly** rather than left to
 `ARCHITECTURE.md` §7's table (added 2026-08-04; `DECISIONS.md` D-54 through
@@ -232,12 +235,21 @@ judgments — not synthetic, and not model-generated — but four things follow:
   Enablement models are reported as *not evaluated* whatever their measured
   numbers.
 
-The scorer shipping today is also **not the selected structure yet**: PR 5
-builds it. Until then stage 9 wraps the baseline's two binary heads, ships
-`partial`, and emits **no three-class distribution at all** — every
-`distribution` field in a result is `null`, because two binary heads cannot
-produce one and synthesizing a plausible-looking substitute would be a
-fabricated number (`docs/ARCHITECTURE.md` §7 row 9, §4).
+**The scorer shipping today is now the selected structure** (updated
+2026-08-05, PR 5 slice C; it previously said PR 5 had yet to build it). Stage 9
+loads a Release 1.1 evaluator artifact and emits a real three-class
+distribution for both Legitimization and Enablement, deciding by `argmax`. The
+models are fitted on the working text the preceding components produce (D-72)
+and on the fit half of the split alone (D-73), so the held-out slice stays
+held out.
+
+**None of that makes them evaluated.** A distribution that sums to 1 is a
+property of the arithmetic, not evidence the three numbers in it are right: a
+per-hazard cell fitted on roughly 42 rows returns three tidy numbers exactly as
+readily as a good one would. Approved per-outcome criteria still do not exist,
+so `docs/SCIENCE.md` §Evidence and outputs' not-evaluated rule continues to
+apply to both models, and the null result recorded above is unchanged by
+shipping the structure it selected.
 
 No quality, coverage, or scientific-success claim is made for any component
 §7 marks `partial` or `placeholder`, per `SCIENCE.md` §Evidence and outputs'

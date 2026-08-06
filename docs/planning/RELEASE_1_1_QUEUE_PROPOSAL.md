@@ -575,10 +575,11 @@ assembled evaluator works.
      for every published metric, the uncertainty estimate and method the
      Estimability paragraph requires.
 
-     **The Release 1.1 inventory is seven component items** (was five;
-     corrected 2026-08-04 after `DECISIONS.md` D-50 and D-51, and again
-     2026-08-05 by PR 4's closing sweep — see below). Two kinds, and the
-     second kind is the one that gets dropped:
+     **The Release 1.1 inventory is six component items** (was five;
+     corrected 2026-08-04 after `DECISIONS.md` D-50 and D-51; grew to seven
+     2026-08-05 by PR 4's closing sweep; **back to six 2026-08-05 when PR 5
+     slice C landed the real three-class scorer** — see below). Two kinds, and
+     the second kind is the one that gets dropped:
 
      - **Absent components** — the hazard, narrative, and refusal
        placeholders. Visibly unbuilt, so hard to overlook.
@@ -604,12 +605,22 @@ assembled evaluator works.
          unmeasurable because no human disclaimer labels exist. Phase C is
          one-directional, so the residual error hides violations rather than
          inventing them.
-       - **L/E scoring's absent distribution** — stage 9 ships `partial`
+       - ~~**L/E scoring's absent distribution** — stage 9 ships `partial`
          until PR 5 lands and reports `distribution=None`, because two
          binary heads cannot produce the three-class multinomial
          `SCIENCE.md` requires (`ARCHITECTURE.md` §7 row 9, §4). This is the
          one inventory item with a scheduled end: it leaves the list when
-         PR 5's real three-class model replaces the wrapped baseline.
+         PR 5's real three-class model replaces the wrapped baseline.~~
+         **Removed 2026-08-05 by PR 5 slice C** — the scheduled end arrived.
+         Stage 9 is `working`, `multinomial_per_hazard` emits a real
+         three-class distribution for both targets, and `ARCHITECTURE.md`
+         §7 row 9 records it. *(PR 1's `baseline_two_head` stays registered
+         and stays `partial`, but it is not what a 1.1 artifact runs, so it
+         is not a shortfall of the shipped release.)* **This removes a
+         `distribution=None` shortfall and nothing else:** both models are
+         still reported *not evaluated* — that follows from having no
+         approved per-outcome criteria, which no component reaching
+         `working` can supply — and D-68 remains a null result.
 
      A component marked `partial` in `ARCHITECTURE.md` §7 belongs in this
      inventory for the same reason a placeholder does: it is reported as

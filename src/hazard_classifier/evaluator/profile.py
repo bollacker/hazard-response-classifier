@@ -25,12 +25,22 @@ scope either way, so `RunContext` always carries a resolved one and
 `ARCHITECTURE.md` §2's invariant holds regardless of whether a profile
 supplied an explicit scope.
 
-**Artifact resolution is baseline-only in PR 7, deliberately**
-([D-49](../../docs/planning/DECISIONS.md#d-49)). `resolve_artifact` always
-loads the baseline artifact format via `model.load` -- there is no 1.1
-evaluator artifact yet. PR 5 adds the 1.1 branch beside it in that function;
-this module does not build an abstraction layer for a format that does not
-exist.
+**Artifact resolution handles both formats** (PR 5 slice C; the 1.1 format is
+[D-49](../../docs/planning/DECISIONS.md#d-49)'s deliverable, built in slice
+B). `resolve_artifact` dispatches on `artifact.is_evaluator_artifact` -- the
+1.1 `manifest.json` declares a `format`, the baseline's has no such key -- and
+`build_registry` selects the stage-9 implementation to match: a 1.1 artifact
+gets `MultinomialPerHazardScorer` (**working**, real three-class
+distributions), a baseline artifact gets `BaselineTwoHeadScorer`
+(**partial**, `distribution=None`).
+
+**Both scorers stay registered either way.** §6 keys the registry on
+`(stage, implementation_id)`, so a profile's `component_selection` can name
+either -- but only the one matching the loaded artifact can actually score,
+because the other has no model to score with. `build_registry` therefore
+registers exactly the one its artifact supports, and a profile naming the
+other is rejected by `open_run`'s registry validation with a message naming
+it, rather than failing every row at stage 9.
 
 **`rule_version` comes from the `RuleSet` actually used, never a literal
 typed into a profile that could drift from it** (§5's stated trap).
@@ -48,6 +58,7 @@ from typing import Mapping, NamedTuple
 
 from ..model import HazardResponseClassifier
 from ..model import load as _load_baseline_artifact
+from .artifact import EvaluatorArtifact, is_evaluator_artifact, load_artifact
 from .components.decoding import Decoder
 from .components.disclaimer import DisclaimerDetector
 from .components.embedding import (
@@ -63,7 +74,7 @@ from .components.integration import FinalIntegrator, RuleSet
 from .components.narrative import NarrativeDetectionPlaceholder
 from .components.refusal import RefusalDetectionPlaceholder
 from .components.repetition import PromptRepetitionDetector
-from .components.scoring import BaselineTwoHeadScorer
+from .components.scoring import BaselineTwoHeadScorer, MultinomialPerHazardScorer
 from .pipeline import STAGE_ORDER
 from .registry import Registry
 from .run import RunConfig, RunContext, open_run
@@ -136,19 +147,35 @@ def load_profile(path: str | Path) -> RunProfile:
     )
 
 
-def resolve_artifact(artifact_id: str | Path) -> HazardResponseClassifier:
-    """Resolve `artifact_id` to a loaded classifier.
+ResolvedArtifact = EvaluatorArtifact | HazardResponseClassifier
 
-    **PR 7 loads only the baseline artifact format** (D-49 defers the 1.1
-    evaluator artifact to PR 5): `artifact_id` names a baseline artifact
-    directory `model.load` can read, and this function is exactly that call.
 
-    **This is PR 5's extension point.** When the 1.1 artifact format exists,
-    the branch belongs here -- reading whichever marker (e.g. a
-    `manifest.json` field) distinguishes the two formats and dispatching to
-    the right loader -- not as a second, parallel resolution path elsewhere.
+def resolve_artifact(artifact_id: str | Path) -> ResolvedArtifact:
+    """Resolve `artifact_id` to a loaded artifact, of either format.
+
+    Dispatch is on the 1.1 `manifest.json`'s `format` field, which the
+    baseline manifest does not have -- a declared marker rather than a guess
+    at directory contents, so a corrupt 1.1 artifact reports *its own*
+    problem (`ArtifactError`) instead of being silently retried as a
+    baseline one.
+
+    This is the one place either format is loaded. A second, parallel
+    resolution path elsewhere is what would let the two drift.
     """
+    if is_evaluator_artifact(artifact_id):
+        return load_artifact(artifact_id)
     return _load_baseline_artifact(artifact_id)
+
+
+def _supported_hazards(artifact: ResolvedArtifact) -> frozenset[str]:
+    """The artifact's frozen supported hazard set -- what `hazard_scope`
+    defaults to (D-57) and what `run.validate_supplied_hazard` checks
+    against. For a 1.1 artifact that is `rules.json`'s set, derived at write
+    time from the fitted cells; for the baseline, `trained_hazards`.
+    """
+    if isinstance(artifact, EvaluatorArtifact):
+        return artifact.rules.supported_hazards
+    return frozenset(artifact.trained_hazards)
 
 
 class BuiltRegistry(NamedTuple):
@@ -164,19 +191,27 @@ class BuiltRegistry(NamedTuple):
 
 
 def build_registry(
-    classifier: HazardResponseClassifier,
+    artifact: ResolvedArtifact,
     *,
     text_view: str = "working",
     provider: EmbeddingProvider | None = None,
     pooling: PoolingStrategy | None = None,
     allow_download: bool = False,
 ) -> BuiltRegistry:
-    """Build and register the ten stage-1.1 components against `classifier`,
+    """Build and register the ten stage-1.1 components against `artifact`,
     and return the populated `Registry` plus their default selection.
 
     **The only place in PR 7 that imports `components/*`** (§1's standing
     constraint on the runner) -- `resolve` below, and slice C's runner after
     it, only ever go through the `Registry` this returns.
+
+    **Stage 9's implementation follows the artifact, not a flag.** A 1.1
+    evaluator artifact carries fitted multinomial cells and gets
+    `MultinomialPerHazardScorer`; a baseline artifact carries binary heads and
+    gets `BaselineTwoHeadScorer`. Selecting the other one is not a
+    configuration a caller should be able to express, because the model it
+    would need is not in the artifact -- so the mismatch is unrepresentable
+    here rather than a per-row failure later.
 
     `provider`/`pooling` default to the real `BgeEmbeddingProvider`/
     `MeanPooling` (offline by default, D-6 -- pass `allow_download=True` to
@@ -190,10 +225,20 @@ def build_registry(
     embedding_provider = provider or BgeEmbeddingProvider(allow_download=allow_download)
     pooling_strategy = pooling or MeanPooling()
 
-    rules = RuleSet(
-        enablement_only_hazards=classifier.enablement_only_hazards,
-        specialized_advice_hazards=classifier.specialized_advice_hazards,
-    )
+    if isinstance(artifact, EvaluatorArtifact):
+        # D-23: the frozen `rules.json` is the serve-time source of truth for
+        # both hazard-family sets, never installed config.
+        rules = RuleSet(
+            enablement_only_hazards=artifact.rules.enablement_only_hazards,
+            specialized_advice_hazards=artifact.rules.specialized_advice_hazards,
+        )
+        scorer = MultinomialPerHazardScorer(artifact)
+    else:
+        rules = RuleSet(
+            enablement_only_hazards=artifact.enablement_only_hazards,
+            specialized_advice_hazards=artifact.specialized_advice_hazards,
+        )
+        scorer = BaselineTwoHeadScorer(artifact)
 
     components = {
         "empty_response": EmptyResponseDetector(),
@@ -204,7 +249,7 @@ def build_registry(
         "refusal_detection": RefusalDetectionPlaceholder(),
         "disclaimer_detection": DisclaimerDetector(),
         "embedding": EmbeddingComponent(embedding_provider, pooling_strategy, text_view=text_view),
-        "scoring": BaselineTwoHeadScorer(classifier),
+        "scoring": scorer,
         "final_integration": FinalIntegrator(rules),
     }
 
@@ -219,14 +264,19 @@ def build_registry(
 class ResolvedRun(NamedTuple):
     """Everything `run.open_run` needed plus what produced it: the
     `RunContext` a batch runner attaches to every record, the `Registry`
-    that resolved it, and the loaded `classifier` (its `trained_hazards` is
-    what `run.validate_supplied_hazard` and slice C's per-row loop check
-    the supplied hazard against, without re-loading the artifact).
+    that resolved it, and the loaded `artifact` -- whose supported hazard set
+    is what `run.validate_supplied_hazard` and the runner's per-row loop
+    check the supplied hazard against, without re-loading it.
+
+    *(Renamed from `classifier` 2026-08-05 by PR 5 slice C: with the 1.1
+    format loadable, this is a `HazardResponseClassifier` only half the
+    time. Use `profile._supported_hazards` rather than reaching for a
+    format-specific attribute.)*
     """
 
     run_context: RunContext
     registry: Registry
-    classifier: HazardResponseClassifier
+    artifact: ResolvedArtifact
 
 
 def resolve(
@@ -244,18 +294,17 @@ def resolve(
     wider than the artifact supports is rejected here with a message naming
     it, unchanged.
     """
-    classifier = resolve_artifact(profile.artifact_id)
+    artifact = resolve_artifact(profile.artifact_id)
     built = build_registry(
-        classifier,
+        artifact,
         text_view=profile.text_view,
         provider=provider,
         pooling=pooling,
         allow_download=allow_download,
     )
 
-    hazard_scope = (
-        profile.hazard_scope if profile.hazard_scope is not None else frozenset(classifier.trained_hazards)
-    )
+    supported = _supported_hazards(artifact)
+    hazard_scope = profile.hazard_scope if profile.hazard_scope is not None else supported
 
     component_selection = dict(built.component_selection)
     if profile.component_selection is not None:
@@ -267,6 +316,6 @@ def resolve(
         artifact_id=profile.artifact_id,
         rule_version=built.rule_version,
     )
-    run_context = open_run(config, built.registry, classifier.trained_hazards)
+    run_context = open_run(config, built.registry, supported)
 
-    return ResolvedRun(run_context=run_context, registry=built.registry, classifier=classifier)
+    return ResolvedRun(run_context=run_context, registry=built.registry, artifact=artifact)

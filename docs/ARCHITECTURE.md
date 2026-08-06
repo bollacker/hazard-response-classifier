@@ -510,24 +510,32 @@ Rules that make replaceability real:
 | 6 | Refusal detection | **placeholder** | Nothing external blocks building it. Held back for 1.1 (D-54) to keep the release's unevaluated surface enumerable: it would have no ground truth and no approved criterion, so it could report nothing but *not evaluated* |
 | 7 | Disclaimer detection | **partial** | Baseline disclaimer patterns wrapped, **three of the four**, per §7.2. Publishes `named["disclaimer_stripped"]` for C-4's comparison but does not remove from `working` (D-55). Two `SCIENCE.md` qualifying forms are unimplemented and precision is unmeasured — §7.2 |
 | 8 | Shared embedding | **working** | §8 |
-| 9 | L and E scoring | **working** *(target)*; **partial** until PR 5 lands | Three-class multinomial per evaluated hazard. **Structure selected 2026-08-05 by [`planning/DECISIONS.md` D-68](planning/DECISIONS.md#d-68)** — a per-hazard flat multinomial softmax; queue item 2 is closed. PR 1's wrapped baseline is partial and reports `distribution=None` (§4); PR 5 replaces it |
+| 9 | L and E scoring | **working** | Three-class multinomial per evaluated hazard, per [`planning/DECISIONS.md` D-68](planning/DECISIONS.md#d-68)'s selected structure. Built by PR 5 slice C as `multinomial_per_hazard`, which is what a 1.1 artifact selects; it fills `Judgment.distribution` and decides by `argmax`. PR 1's `baseline_two_head` **stays registered** and stays **partial** — it reports `distribution=None` (§4) and is the only implementation exercising that path — but it is not what a 1.1 artifact runs. **`working` describes the component, not its quality:** both models are reported *not evaluated* (`SCIENCE.md` §Evidence and outputs) and D-68 is a null result |
 | 10 | Final integration | **working** | §9 |
 
-Three placeholders and **four** partials ship visibly (decoding joined them
-2026-08-04 under `planning/DECISIONS.md` D-51). `SCIENCE.md` §Evidence and
-outputs requires each to be reported as *not evaluated*, and D-47 requires the
-release's limitations document to enumerate exactly these — including
-decoding's stubbed failure trigger and stage 4's exact-only scope (D-50),
-both of which are shortfalls against a stated success criterion rather than
-absent components.
+Three placeholders and **three** partials ship visibly (decoding, prompt
+repetition, disclaimer detection). `SCIENCE.md` §Evidence and outputs requires
+each to be reported as *not evaluated*, and D-47 requires the release's
+limitations document to enumerate exactly these — including decoding's stubbed
+failure trigger (D-51) and stage 4's exact-only scope (D-50), both of which are
+shortfalls against a stated success criterion rather than absent components.
 
-**Corrected 2026-08-05, PR 4's closing sweep: this sentence said "three"
-partials while the table above marked four.** Stage 9 is the fourth — it ships
-`partial` today and reports `distribution=None`, and it stops being an
-inventory item only when PR 5 replaces it. The count matters because D-47's
-narrowing 2 generates the limitations inventory from *this table*, so a prose
-count that disagrees with it drops an item for anyone who enumerates from the
-sentence rather than the rows. Take the list from the table.
+**This count has been wrong twice, in opposite directions, and both times a
+prose sentence disagreed with the table above it.** PR 4's closing sweep found
+it saying "three" while the table marked four — stage 9 was the missing one.
+PR 5 slice C then made stage 9 **working**, so four became three again. The
+count matters because D-47's narrowing 2 generates the limitations inventory
+from *this table*: a prose count that disagrees with it either drops an item or
+invents one, for anyone who enumerates from the sentence rather than the rows.
+**Take the list from the table, every time.**
+
+**Stage 9's departure is the one inventory item that had a scheduled end**, and
+it has now been reached: the "L/E scoring's absent distribution" entry leaves
+D-47's inventory with PR 5 slice C. Nothing else leaves it in Release 1.1.
+What does *not* change is that both models remain **not evaluated** — that is
+a `SCIENCE.md` §Evidence and outputs consequence of having no approved
+per-outcome criteria, not a maturity field, and no component reaching
+`working` can discharge it.
 
 ### 7.1 Prompt-repetition detection for 1.1
 
