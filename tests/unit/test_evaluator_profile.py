@@ -5,6 +5,7 @@ artifact resolution (slice B, `docs/planning/PR7_EXECUTION_PLAN.md` §5).
 from __future__ import annotations
 
 import ast
+import re
 import json
 from pathlib import Path
 from typing import ClassVar
@@ -364,6 +365,74 @@ def test_profile_text_view_flows_to_the_embedded_text_and_into_results_jsonl() -
 # --- Artifact-format dispatch (PR 5 slice C, `PR5_EXECUTION_PLAN.md` §7) ---
 
 GOLDEN_1_1_ARTIFACT = Path(__file__).resolve().parents[1] / "golden" / "evaluator_1_1" / "artifact"
+
+ARCHITECTURE_MD = Path(profile.__file__).resolve().parents[3] / "docs" / "ARCHITECTURE.md"
+
+
+def _section_7_maturities() -> list[tuple[int, str, str]]:
+    """Parse `ARCHITECTURE.md` §7's component-inventory table into
+    `(row number, stage name, maturity)`. The table's rows are numbered in
+    pipeline order, so row *n* is `STAGE_ORDER[n - 1]`.
+    """
+    lines = ARCHITECTURE_MD.read_text(encoding="utf-8").splitlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith("## 7. Component inventory"))
+    rows = []
+    for line in lines[start : start + 20]:
+        match = re.match(r"^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*\*{0,2}(\w+)\*{0,2}\s*\|", line)
+        if match:
+            rows.append((int(match.group(1)), match.group(2), match.group(3)))
+    return rows
+
+
+def test_architecture_section_7_matches_every_components_real_maturity() -> None:
+    """**`ARCHITECTURE.md` §7's table is not documentation, it is the source
+    D-47's limitations inventory is generated from** — "every component §7
+    marks `partial` or `placeholder` belongs in the inventory"
+    ([D-47](../../docs/planning/DECISIONS.md#d-47)'s 2026-08-04 correction).
+    Nothing checked it against the code, and **six consecutive verification
+    sweeps found that inventory stale**, in both directions. A prose table
+    maintained by hand is exactly the shape that goes stale silently.
+
+    So this joins the two: §7's rows, in pipeline order, against the
+    `maturity` every registered component actually declares. A component whose
+    maturity changes without §7 moving with it now fails here rather than in
+    the next sweep -- or, worse, in a limitations document that under- or
+    over-states what shipped.
+
+    **Built against the 1.1 artifact deliberately.** Stage 9's implementation
+    follows the artifact, and §7 row 9 describes what *a 1.1 artifact runs*
+    (`multinomial_per_hazard`, `working`). PR 1's `baseline_two_head` stays
+    registered and stays `partial`, but it is not the shipped release's
+    scorer, which is why the row says `working` and why resolving a baseline
+    artifact here would compare against the wrong implementation.
+    """
+    from hazard_classifier.evaluator.artifact import load_artifact
+
+    rows = _section_7_maturities()
+    assert [row[0] for row in rows] == list(range(1, len(pipeline.STAGE_ORDER) + 1)), (
+        "§7's table must carry one numbered row per pipeline stage, in order"
+    )
+
+    built = profile.build_registry(
+        load_artifact(GOLDEN_1_1_ARTIFACT), provider=_CapturingProvider(), pooling=_StubPooling()
+    )
+
+    documented = {}
+    actual = {}
+    for (number, name, maturity), stage in zip(rows, pipeline.STAGE_ORDER):
+        component = built.registry.get(stage, built.component_selection[stage])
+        documented[f"{number} {name}"] = maturity
+        actual[f"{number} {name}"] = component.maturity
+
+    assert actual == documented
+
+    # And the generated inventory is what the specifications claim it is:
+    # three placeholders and three partials, six items in all
+    # (`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6, `README.md`). Asserted on the
+    # generated set, never on a copied list -- that is the whole point.
+    inventory = {name: m for name, m in documented.items() if m in ("partial", "placeholder")}
+    assert sorted(inventory.values()) == ["partial"] * 3 + ["placeholder"] * 3
+    assert len(inventory) == 6
 
 
 def test_resolve_artifact_loads_the_baseline_format() -> None:

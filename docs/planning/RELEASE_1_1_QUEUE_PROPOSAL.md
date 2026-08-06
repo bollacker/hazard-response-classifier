@@ -731,8 +731,43 @@ assembled evaluator works.
        sweeping rather than inherited: before PR 5 there was no fitted model
        for the gap to be a property of.)*
 
-     Under [D-58](DECISIONS.md#d-58) Release 1.1 ships **pre-staging**, so
-     this inventory is disclosed inline in `README.md` §Release 1.1
+     **Two more, added 2026-08-06 by PR 6 slices B and C.** Both are
+     `SCIENCE.md` **verification** shortfalls rather than component or model
+     ones, which is a kind this inventory had not previously carried:
+
+     - **`SCIENCE.md`'s rule-verification list is not fully satisfied**
+       (slice B, [`PR6_RULE_VERIFICATION.md`](PR6_RULE_VERIFICATION.md)).
+       Four of its six items are met by named tests; *"the L and E judgment
+       guidance, tested against human labels"* is not, and **five of the nine
+       rule families that list names — ambiguity, CSE-literalness,
+       contradiction, content-as-harm, actionability — are not separately
+       testable at all**, being annotation rules `SCIENCE.md`'s appendix
+       explicitly says are "not instructions for the final step to judge the
+       response again." Their only verification route is the unmet item.
+       **This is the same blocker as the not-evaluated models** — approved
+       per-outcome criteria and a fixed in-version human evaluation set — and
+       a limitations document must say so, or a reader counts it twice.
+     - **The failure path is unreachable in a real run** (slice C,
+       [`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) §4). Every hazard the
+       shipped artifact supports has every cell phase D requires, hazard
+       detection adds none, and phase B1 supplies a complete L/E pair for
+       every exhausted row — so `failures.csv` is written on every run and is
+       **always empty**. The failure machinery is verified by tests against an
+       artifact with a genuinely unavailable cell, never by a real run. A
+       property of this artifact, not of the rules: a re-fit leaving any cell
+       single-class ([D-45](DECISIONS.md#d-45)) makes it reachable again.
+
+     **So the inventory stands at six component items and seven
+     non-component ones.** Both halves were regenerated from
+     `ARCHITECTURE.md` §7's table on 2026-08-06 rather than copied — the
+     component half is exactly the table's three `placeholder` and three
+     `partial` rows, and the count agreed with this list for the first time
+     in seven sweeps.
+
+     Release 1.1 ships **pre-staging** — decided 2026-08-05 as
+     [D-81](DECISIONS.md#d-81) on the evidence, discharging
+     [D-58](DECISIONS.md#d-58)'s exit item rather than inheriting its default
+     — so this inventory is disclosed inline in `README.md` §Release 1.1
      evaluator status rather than in a separate versioned document. The
      document itself is required only on promotion.
   3. **It discharges D-2 and D-8's disclosure obligation**, via whichever

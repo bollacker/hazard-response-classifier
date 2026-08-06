@@ -607,6 +607,18 @@ limitations document to enumerate exactly these — including decoding's stubbed
 failure trigger (D-51) and stage 4's exact-only scope (D-50), both of which are
 shortfalls against a stated success criterion rather than absent components.
 
+**This table is now pinned by a test** (added 2026-08-06 by PR 6 slice D):
+`test_architecture_section_7_matches_every_components_real_maturity` parses the
+rows above and compares each against the `maturity` the registered component
+actually declares, then asserts the generated inventory is three `partial` and
+three `placeholder`. It is built against a **1.1** artifact, because row 9
+describes what a 1.1 artifact runs. **Editing a maturity here without changing
+the component — or the reverse — now fails the suite** rather than surviving to
+the next sweep or, worse, into a limitations document. That is the direct
+countermeasure to the history below: six consecutive sweeps found D-47's
+inventory stale, and every one of them was a hand-maintained list drifting from
+this hand-maintained table.
+
 **This count has been wrong twice, in opposite directions, and both times a
 prose sentence disagreed with the table above it.** PR 4's closing sweep found
 it saying "three" while the table marked four — stage 9 was the missing one.
