@@ -584,9 +584,10 @@ implementation.
 
 PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**, and as of
 PR 5 slice C it **scores with the real three-class model**. **PR 5 is in
-progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0, A, B and C
+progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0, A, B, C and D
 are complete and it waits on nothing external; a session starts at its
-**slice D** (evaluation and reporting).
+**slice E** — the verification sweep and the close, which is what gate G-3
+blocks.
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -649,9 +650,12 @@ Detailed phased proposal:
    **PR 5 (L/E training, scoring, and evaluation) is in progress.** Execution
    plan: [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md). Slice 0 (the
    working-text measurement behind [D-72](DECISIONS.md#d-72)), **slice A (the
-   production fitter)**, **slice B (the 1.1 artifact)** and **slice C (the
-   scoring component)** are complete; slices D and E remain, and gate G-3
-   blocks only the close. Nothing new was decided in any of them — they build
+   production fitter)**, **slice B (the 1.1 artifact)**, **slice C (the
+   scoring component)** and **slice D (the per-outcome report)** are complete;
+   only slice E remains, and gate G-3 is what it waits on. The dev-slice
+   figures are in [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md), **every one of
+   them reported *not evaluated*.** Nothing new was decided in any of them —
+   they build
    D-68's structure, on D-72's text, over D-73's rows, and write the payload
    [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) §6
    already fixed. Slice A's central claim is **verified rather than stated**:
@@ -660,8 +664,9 @@ Detailed phased proposal:
    (`max|diff| = 0.0`, both targets, identical unavailable-cell sets). Slice B
    closes [D-49](DECISIONS.md#d-49), and `../ARCHITECTURE.md` §10.1 now
    describes the payload as built. Slice C makes **stage 9 `working`** and
-   removes the one D-47 inventory item that had a scheduled end. **624 tests,
-   zero regressions**, `test_baseline_parity.py` unchanged.
+   removes the one D-47 inventory item that had a scheduled end. Slice D
+   publishes the per-outcome numbers. **643 tests, zero regressions**,
+   `test_baseline_parity.py` unchanged.
 
    **PR 7 has a written plan:
    [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
@@ -1036,6 +1041,54 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 5 slice D: the per-outcome report, every figure marked
+  *not evaluated*.** `scripts/report_le_dev_metrics.py` scores the dev slice
+  with the shipped artifact and generates **both**
+  [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) and `pr5_results/dev_metrics.json`
+  so they cannot drift; `../../README.md` §Release 1.1 evaluator status carries
+  the summary table. **643 tests, zero regressions.** `metrics.json` is
+  deliberately **not** built — `views.py` now records that one of its two
+  blockers cleared and the other, approved criteria, did not, and that the
+  second is the one deciding whether a shipped view is honest (PR 6's call
+  with [D-58](DECISIONS.md#d-58)).
+
+  | | class 0 | class 1 | class 2 | Macro-F1 | Worst class |
+  |---|---|---|---|---|---|
+  | **L** F1 | 0.722 | 0.462 | 0.290 | 0.491 (0.405–0.566) | 0.290 (0.119–0.442) |
+  | **E** F1 | 0.756 | 0.333 | 0.427 | 0.506 (0.430–0.580) | 0.333 (0.189–0.437) |
+
+  **The macro is not the number worth reading.** L2 recall is **0.222** — of
+  45 dev rows a human judged L2, the model labels about 10 that way — and E1
+  recall is **0.280**. Both models under-claim their weaker class and are
+  comparatively accurate when they do claim it. That asymmetry is invisible in
+  F1 and invisible in a macro, which is why precision and recall are reported
+  separately. Whether it is acceptable is what approved criteria would decide,
+  and there are none.
+
+  **Two findings, both from reading the output rather than writing it.**
+
+  1. **Per-hazard intervals are degenerate in the direction that misleads.**
+     Almost every hazard has **three** prompt groups in the dev slice, and a
+     cluster bootstrap over three groups has only ten distinct resamples in
+     existence — so a *narrow* per-hazard interval means fewer clusters, not
+     more certainty, which is the opposite of how a table is read. Rows are
+     marked `†` and the caution sits beside the table. The honest summary is
+     that per-hazard reporting is **not supportable on this data**; it is
+     included because omitting it would mislead more.
+  2. **The figures are not comparable with D-68's, and the temptation runs
+     the opposite way from the one the plan warned about.** `PR5_EXECUTION_PLAN.md`
+     §13 warns against a session tempted to *fix* a structure that looks poor.
+     The live risk here is the mirror: L's macro-F1 is 0.491 against D-68's
+     recorded 0.4336, and reading that as the working-text refit having helped
+     would manufacture a result. Same dev slice, different input view, **no
+     paired test**, and `PREREGISTRATION_LE_STRUCTURE.md` §5 reserves any such
+     comparison for a re-issued selection. Said plainly in both the report and
+     `README.md`.
+
+  **The prose that reads the table is generated from the table**, so a re-run
+  cannot leave sentences describing figures that changed — and it is tested
+  for what it must never say, which is whether the numbers are good.
 
 - 2026-08-05 — **[D-76](DECISIONS.md#d-76): a component observation records
   every error it produced.** Kurt accepted the §4 amendment slice C raised

@@ -23,6 +23,16 @@ Two things the plan warns go wrong here, and both inflate confidence:
 
 L and E are computed by calling these on each target's own rows -- nothing
 here knows which target it is looking at.
+
+**`per_class_precision` and `per_class_recall` were added 2026-08-05 for PR 5
+slice D's per-outcome report** (`PR5_EXECUTION_PLAN.md` §8: "per-class recall,
+precision, and F1", because a single accuracy figure hides a rare class).
+They are additive: no selection path reads them, `stage1.json`/`stage2.json`
+are unaffected, and every function queue item 2's rule depends on is
+untouched. They live here rather than in the reporting script so the
+uncertainty around them comes from `cluster_bootstrap_interval` -- the
+already-tested cluster bootstrap -- rather than from a second implementation
+of the one thing this module's docstring opens by warning about.
 """
 
 from __future__ import annotations
@@ -262,6 +272,33 @@ def per_class_f1(y_true, y_pred) -> np.ndarray:
         denominator = precision + recall
         f1 = np.where(denominator > 0, 2 * precision * recall / denominator, 0.0)
     return f1
+
+
+def per_class_precision(y_true, y_pred) -> np.ndarray:
+    """Per-class precision over classes 0, 1, 2 -- of the rows the model
+    called class `k`, how many were class `k`.
+
+    A class the model never predicts scores **0**, matching `per_class_f1`'s
+    `zero_division=0` convention. Reported alongside recall because the two
+    fail in opposite directions and F1 alone cannot say which: a class with
+    F1 0.30 built from precision 0.90 / recall 0.18 is a model that almost
+    never claims the class and is usually right when it does, which is a
+    different object from one at precision 0.18 / recall 0.90.
+    """
+    counts = confusion_matrix(y_true, y_pred).astype(np.float64)
+    predicted = counts.sum(axis=0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(predicted > 0, np.diag(counts) / predicted, 0.0)
+
+
+def per_class_recall(y_true, y_pred) -> np.ndarray:
+    """Per-class recall over classes 0, 1, 2 -- of the rows that truly were
+    class `k`, how many the model found. Zero-division convention as above.
+    """
+    counts = confusion_matrix(y_true, y_pred).astype(np.float64)
+    actual = counts.sum(axis=1)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(actual > 0, np.diag(counts) / actual, 0.0)
 
 
 def macro_f1_score(y_true, y_pred) -> float:

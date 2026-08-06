@@ -26,6 +26,8 @@ from hazard_classifier.experiments.comparison_metrics import (
     macro_f1_score,
     paired_cluster_bootstrap,
     per_class_f1,
+    per_class_precision,
+    per_class_recall,
     worst_class_f1_score,
 )
 
@@ -355,3 +357,71 @@ def test_interval_dataclasses_are_json_ready():
 
     for payload in (paired, marginal, metrics):
         assert all(isinstance(v, (int, float, bool, list)) for v in payload.values())
+
+
+# --- Per-class precision and recall (PR 5 slice D) ------------------------
+
+
+def test_per_class_precision_and_recall_on_a_hand_computable_confusion():
+    """A confusion small enough to check by hand, so the two are pinned
+    independently of each other and of F1.
+
+    true:  0 0 0 1 1 2
+    pred:  0 1 1 1 2 2
+      class 0: TP 1, predicted 1, actual 3  -> P 1.0,  R 1/3
+      class 1: TP 1, predicted 3, actual 2  -> P 1/3,  R 0.5
+      class 2: TP 1, predicted 2, actual 1  -> P 0.5,  R 1.0
+    """
+    y_true = np.array([0, 0, 0, 1, 1, 2])
+    y_pred = np.array([0, 1, 1, 1, 2, 2])
+
+    np.testing.assert_allclose(per_class_precision(y_true, y_pred), [1.0, 1 / 3, 0.5])
+    np.testing.assert_allclose(per_class_recall(y_true, y_pred), [1 / 3, 0.5, 1.0])
+
+
+def test_precision_and_recall_agree_with_the_f1_already_pinned_here():
+    """F1 is the harmonic mean of these two. Checking the identity is what
+    stops three separate implementations from drifting apart.
+    """
+    rng = np.random.default_rng(20260805)
+    y_true = rng.integers(0, 3, size=200)
+    y_pred = rng.integers(0, 3, size=200)
+
+    precision = per_class_precision(y_true, y_pred)
+    recall = per_class_recall(y_true, y_pred)
+    expected = np.where(precision + recall > 0, 2 * precision * recall / (precision + recall), 0.0)
+
+    np.testing.assert_allclose(per_class_f1(y_true, y_pred), expected)
+
+
+def test_a_class_the_model_never_predicts_scores_zero_not_undefined():
+    """The `zero_division=0` convention `per_class_f1` already documents. A
+    model that abandons a class must score 0 on it, or the per-outcome report
+    quietly omits the outcome that matters most.
+    """
+    y_true = np.array([0, 1, 2, 2])
+    y_pred = np.array([0, 0, 0, 0])
+
+    assert list(per_class_precision(y_true, y_pred)[1:]) == [0.0, 0.0]
+    assert list(per_class_recall(y_true, y_pred)[1:]) == [0.0, 0.0]
+
+
+def test_they_carry_a_bootstrap_interval_through_the_existing_machinery():
+    """Slice D reports every figure with an uncertainty estimate
+    (`SCIENCE.md` §Evidence and outputs, Estimability). These plug into
+    `cluster_bootstrap_interval` as ordinary metrics -- no second bootstrap.
+    """
+    rng = np.random.default_rng(7)
+    y_true = rng.integers(0, 3, size=120)
+    predictions = Predictions(labels=rng.integers(0, 3, size=120), scored=np.ones(120, dtype=bool))
+    groups = np.repeat(np.arange(30), 4)
+
+    interval = cluster_bootstrap_interval(
+        y_true,
+        predictions,
+        groups,
+        metric=lambda yt, yp: float(per_class_recall(yt, yp)[1]),
+        n_resamples=50,
+    )
+    assert interval.ci_low <= interval.point_estimate <= interval.ci_high
+    assert interval.n_groups == 30

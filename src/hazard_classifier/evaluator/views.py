@@ -14,11 +14,19 @@ Three of §11's four views are built here:
   slice C alongside the batch runner that produces the records it reads
   (`docs/planning/PR7_EXECUTION_PLAN.md` §6).
 
-`metrics.json` is still not built: it needs the per-outcome metrics and
-uncertainty estimates `SCIENCE.md` §Estimability requires, which are blocked
-on PR 5's real three-class model *and* on the Standards team's approved
-criteria -- and only the first of those clears with PR 5, so whether the view
-ships at all is PR 6's call. Naming it as unbuilt is the point.
+`metrics.json` is still not built, and the reason has narrowed rather than
+gone away (updated 2026-08-05, PR 5 slice D). It needs the per-outcome
+metrics and uncertainty estimates `SCIENCE.md` §Estimability requires, which
+were blocked on two things: PR 5's real three-class model **and** the
+Standards team's approved criteria. **The first has cleared** -- PR 5
+produces exactly those figures, per outcome, each with a cluster-bootstrap
+interval (`scripts/report_le_dev_metrics.py`,
+`docs/planning/PR5_DEV_METRICS.md`). The second has not, and it is the one
+that decides whether a *shipped view* is honest: without approved criteria
+every figure is reported *not evaluated*, and a `metrics.json` sitting in an
+output directory is read as a scorecard no matter what its fields say.
+So PR 5 produces the **report**; whether the **view** ships is PR 6's call
+alongside the promotion decision (D-58). Naming it as unbuilt is the point.
 
 **Run rejections are not in `failures.csv`** (§11 row 4, §2). A rejection
 aborts the run before any row is scored, so it produces no record for a view

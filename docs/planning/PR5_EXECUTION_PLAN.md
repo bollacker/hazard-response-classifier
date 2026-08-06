@@ -39,11 +39,12 @@ all three before starting.**
 
 **Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
 production fitter, B the artifact, C the scoring component, D evaluation and
-reporting, E the sweep and close. **Slices 0, A, B and C have run** (all
-2026-08-05, §4–§7) and **§3's gate questions G-1 and G-2 are answered and
+reporting, E the sweep and close. **Slices 0, A, B, C and D have run** (all
+2026-08-05, §4–§8) and **§3's gate questions G-1 and G-2 are answered and
 absorbed** ([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73)): fit on
-pipeline working text, fit split only. **A session starts at slice D.** G-3
-stays open and blocks only the close.
+pipeline working text, fit split only. **A session starts at slice E** — the
+verification sweep and the close. G-3 is the one thing still open, and it
+blocks exactly that.
 
 ---
 
@@ -79,7 +80,7 @@ specification, not the entry.
 - **Baseline is green: 525 tests**, `pytest` from the repo root, ~23 s.
   (Corrected 2026-08-05 at slice A: 433 was PR 4's count, written before PR 7
   landed 92 more. Slice A takes it to **576** in ~40 s — see §5 — slice B to
-  **600**, slice C to **624**, and D-76 to **628** in ~43 s.)
+  **600**, slice C to **624**, D-76 to **628**, and slice D to **643** in ~41 s.)
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine.
 - The data exists and is frozen: `data/interim_split_v1.json` (`interim-v1`,
@@ -602,6 +603,56 @@ unavailable cells fail their hazard rather than inventing a judgment, and the
 maturity flip and inventory removal both land.
 
 ## 8. Slice D — Evaluation and reporting
+
+> **Complete** (2026-08-05). **643 tests, zero regressions.**
+> `scripts/report_le_dev_metrics.py` scores the dev slice with the shipped
+> artifact and generates **both** outputs so they cannot drift:
+> [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) and
+> `pr5_results/dev_metrics.json`. `README.md` §Release 1.1 evaluator status
+> carries the summary table. `metrics.json` is **not** built (§8's rule);
+> `views.py` now records that one of its two blockers cleared and the other
+> — approved criteria — did not, which is the one that decides whether a
+> shipped view is honest.
+>
+> **The dev-slice figures, all reported *not evaluated*:**
+>
+> | | class 0 | class 1 | class 2 | Macro-F1 | Worst class |
+> |---|---|---|---|---|---|
+> | **L** F1 | 0.722 | 0.462 | 0.290 | 0.491 (0.405–0.566) | 0.290 (0.119–0.442) |
+> | **E** F1 | 0.756 | 0.333 | 0.427 | 0.506 (0.430–0.580) | 0.333 (0.189–0.437) |
+>
+> **The macro is not the number worth reading.** L2 recall is **0.222** — of
+> 45 dev rows a human judged L2, the model labels about 10 that way — and E1
+> recall is **0.280**. Both models under-claim their weaker class and are
+> comparatively accurate when they do claim it. That asymmetry is invisible in
+> F1 and invisible in a macro, which is exactly why §8 requires precision and
+> recall separately.
+>
+> **Two things the plan did not anticipate, both found by looking at the
+> output rather than by writing it.**
+>
+> 1. **Per-hazard intervals are degenerate, and degenerate in the direction
+>    that misleads.** §8 says to report intervals rather than point estimates
+>    because per-hazard claims are weak — but almost every hazard has **three**
+>    prompt groups in the dev slice, and a cluster bootstrap over three groups
+>    has only ten distinct resamples in existence. So a *narrow* per-hazard
+>    interval means fewer clusters, not more certainty, which is the opposite
+>    of how a reader parses a table. Rows below the threshold are marked `†`
+>    and the caution sits beside the table, not in a footnote. The honest
+>    summary is that per-hazard reporting is **not supportable on this data**;
+>    it is included because omitting it would mislead more.
+> 2. **The figures are not comparable with D-68's, and the temptation runs the
+>    *other* way from §13's warning.** §13 warns about a session tempted to fix
+>    a structure that looks poor. The mirror risk is live here: L's macro-F1 is
+>    0.491 against D-68's recorded 0.4336, and reading that as "the working-text
+>    refit helped" would manufacture a result. Same dev slice, different input
+>    view, **no paired test** — and §5 reserves any such comparison for a
+>    re-issued selection. Stated in the report and in `README.md`.
+>
+> **The prose that reads the table is generated from the table**
+> (`_describe_outcomes`), so a re-run cannot leave the sentences describing
+> figures that changed — and it is tested for what it must never say, which is
+> whether the numbers are good.
 
 What PR 5 owes that is not code: per-outcome numbers that cannot be mistaken
 for a benchmark.
