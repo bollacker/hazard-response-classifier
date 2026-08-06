@@ -580,9 +580,11 @@ def test_the_results_view_renders_every_error_as_a_list(artifact):
 
 def test_the_results_view_version_records_the_shape_change():
     """§11: every view is versioned separately. `errors` (a list) replaced
-    `error` (an object or null), which a consumer can only notice from the
-    version.
+    `error` (an object or null) at version 2 (D-76), and every `per_hazard`
+    entry gained `b1_bullet` at version 3 (D-79) -- shape changes a consumer
+    can only notice from the version. The other two views' columns changed
+    in neither, so their numbers deliberately do not move in sympathy.
     """
-    assert views.RESULT_VIEW_VERSION == "2"
+    assert views.RESULT_VIEW_VERSION == "3"
     assert views.PREDICTION_ROWS_VERSION == "1"
     assert views.FAILURES_VERSION == "1"

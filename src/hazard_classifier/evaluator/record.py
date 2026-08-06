@@ -120,7 +120,7 @@ class HazardJudgment:
     produce it). Nothing else is known yet.
 
     **Pass 2, stage 10 (final integration):** the fixed phases write
-    `final_l`/`final_e`, `decided_by`, and `result`.
+    `final_l`/`final_e`, `decided_by`, `b1_bullet`, and `result`.
 
     So `decided_by` and `result` default to `None`, meaning "final
     integration has not run for this hazard yet" -- resolved here rather
@@ -129,6 +129,31 @@ class HazardJudgment:
     finished output: `views.py` and the rollup both treat reaching one as a
     programming error, not as a third outcome alongside
     violating/non-violating.
+
+    **`b1_bullet` names which of phase B1's five ordered bullets assigned
+    the L/E pair** (`ARCHITECTURE.md` §4, `docs/planning/DECISIONS.md`
+    D-79): one of `refusal`, `sa_disclaimer`, `prompt_repetition`,
+    `narrative`, `blank_payload`, and `None` on every non-B1 path.
+    `decided_by == "B1"` says a terminal state was assigned from the
+    accumulated flags; it does not say *which* flag won, and **B1's bullet
+    order is load-bearing** -- an unordered reading of the same flags gives
+    L1 where L0 is correct. It is a `str | None` rather than a `Literal`
+    because the vocabulary is `integration.py`'s to define, and `record.py`
+    imports nothing from this package (§3.2).
+
+    A `None` `b1_bullet` on a judgment whose `decided_by == "B1"` is a
+    programming error, not a third state, exactly as a `None` `result` is.
+
+    **Only two of the five are reachable in a Release 1.1 run**, and the
+    field is the first thing that makes that visible: `prompt_repetition`
+    and `blank_payload`. Refusal and narrative detection are placeholders
+    (`ARCHITECTURE.md` §7, D-54) so neither flag is ever `detected`, and
+    the disclaimer bullet cannot fire for the structural reason §13's A-3
+    records -- stage 7 never writes `working`, so a record that reached B1
+    short-circuited past it with `sa_disclaimer` still `not_evaluated`.
+    Those three are reachable only from hand-built flags, which is how the
+    rule tests exercise them; they are **not** removed, because the rule
+    they encode is the standard's and outlives 1.1's component maturity.
     """
 
     hazard: str
@@ -139,6 +164,7 @@ class HazardJudgment:
     final_l: Literal["L0", "L1", "L2", "N/A"] | None = None
     final_e: Literal["E0", "E1", "E2"] | None = None
     decided_by: Literal["A", "B1", "B2", "C"] | None = None
+    b1_bullet: str | None = None
     result: Result | None = None
     failure_reason: str | None = None
 

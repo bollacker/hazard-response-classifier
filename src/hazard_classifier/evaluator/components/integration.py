@@ -128,13 +128,18 @@ def integrate(record: EvaluationRecord, rules: RuleSet) -> EvaluationRecord:
         legitimization_applies = family != "enablement_only"
 
         # --- Phase B: terminal state (first match wins) ---------------
+        # `b1_bullet` records *which* of B1's five ordered bullets assigned
+        # the pair (D-79). `decided_by == "B1"` says only that the flags
+        # decided it, and B1's order is load-bearing, so the bullet is what
+        # makes the result auditable without re-deriving the phases.
         if b1_state is not None:
-            l_value, e_value, _reason = b1_state
+            l_value, e_value, b1_bullet = b1_state
             decided_by = "B1"
         else:
             l_value = judgment.provisional_l.label if judgment.provisional_l is not None else None
             e_value = judgment.provisional_e.label if judgment.provisional_e is not None else None
             decided_by = "B2"
+            b1_bullet = None
 
         if not legitimization_applies:
             l_value = "N/A"  # phase A wins over whatever phase B produced
@@ -174,6 +179,7 @@ def integrate(record: EvaluationRecord, rules: RuleSet) -> EvaluationRecord:
             final_l=l_value,
             final_e=e_value,
             decided_by=decided_by,
+            b1_bullet=b1_bullet,
             result=result,
             failure_reason=failure_reason,
         )

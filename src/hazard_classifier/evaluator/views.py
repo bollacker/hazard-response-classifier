@@ -63,7 +63,14 @@ from .record import EvaluationRecord
 # `PREDICTION_ROWS_VERSION` and `FAILURES_VERSION` are deliberately **not**
 # bumped -- neither view's columns changed, and moving them in sympathy
 # would make a future change to one look like a change to all three.
-RESULT_VIEW_VERSION = "2"
+#
+# Bumped 2 -> 3 on 2026-08-05 by D-79: every `per_hazard` entry now carries
+# `b1_bullet`, which of phase B1's five ordered bullets assigned the L/E
+# pair (`ARCHITECTURE.md` §4). Same reasoning, same two versions held
+# still: neither `predictions.csv` nor `failures.csv` gains a column.
+# **No result changes** -- what changed is what the record says about *how*
+# a B1 result was reached.
+RESULT_VIEW_VERSION = "3"
 PREDICTION_ROWS_VERSION = "1"
 # §11: "every view is versioned separately". This one starts at 1
 # independently of the other two rather than inheriting their number --
@@ -199,6 +206,11 @@ def result_view(record: EvaluationRecord) -> dict[str, Any]:
                 "final_l": judgment.final_l,
                 "final_e": judgment.final_e,
                 "decided_by": judgment.decided_by,
+                # Which of phase B1's five ordered bullets assigned the
+                # pair, `None` on every non-B1 path (D-79). A field that
+                # exists on the record and not in the view is not an audit
+                # record, which is why the bump to version 3 is here.
+                "b1_bullet": judgment.b1_bullet,
                 "result": judgment.result,
                 "failure_reason": judgment.failure_reason,
             }
