@@ -583,9 +583,9 @@ one item or advance past an Awaiting User item on its own. See
 implementation.
 
 PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**. **PR 5 is
-next**, then PR 6 ([D-71](DECISIONS.md#d-71)). PR 5 has a selected structure
-to build, a written execution plan whose slice 0 has already run, and waits
-on nothing external; a session starts at its slice A.
+in progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0 and A are
+complete and it waits on nothing external; a session starts at its **slice B**
+(the 1.1 artifact).
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -644,6 +644,18 @@ Detailed phased proposal:
    profile, batch runner, CLI, and `failures.csv`, all five slices. **PR 5
    is next, then PR 6** ([D-71](DECISIONS.md#d-71)). **Item 4 stays open**;
    two PRs remain.
+
+   **PR 5 (L/E training, scoring, and evaluation) is in progress.** Execution
+   plan: [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md). Slice 0 (the
+   working-text measurement behind [D-72](DECISIONS.md#d-72)) and **slice A
+   (the production fitter)** are complete; slices B–E remain, and gate G-3
+   blocks only the close. Nothing new was decided in slice A — it builds
+   D-68's structure, on D-72's text, over D-73's rows, and its central claim
+   is **verified rather than stated**: on the real fit split's working-text
+   features the production fitter and `experiments.candidates.MultinomialSoftmax`
+   agree exactly (`max|diff| = 0.0`, both targets, identical unavailable-cell
+   sets). **576 tests, zero regressions**, `test_baseline_parity.py`
+   unchanged.
 
    **PR 7 has a written plan:
    [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
@@ -1007,6 +1019,53 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 5 slice A: the production L/E fitter.** D-68's structure
+  moved out of `experiments/` and into production, fitted on D-72's working
+  text over D-73's fit half. **576 tests, zero regressions**,
+  `test_baseline_parity.py` unchanged (D-48). **No new decision** — every
+  scientific choice this slice makes was already locked.
+
+  **What it is.** `evaluator/training/multinomial.py` (D-68's estimator, and
+  the fitted **pure-NumPy** model it produces — no live estimator survives a
+  fit, so [D-37](DECISIONS.md#d-37)'s no-pickle rule is satisfiable by
+  construction rather than by care at serialization time),
+  `evaluator/training/features.py` (the serve-time feature path: the **real**
+  stages 1–7 produce `working` and the **real** stage 8 embeds and pools it,
+  so there is no second implementation to drift from the one that scores),
+  `evaluator/training/release.py` (`fit_release_models()` plus
+  `FitProvenance`), and `evaluator/no_fixed_rules.py`
+  (`candidates.py::_assert_no_fixed_rule_import` carried into production —
+  now resolving *relative* imports, which the original did not, and which is
+  the spelling the guard most needs to catch inside a package).
+
+  **The claim that matters is verified, not stated.** On the real fit split's
+  768-dimensional working-text features, across all 28 `(target, hazard)`
+  cells, the production fitter and `experiments.candidates.MultinomialSoftmax`
+  agree to **`max|diff| = 0.0` on both targets** with identical
+  unavailable-cell sets. That is what makes "we shipped what was selected"
+  checkable, and it is why `experiments/` is not deleted.
+
+  **The real fit, run once end to end** (~2.5 min on CPU): 635 feature rows,
+  **0 exhausted**; **E: 635 rows, 15 cells**; **L: 563 rows, 13 cells**
+  (`prv`/`sxc_prn` excluded by eligibility, not by failure); **no unavailable
+  cell on either target**, and every cell saw all three classes. So D-45's
+  unavailable path and the absent-class path are both real code on cases this
+  particular data does not contain — tested against synthetic fixtures that
+  do.
+
+  **Two notes for a later slice.** Rows that *exhaust* in stages 1–7 are
+  excluded from fitting and the exclusion is counted in the provenance: such a
+  row is decided by `SCIENCE.md` phase B1 and never reaches stage 9, so
+  fitting on its human label would train on text no model scores. Slice 0
+  measured zero of them here. And the suite went **~23 s → ~40 s**, because
+  `test_evaluator_training_release.py` runs the real 635-row fit split through
+  stages 1–7 to check D-73's row counts and the L exclusion as *behavior*
+  rather than as prose.
+
+  **Nothing here is a benchmark.** Both models remain **not evaluated**
+  (`../SCIENCE.md` §Legitimization/Enablement Scoring), D-68 remains a **null
+  result**, and building the selected structure is not evidence it is good.
 
 - 2026-08-05 — **The pre-flight check, [D-75](DECISIONS.md#d-75) — and a
   correction to what PR 7's close claimed the problem was.** Kurt directed

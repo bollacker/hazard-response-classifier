@@ -39,10 +39,10 @@ all three before starting.**
 
 **Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
 production fitter, B the artifact, C the scoring component, D evaluation and
-reporting, E the sweep and close. **Slice 0 has already run** (2026-08-05, §4)
-and **§3's gate questions G-1 and G-2 are answered and absorbed**
+reporting, E the sweep and close. **Slices 0 and A have run** (both 2026-08-05,
+§4 and §5) and **§3's gate questions G-1 and G-2 are answered and absorbed**
 ([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73)): fit on pipeline working
-text, fit split only. **A session starts at slice A.** G-3 stays open and
+text, fit split only. **A session starts at slice B.** G-3 stays open and
 blocks only the close.
 
 ---
@@ -76,7 +76,9 @@ specification, not the entry.
   is that PR 6 must test *artifact round trips* while D-49 makes the artifact
   format PR 5's deliverable. Nothing in PR 5 depends on PR 7 or PR 6 existing,
   so a session may run it whenever PR 7 is done.
-- **Baseline is green: 433 tests**, `pytest` from the repo root, ~23 s.
+- **Baseline is green: 525 tests**, `pytest` from the repo root, ~23 s.
+  (Corrected 2026-08-05 at slice A: 433 was PR 4's count, written before PR 7
+  landed 92 more. Slice A takes it to **576** in ~40 s — see §5.)
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine.
 - The data exists and is frozen: `data/interim_split_v1.json` (`interim-v1`,
@@ -302,6 +304,47 @@ write). No production code.
 presented to Kurt with them. **Stop here.**
 
 ## 5. Slice A — The production fitter
+
+> **Complete** (2026-08-05). **576 tests, zero regressions**,
+> `test_baseline_parity.py` unchanged (D-48). Four new modules, none of them
+> touching `model.py`, `heads.py`, or any other baseline module:
+>
+> | Module | What it is |
+> |---|---|
+> | `evaluator/training/multinomial.py` | D-68's estimator and the fitted, **pure-NumPy** model it produces. No component import, no text, no live estimator after `fit` |
+> | `evaluator/training/features.py` | The serve-time feature path: the real stages 1–7 produce `working`, the real stage 8 embeds and pools it |
+> | `evaluator/training/release.py` | `fit_release_models()` — the fit half, the L eligibility rule, and `FitProvenance` |
+> | `evaluator/no_fixed_rules.py` | `candidates.py`'s import guard, carried into production |
+>
+> **The equivalence claim is verified, not stated.** On the real fit split's
+> working-text features — 768-dimensional, all 28 cells — the production
+> fitter and `experiments.candidates.MultinomialSoftmax` agree to
+> **`max|diff| = 0.0` on both targets**, with identical unavailable-cell
+> sets. That is what makes "we shipped what was selected" checkable, and it
+> is why `experiments/` is not deleted.
+>
+> **The real fit, run once end to end** (~2.5 min on CPU, one BGE pass):
+> 635 feature rows, **0 exhausted**; **E: 635 rows, 15 cells**; **L: 563
+> rows, 13 cells** (`prv`/`sxc_prn` excluded by eligibility, not by
+> failure); **no unavailable cell on either target**, and **every cell saw
+> all three classes**, so the absent-class path §5 warned about is real code
+> on a case this data does not contain. Rows per cell run 33–93 (`hte` is
+> the outlier) — the ~42 the pre-registration predicted.
+>
+> **Two things a later slice should know.**
+>
+> 1. **Exhausted rows are excluded from fitting, and the exclusion is
+>    counted** (`FitProvenance.exhausted_excluded`). A row whose working text
+>    empties in stages 1–7 is decided by `SCIENCE.md` phase B1 and never
+>    reaches stage 9, so fitting on its human label would train on text no
+>    model ever scores. Slice 0 measured **zero** such rows, so this changes
+>    no number today; it is implemented because a fit that silently trained
+>    on unscoreable rows would be invisible in every output.
+> 2. **The suite went from ~23 s to ~40 s.** `test_evaluator_training_release.py`
+>    runs stages 1–7 over the real 635-row fit split (with a stub encoder) to
+>    check D-73's row counts and the L exclusion as *behavior* rather than as
+>    prose. That is the cost of testing the release's central row-selection
+>    claims against the real split; it is not accidental.
 
 Build to D-68 and `PREREGISTRATION_LE_STRUCTURE.md` §6. New module —
 suggested `src/hazard_classifier/evaluator/training/multinomial.py` or a
