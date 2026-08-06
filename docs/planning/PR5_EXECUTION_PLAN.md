@@ -39,11 +39,11 @@ all three before starting.**
 
 **Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
 production fitter, B the artifact, C the scoring component, D evaluation and
-reporting, E the sweep and close. **Slices 0 and A have run** (both 2026-08-05,
-§4 and §5) and **§3's gate questions G-1 and G-2 are answered and absorbed**
-([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73)): fit on pipeline working
-text, fit split only. **A session starts at slice B.** G-3 stays open and
-blocks only the close.
+reporting, E the sweep and close. **Slices 0, A and B have run** (all
+2026-08-05, §4–§6) and **§3's gate questions G-1 and G-2 are answered and
+absorbed** ([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73)): fit on
+pipeline working text, fit split only. **A session starts at slice C.** G-3
+stays open and blocks only the close.
 
 ---
 
@@ -78,7 +78,8 @@ specification, not the entry.
   so a session may run it whenever PR 7 is done.
 - **Baseline is green: 525 tests**, `pytest` from the repo root, ~23 s.
   (Corrected 2026-08-05 at slice A: 433 was PR 4's count, written before PR 7
-  landed 92 more. Slice A takes it to **576** in ~40 s — see §5.)
+  landed 92 more. Slice A takes it to **576** in ~40 s — see §5 — and slice B
+  to **600** in ~45 s.)
 - Environment: `~/.pyenv/versions/airr/bin/python`, or `pyenv activate airr`.
   Bare `python` fails on this machine.
 - The data exists and is frozen: `data/interim_split_v1.json` (`interim-v1`,
@@ -407,6 +408,68 @@ independently of scoring (PR 5 exit criterion: "fitting and scoring are
 independently testable"). 433 + n tests green.
 
 ## 6. Slice B — The 1.1 artifact
+
+> **Complete** (2026-08-05). **600 tests, zero regressions**,
+> `test_baseline_parity.py` unchanged. `evaluator/artifact.py` is a **new
+> writer and a new reader**, not a branch on `model.save`/`model.load`.
+>
+> ```
+> <artifact>/
+>   manifest.json      identity, embedding, components, rule version, training provenance
+>   rules.json         families, the frozen supported set, the frozen rule constants
+>   model/
+>     cells.json       which (target, hazard) cells were fit, and each cell's class order
+>     legitimization.npz
+>     enablement.npz   coef (n_features, 3), intercept (3,), mean, scale
+> ```
+>
+> **No `thresholds.json`** — not written, and `load_artifact` **rejects** an
+> artifact that has one, so §6's "retained only for `L3`" is enforced rather
+> than remembered. **No pickle**: the payload loads under
+> `allow_pickle=False`, and a static test asserts no module under
+> `evaluator/` imports `pickle`, `joblib`, or `dill`.
+>
+> **The round trip is checked as behavior**, not as parsing: a loaded model
+> must produce **identical distributions** to the model that was written,
+> and the provenance record must compare equal. Deferring the reader's test
+> to PR 6 would have meant shipping a writer with no reader.
+>
+> **Two things the plan did not anticipate, both real.**
+>
+> 1. **The manifest records the components that produced the training
+>    text** — each stage's implementation, version, and maturity.
+>    `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 carries a standing obligation
+>    ("three of those components are placeholders… **a re-fit is owed
+>    whenever any of them is built**"), and until now nothing made it
+>    *checkable*. Comparing an artifact's training component set against a
+>    run's says exactly where a re-fit is owed. §10's "component
+>    implementations and versions" is the field; the training-time reading of
+>    it is what makes it load-bearing.
+> 2. **`rules.json`'s two family sets are written in full, not narrowed to
+>    the supported hazards** — the opposite of what the baseline's
+>    `model.save` does. They are the *frozen rule constants* a run's
+>    `RuleSet` is rebuilt from, and narrowing silently reclassifies a hazard
+>    outside the intersection as `default`: the one family whose L/E table
+>    **requires** a Legitimization judgment. `hazard_family` is the separate
+>    per-artifact record and *is* keyed by the supported set, which is
+>    derived from the fitted cells and never supplied (D-57).
+>
+> **What is committed, and what is not.**
+> `tests/golden/evaluator_1_1/artifact` is the golden fixture §6 asks for —
+> 768-dimensional, real BGE, fitted on `examples/sample_input.csv`'s twelve
+> synthetic rows, and **named a fixture in its own `artifact_id` and
+> `split_role`** so nothing can mistake it for a model of anything.
+> `tests/golden/capture_evaluator_1_1.py` recaptures it and an integration
+> test proves the committed copy still reproduces from current code.
+> `scripts/build_release_artifact.py` builds the **real** artifact (876 KB,
+> 15 supported hazards, 28 cells, ~2.9 min) into gitignored `artifacts/`;
+> whether one ships is PR 6's promotion call (D-58), not slice B's.
+>
+> **Left to slice C, deliberately:** the `profile.resolve_artifact` branch.
+> `artifact.is_evaluator_artifact()` is the dispatch test (the baseline
+> manifest has no `format` key, so the formats are told apart by a field
+> rather than by guessing at directory contents), but wiring it changes
+> `build_registry`'s scorer construction — which is slice C's subject.
 
 `ARCHITECTURE.md` §10 and `PREREGISTRATION_LE_STRUCTURE.md` §6 are the
 specification. **This is the deliverable [D-49](DECISIONS.md#d-49) deferred

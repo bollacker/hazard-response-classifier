@@ -709,6 +709,55 @@ The 1.1 artifact keeps the baseline's shape and constraints:
   frozen artifact, never installed config, so an artifact always scores
   consistently with itself.
 
+### 10.1 The Release 1.1 payload, as built
+
+Written 2026-08-05 by PR 5 slice B, which implemented the table above for the
+structure [D-68](planning/DECISIONS.md#d-68) selected. `evaluator/artifact.py`
+is the writer and the reader; `model.save`/`model.load` are untouched and keep
+serving the baseline ([D-49](planning/DECISIONS.md#d-49),
+[D-48](planning/DECISIONS.md#d-48)).
+
+```
+<artifact>/
+  manifest.json
+  rules.json
+  model/
+    cells.json            which (target, hazard) cells were fit, and each cell's class order
+    legitimization.npz    per fitted cell: coef (n_features, 3), intercept (3,), mean, scale
+    enablement.npz
+```
+
+- **`format: "hrc-evaluator-1.1"` in the manifest is the discriminator.** The
+  baseline manifest has no `format` key, so the two formats are told apart by
+  a field rather than by guessing at directory contents.
+- **`model/cells.json` is the authoritative index.** `.npz` keys are *built*
+  from it, never parsed — the same discipline `model.load` applies to
+  `heads.npz`. It carries each cell's `fitted_classes`, which is what keeps a
+  reloaded model from mis-ordering its columns, and what makes a class the
+  cell never saw read as exactly `0.0` rather than as a probability.
+- **No `thresholds.json`, and its presence is an error.**
+  `planning/PREREGISTRATION_LE_STRUCTURE.md` §6 retains it only for the
+  two-head structure (`L3`); a multinomial decides by `argmax` and has none.
+  The reader rejects an artifact carrying one.
+- **`rules.json`'s `supported_hazards` is derived from the fitted cells**, as
+  the union across both targets — never supplied, because
+  [D-57](planning/DECISIONS.md#d-57) makes `hazard_scope` default to it.
+  Legitimization does not apply to the enablement-only hazards at all
+  (`SCIENCE.md` phase A), so an intersection would drop two hazards the
+  evaluator must still score for Enablement.
+- **`rules.json`'s two family sets are the frozen rule constants in full**,
+  *not* narrowed to `supported_hazards` the way the baseline narrows them.
+  They are what a run's `RuleSet` is rebuilt from, and a narrowed set silently
+  reclassifies anything outside the intersection as `default` — the one family
+  whose L/E table requires a Legitimization judgment. `hazard_family` is the
+  separate per-artifact record and *is* keyed by the supported set.
+- **The manifest's component record is the *training-time* one**: each stage
+  that produced the working text the models were fitted on, with its
+  implementation, version, and maturity. `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5
+  records that a re-fit is owed whenever narrative, refusal, or hazard
+  detection is built; comparing this set against a run's is what makes that
+  checkable instead of remembered.
+
 ## 11. Derived views
 
 The record is canonical. Every output is a view derived from it, never the

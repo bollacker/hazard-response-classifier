@@ -30,10 +30,8 @@ reported **not evaluated** (`SCIENCE.md` §Legitimization Scoring,
 
 from __future__ import annotations
 
-import dataclasses
 import json
 import sys
-from typing import Mapping
 
 import numpy as np
 import pandas as pd
@@ -42,7 +40,8 @@ from ...config import DEFAULT_SEED
 from ...interim_data import INTERIM_SOURCE, INTERIM_SPLIT, legitimization_rows, load_interim
 from ..no_fixed_rules import assert_no_fixed_rule_import
 from .features import PipelineFeatures, build_pipeline_features
-from .multinomial import ESTIMATOR_PARAMS, TargetModel, fit_target_model
+from .multinomial import ESTIMATOR_PARAMS, fit_target_model
+from .provenance import FitProvenance, LEModels
 
 __all__ = ["FitProvenance", "LEModels", "fit_release_models", "fit_models_from_features"]
 
@@ -56,45 +55,6 @@ _LABEL_COLUMN = {
     "legitimization": "legitimization_value",
     "enablement": "enablement_value",
 }
-
-
-@dataclasses.dataclass(frozen=True)
-class FitProvenance:
-    """What a run needs to reproduce this fit, and what slice B's
-    `manifest.json` carries into the artifact
-    (`ARCHITECTURE.md` §10; `PR5_EXECUTION_PLAN.md` §6). PR 5's exit
-    criterion "runs reproduce results from locked model, rule, data, split,
-    and metric versions" is met by this field set or it is not met.
-    """
-
-    source_path: str
-    source_sha256: str
-    split_path: str
-    split_version: str
-    split_half: str  # the loader's word: "train" | "eval"
-    split_role: str  # the pre-registration's word: "fit" | "dev"
-    text_view: str
-    embedding_provider: str
-    embedding_provider_version: str
-    pooling: str
-    seed: int
-    estimator: Mapping[str, object]
-    n_feature_rows: int
-    exhausted_excluded: tuple[tuple[str, str, str], ...]  # (prompt_uid, hazard, stage)
-
-
-@dataclasses.dataclass(frozen=True)
-class LEModels:
-    """Both fitted targets plus the provenance of the fit that produced them.
-
-    Held together because they are fitted from one feature pass and shipped
-    in one artifact -- but they are **separate models** (`S1`), and neither
-    reads the other.
-    """
-
-    legitimization: TargetModel
-    enablement: TargetModel
-    provenance: FitProvenance
 
 
 def _target_rows(
@@ -182,9 +142,12 @@ def fit_release_models(
         text_view=features.text_view,
         embedding_provider=features.provider_name,
         embedding_provider_version=features.provider_version,
+        embedding_model_name=features.provider_model_name,
+        embedding_model_revision=features.provider_model_revision,
         pooling=features.pooling_name,
         seed=DEFAULT_SEED,
         estimator=dict(ESTIMATOR_PARAMS),
+        components=features.components,
         n_feature_rows=len(features.prompt_uids),
         exhausted_excluded=tuple(
             (row.prompt_uid, row.hazard, row.exhausted_at) for row in features.exhausted_rows

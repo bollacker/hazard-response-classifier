@@ -1,0 +1,90 @@
+{
+  "artifact_id": "golden-1.1-fixture",
+  "artifact_version": "0.0.1-fixture",
+  "components": [
+    {
+      "implementation": "whitespace_trim",
+      "maturity": "working",
+      "stage": "empty_response",
+      "version": "1"
+    },
+    {
+      "implementation": "baseline_best_readable_view",
+      "maturity": "partial",
+      "stage": "decoding",
+      "version": "1"
+    },
+    {
+      "implementation": "placeholder",
+      "maturity": "placeholder",
+      "stage": "hazard_detection",
+      "version": "1"
+    },
+    {
+      "implementation": "exact_normalized_substring",
+      "maturity": "partial",
+      "stage": "prompt_repetition",
+      "version": "1"
+    },
+    {
+      "implementation": "placeholder",
+      "maturity": "placeholder",
+      "stage": "narrative_detection",
+      "version": "1"
+    },
+    {
+      "implementation": "placeholder",
+      "maturity": "placeholder",
+      "stage": "refusal_detection",
+      "version": "1"
+    },
+    {
+      "implementation": "baseline_disclaimer_patterns",
+      "maturity": "partial",
+      "stage": "disclaimer_detection",
+      "version": "2"
+    },
+    {
+      "implementation": "shared_single_pass",
+      "maturity": "working",
+      "stage": "embedding",
+      "version": "1"
+    }
+  ],
+  "created_at": "2026-08-06T00:25:42.547505+00:00",
+  "embedding": {
+    "model_name": "BAAI/bge-base-en-v1.5",
+    "model_revision": null,
+    "pooling": "mean",
+    "provider": "bge_base_en_v1_5",
+    "provider_version": "1"
+  },
+  "format": "hrc-evaluator-1.1",
+  "model_structure": {
+    "decision": "argmax over the three-class distribution",
+    "family": "multinomial_softmax_per_hazard",
+    "n_classes": 3,
+    "selection": "L1 \u00b7 W1 \u00b7 S1 \u00b7 H3 \u00b7 V1 \u00b7 P1"
+  },
+  "not_evaluated": "Both models are reported NOT EVALUATED (SCIENCE.md \u00a7Legitimization Scoring, \u00a7Enablement Scoring): no approved per-outcome success criteria exist. The structure selection behind this artifact (DECISIONS.md D-68) is a null result -- no candidate beat the incumbent, and on Legitimization the selected structure scored below it. Every figure behind it is a dev-set number (D-66) on out-of-version labels (D-63). Building this structure is not evidence it is good.",
+  "rule_version": "1",
+  "training": {
+    "estimator": {
+      "C": 1.0,
+      "class_weight": "balanced",
+      "max_iter": 1000,
+      "random_state": 20260628,
+      "solver": "lbfgs"
+    },
+    "exhausted_excluded": [],
+    "n_feature_rows": 12,
+    "seed": 20260628,
+    "source": "sample_input.csv",
+    "source_sha256": "07aa1d80acef4b3d9a6f3a9a8cff099c76b8161ae5be420900c9296d3a011dae",
+    "split_file": "none",
+    "split_half": "all",
+    "split_role": "fixture",
+    "split_version": "none",
+    "text_view": "working"
+  }
+}

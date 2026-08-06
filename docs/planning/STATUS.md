@@ -583,9 +583,9 @@ one item or advance past an Awaiting User item on its own. See
 implementation.
 
 PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**. **PR 5 is
-in progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0 and A are
-complete and it waits on nothing external; a session starts at its **slice B**
-(the 1.1 artifact).
+in progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0, A and B
+are complete and it waits on nothing external; a session starts at its
+**slice C** (the scoring component).
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -647,15 +647,19 @@ Detailed phased proposal:
 
    **PR 5 (L/E training, scoring, and evaluation) is in progress.** Execution
    plan: [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md). Slice 0 (the
-   working-text measurement behind [D-72](DECISIONS.md#d-72)) and **slice A
-   (the production fitter)** are complete; slices B–E remain, and gate G-3
-   blocks only the close. Nothing new was decided in slice A — it builds
-   D-68's structure, on D-72's text, over D-73's rows, and its central claim
-   is **verified rather than stated**: on the real fit split's working-text
-   features the production fitter and `experiments.candidates.MultinomialSoftmax`
-   agree exactly (`max|diff| = 0.0`, both targets, identical unavailable-cell
-   sets). **576 tests, zero regressions**, `test_baseline_parity.py`
-   unchanged.
+   working-text measurement behind [D-72](DECISIONS.md#d-72)), **slice A (the
+   production fitter)** and **slice B (the 1.1 artifact)** are complete;
+   slices C–E remain, and gate G-3 blocks only the close. Nothing new was
+   decided in either slice — they build D-68's structure, on D-72's text, over
+   D-73's rows, and write the payload
+   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) §6
+   already fixed. Slice A's central claim is **verified rather than stated**:
+   on the real fit split's working-text features the production fitter and
+   `experiments.candidates.MultinomialSoftmax` agree exactly
+   (`max|diff| = 0.0`, both targets, identical unavailable-cell sets). Slice B
+   closes [D-49](DECISIONS.md#d-49), and `../ARCHITECTURE.md` §10.1 now
+   describes the payload as built. **600 tests, zero regressions**,
+   `test_baseline_parity.py` unchanged.
 
    **PR 7 has a written plan:
    [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
@@ -1019,6 +1023,59 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 5 slice B: the 1.1 evaluator artifact.** The deliverable
+  [D-49](DECISIONS.md#d-49) deferred out of PR 1 and into PR 5, built to
+  `../ARCHITECTURE.md` §10 and
+  [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) §6.
+  **600 tests, zero regressions**, `test_baseline_parity.py` unchanged.
+  `evaluator/artifact.py` is a **new writer and a new reader**, not a branch
+  added to `model.save`/`model.load` (D-48). `../ARCHITECTURE.md` §10.1 now
+  describes the payload as built.
+
+  **What is enforced rather than remembered.** There is no `thresholds.json`
+  and the reader **rejects** an artifact carrying one — §6 retains it only for
+  the two-head structure, so an empty one would be a lie about the model. The
+  payload loads under `allow_pickle=False`, and a static test asserts no
+  module under `evaluator/` imports `pickle`, `joblib`, or `dill` (D-37).
+  `rules.json`'s supported hazard set is **derived from the fitted cells** and
+  a mismatch is rejected, because [D-57](DECISIONS.md#d-57) makes
+  `hazard_scope` default to it. And the round trip is checked as *behavior* —
+  a loaded model must produce identical distributions, not merely parse.
+  Deferring the reader's test to PR 6 would have meant shipping a writer with
+  no reader.
+
+  **Two findings the plan did not anticipate, both from reading the
+  specifications against each other.**
+
+  1. **The manifest records the components that produced the training text**,
+     with their versions and maturities.
+     [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md) PR 5
+     carries a standing obligation — three of those components are
+     placeholders, so "a re-fit is owed whenever any of them is built" — and
+     nothing until now made it *checkable*. Comparing an artifact's
+     training-time component set against a run's says exactly where a re-fit
+     is owed.
+  2. **`rules.json`'s two family sets are written in full, not narrowed to the
+     supported hazards** — the opposite of what the baseline's `model.save`
+     does. They are the frozen rule constants a run's `RuleSet` is rebuilt
+     from, and narrowing silently reclassifies a hazard outside the
+     intersection as `default`: the one family whose L/E table **requires** a
+     Legitimization judgment.
+
+  **Committed:** `tests/golden/evaluator_1_1/artifact` — the golden fixture §6
+  asks for, 768-dimensional and real-BGE so slice C can score with it, fitted
+  on twelve synthetic rows and **named a fixture in its own `artifact_id` and
+  `split_role`** so nothing mistakes it for a model of anything; plus
+  `tests/golden/capture_evaluator_1_1.py` and an integration test proving the
+  committed copy still reproduces from current code. **Not committed:** the
+  real artifact. `scripts/build_release_artifact.py` builds it (876 KB, 15
+  supported hazards, 28 cells, ~2.9 min) into gitignored `artifacts/`;
+  whether one ships is PR 6's promotion call ([D-58](DECISIONS.md#d-58)).
+
+  **Left to slice C, deliberately:** the `profile.resolve_artifact` branch.
+  `artifact.is_evaluator_artifact()` is the dispatch test, but wiring it
+  changes `build_registry`'s scorer construction, which is slice C's subject.
 
 - 2026-08-05 — **PR 5 slice A: the production L/E fitter.** D-68's structure
   moved out of `experiments/` and into production, fitted on D-72's working

@@ -1,0 +1,21 @@
+{
+  "enablement_only_hazards": [
+    "prv",
+    "sxc_prn"
+  ],
+  "hazard_family": {
+    "hte": "default",
+    "prv": "enablement_only"
+  },
+  "rule_version": "1",
+  "specialized_advice_hazards": [
+    "spc_ele",
+    "spc_fin",
+    "spc_hlt",
+    "spc_lgl"
+  ],
+  "supported_hazards": [
+    "hte",
+    "prv"
+  ]
+}

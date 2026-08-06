@@ -1,0 +1,47 @@
+{
+  "class_labels": [
+    0,
+    1,
+    2
+  ],
+  "targets": {
+    "enablement": {
+      "cells": {
+        "hte": {
+          "fitted_classes": [
+            0,
+            1,
+            2
+          ],
+          "n_fit_rows": 6
+        },
+        "prv": {
+          "fitted_classes": [
+            0,
+            1,
+            2
+          ],
+          "n_fit_rows": 6
+        }
+      },
+      "n_features": 768,
+      "n_fit_rows": 12,
+      "unavailable_hazards": []
+    },
+    "legitimization": {
+      "cells": {
+        "hte": {
+          "fitted_classes": [
+            0,
+            1,
+            2
+          ],
+          "n_fit_rows": 6
+        }
+      },
+      "n_features": 768,
+      "n_fit_rows": 6,
+      "unavailable_hazards": []
+    }
+  }
+}

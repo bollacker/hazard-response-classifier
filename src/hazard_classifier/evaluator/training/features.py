@@ -56,6 +56,7 @@ from ..components.refusal import RefusalDetectionPlaceholder
 from ..components.repetition import PromptRepetitionDetector
 from ..pipeline import STAGE_ORDER
 from ..record import EvaluationRecord, Flags, TextViews
+from .provenance import ComponentRecord
 
 __all__ = ["ExhaustedRow", "PipelineFeatures", "build_pipeline_features"]
 
@@ -117,7 +118,10 @@ class PipelineFeatures:
     text_view: str
     provider_name: str
     provider_version: str
+    provider_model_name: str | None
+    provider_model_revision: str | None
     pooling_name: str
+    components: tuple[ComponentRecord, ...]
 
     @property
     def n_features(self) -> int:
@@ -252,5 +256,33 @@ def build_pipeline_features(
         text_view=text_view,
         provider_name=embedding_provider.name,
         provider_version=embedding_provider.version,
+        # `EmbeddingProvider` does not require these -- but D-23 makes the
+        # encoder's identity the artifact's to carry, so they are read off
+        # the concrete provider where it exposes them rather than left to a
+        # serve-time default a caller could forget to override.
+        provider_model_name=getattr(embedding_provider, "model_name", None),
+        provider_model_revision=getattr(embedding_provider, "revision", None),
         pooling_name=pooling_strategy.name,
+        components=_component_records(components, embedding),
+    )
+
+
+def _component_records(
+    text_components: dict[str, object], embedding: EmbeddingComponent
+) -> tuple[ComponentRecord, ...]:
+    """The stages that produced this training text, as they stood, in
+    `STAGE_ORDER`. See `ComponentRecord`: this is what makes PR 5's standing
+    "a re-fit is owed when narrative, refusal, or hazard detection is built"
+    checkable against an artifact rather than remembered.
+    """
+    ordered: list[object] = [text_components[stage] for stage in _TEXT_STAGES]
+    ordered.append(embedding)
+    return tuple(
+        ComponentRecord(
+            stage=component.stage,
+            implementation=component.implementation,
+            version=component.version,
+            maturity=component.maturity,
+        )
+        for component in ordered
     )

@@ -27,9 +27,17 @@ dev-class number under D-66 in any case.
 
 from __future__ import annotations
 
+import json
+import sys
+from pathlib import Path
+
 import numpy as np
 
-from hazard_classifier.embed import EMBEDDING_DIM
+# `tests/golden/` is a directory of scripts, not an importable package -- the
+# same reason `capture_baseline.py` is run by path rather than imported.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "golden"))
+
+from hazard_classifier.embed import EMBEDDING_DIM  # noqa: E402
 from hazard_classifier.evaluator.components.embedding import (
     POOLED_VECTOR_FACT,
     BgeEmbeddingProvider,
@@ -129,3 +137,42 @@ class _NullProvider:
 
     def embed(self, texts) -> np.ndarray:
         return np.zeros((len(texts), 4), dtype=np.float32)
+
+
+def test_the_committed_golden_1_1_artifact_reproduces_from_the_current_code(tmp_path):
+    """The golden 1.1 artifact is a *fixture other tests load without
+    fitting*, so it is only worth anything while it still describes what this
+    code produces. Recapturing it against unmodified code must give the same
+    arrays and the same JSON.
+
+    **Unlike `test_baseline_parity.py`, a failure here is not automatically a
+    defect.** The baseline's output must not change (D-48); this fixture's may,
+    whenever the fitter or the components that build its training text change
+    deliberately. What the test forbids is the fixture going *silently* stale
+    — the fix is to rerun `tests/golden/capture_evaluator_1_1.py` and commit
+    the result, having checked the change was intended.
+
+    `created_at` is excluded: it is the one genuinely time-varying field. The
+    `.npz` files are compared by array rather than by bytes, since a zip
+    embeds per-entry timestamps even when the arrays inside are identical.
+    """
+    from capture_evaluator_1_1 import ARTIFACT_DIR, capture
+
+    fresh = capture(tmp_path / "artifact")
+
+    for name in ("rules.json", "model/cells.json"):
+        assert (ARTIFACT_DIR / name).read_text() == (fresh / name).read_text(), name
+
+    committed = json.loads((ARTIFACT_DIR / "manifest.json").read_text())
+    recaptured = json.loads((fresh / "manifest.json").read_text())
+    committed.pop("created_at")
+    recaptured.pop("created_at")
+    assert committed == recaptured
+
+    for target in ("legitimization", "enablement"):
+        with np.load(ARTIFACT_DIR / "model" / f"{target}.npz") as a, np.load(
+            fresh / "model" / f"{target}.npz"
+        ) as b:
+            assert sorted(a.files) == sorted(b.files)
+            for key in a.files:
+                np.testing.assert_array_equal(a[key], b[key], err_msg=f"{target}:{key}")
