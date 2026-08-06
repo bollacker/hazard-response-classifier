@@ -32,6 +32,18 @@ is about one row's content: it becomes a `failures.csv` row (and a record in
 converts one into the other -- in particular `_score_row`'s exception
 handler deliberately does **not** catch `RunRejectedError`.
 
+**The loop is sequential, and that is the contract, not an implementation
+detail** ([D-61](../../docs/planning/DECISIONS.md#d-61),
+`ARCHITECTURE.md` §6). Release 1.1 is single-threaded per process, claims no
+thread-safety, and **builds no parallelism at all** -- where a caller needs
+it, it belongs at the process level. `run_batch` scores row by row in input
+order, which is what makes `results.jsonl` reproducible row for row rather
+than merely deterministic in aggregate. `tests/unit/test_evaluator_runner.py`
+pins both halves: no evaluator module imports a concurrency primitive, and
+the encoder is called exactly once per row. Adding a pool here is not a
+local change -- it breaks a documented claim, and `SCIENCE.md`'s concurrency
+verification item, `ARCHITECTURE.md` §6 and D-61 all have to move with it.
+
 **This module never imports a concrete component** (`ARCHITECTURE.md` §6,
 and PR 7's exit criterion). It composes `validate_supplied_hazard`,
 `run_pipeline`, and the views, and resolves every implementation through the

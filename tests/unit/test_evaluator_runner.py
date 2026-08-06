@@ -11,6 +11,7 @@ one.
 
 from __future__ import annotations
 
+import ast
 import csv
 import dataclasses
 import json
@@ -586,3 +587,80 @@ def test_failure_rows_has_its_own_version_distinct_from_the_other_views() -> Non
     assert views.FAILURES_VERSION == "1"
     assert hasattr(views, "RESULT_VIEW_VERSION")
     assert hasattr(views, "PREDICTION_ROWS_VERSION")
+
+
+# --- The single-threaded contract (D-61) -----------------------------------
+
+
+def test_the_evaluator_builds_no_parallelism_anywhere() -> None:
+    """`SCIENCE.md` §Evidence and outputs requires **concurrency**
+    verification, scoped by [D-61](../../docs/planning/DECISIONS.md#d-61) to
+    the contract 1.1 actually claims: single-threaded per process, no
+    thread-safety claimed, parallelism (if any) at the process level and
+    **1.1 builds none** (`ARCHITECTURE.md` §6).
+
+    Determinism -- the "correct and reproducible" half -- is covered by
+    `test_the_same_input_produces_byte_identical_outputs` and
+    `test_run_is_deterministic_across_two_identical_calls`. What nothing
+    pinned was the **contract itself**: D-61 said parallelism is not built,
+    and only D-61's existence said so. A future session adding a thread pool
+    to `run_batch` would break the claim in `ARCHITECTURE.md` §6, every
+    determinism test would keep passing, and no test would notice.
+
+    Checked statically, the way D-37's no-pickle rule is
+    (`test_no_evaluator_module_imports_pickle_or_joblib`) -- a property of
+    the code rather than of one run. This test failing is not automatically
+    a defect: it means the contract changed, and `ARCHITECTURE.md` §6, D-61
+    and `SCIENCE.md`'s concurrency item all have to move with it.
+    """
+    banned = {
+        "threading",
+        "multiprocessing",
+        "concurrent",
+        "asyncio",
+        "subprocess",
+        "joblib",
+    }
+    package_dir = Path(runner.__file__).resolve().parent
+    paths = sorted(package_dir.rglob("*.py"))
+    assert paths  # the glob itself must not silently match nothing
+
+    for path in paths:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names = {alias.name.split(".")[0] for alias in node.names}
+            elif isinstance(node, ast.ImportFrom):
+                names = {(node.module or "").split(".")[0]}
+            else:
+                continue
+            offending = names & banned
+            assert not offending, (
+                f"{path.name} imports {sorted(offending)}; Release 1.1's contract is "
+                "single-threaded per process with no parallelism built (D-61, "
+                "ARCHITECTURE.md §6)"
+            )
+
+
+def test_run_batch_scores_rows_sequentially_in_input_order(tmp_path) -> None:
+    """The observable half of the same contract: `run_batch` is a sequential
+    loop, so the encoder is called exactly once per row and the records come
+    back in input order.
+
+    A parallel implementation would be free to interleave or batch these, so
+    this pins the ordering guarantee a single-threaded runner actually gives
+    -- which is what makes `results.jsonl` reproducible row for row, not
+    merely deterministic in aggregate.
+    """
+    run_context, registry, provider = _resolved()
+    rows = [_row(0), _row(1), _row(2)]
+
+    records = runner.run_batch(rows, run_context, registry)
+    paths = runner.write_outputs(records, tmp_path)
+
+    assert [record.request_id for record in records] == [row.request_id for row in rows]
+    # One `embed` call per row -- never batched across rows.
+    assert provider.calls == len(rows)
+
+    written = _read_jsonl(paths[runner.RESULTS_FILENAME])
+    assert [record["request_id"] for record in written] == [row.request_id for row in rows]

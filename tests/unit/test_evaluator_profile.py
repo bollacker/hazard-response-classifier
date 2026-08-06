@@ -164,12 +164,14 @@ def test_load_profile_rejects_a_missing_artifact_id(tmp_path) -> None:
 
 
 # --- resolve_artifact -----------------------------------------------------
-
-
-def test_resolve_artifact_loads_the_baseline_format() -> None:
-    classifier = profile.resolve_artifact(GOLDEN_ARTIFACT)
-
-    assert classifier.trained_hazards  # a real, non-empty artifact loaded
+#
+# `test_resolve_artifact_loads_the_baseline_format` used to be defined here
+# *and* in the artifact-format dispatch section below, where PR 5 slice C
+# added the second one. Two `def`s of one name in one module means the
+# second silently replaces the first, so this one never ran -- found by
+# PR 6 slice C while checking §6's "artifact round trips" row. The
+# surviving definition is the stronger of the two and has absorbed this
+# one's assertion; see the dispatch section.
 
 
 # --- build_registry --------------------------------------------------------
@@ -365,9 +367,69 @@ GOLDEN_1_1_ARTIFACT = Path(__file__).resolve().parents[1] / "golden" / "evaluato
 
 
 def test_resolve_artifact_loads_the_baseline_format() -> None:
+    """`resolve_artifact` is the one place either format is loaded, so the
+    baseline's round trip through it is as load-bearing as the 1.1 one.
+
+    The `trained_hazards` assertion is carried over from a second, earlier
+    definition of this same test name further up this file, which the
+    duplicate name meant had never run (PR 6 slice C).
+    """
     from hazard_classifier.model import HazardResponseClassifier
 
-    assert isinstance(profile.resolve_artifact(GOLDEN_ARTIFACT), HazardResponseClassifier)
+    loaded = profile.resolve_artifact(GOLDEN_ARTIFACT)
+
+    assert isinstance(loaded, HazardResponseClassifier)
+    assert loaded.trained_hazards  # a real, non-empty artifact, not an empty shell
+
+
+def test_the_baseline_format_round_trips_as_behavior_through_the_evaluator(tmp_path) -> None:
+    """`SCIENCE.md` §Evidence and outputs requires verification of **artifact
+    round trips**, and `resolve_artifact` loads *both* formats -- so the
+    baseline's round trip is as load-bearing as the 1.1 one PR 5 slice B
+    covered.
+
+    What was already covered: `model.save`/`load` bit-identical at the head
+    level (`test_model_artifact.py`), and `resolve_artifact` dispatching to
+    the baseline format (above). What was not, and is the shape PR 5 slice B
+    used for the 1.1 format, is the round trip **as behavior**: save, resolve
+    the saved copy, and run the whole evaluator on it, asserting the results
+    a consumer actually reads are identical.
+
+    Compared on the rendered `results.jsonl` view rather than on the record,
+    because the view is what leaves the process -- a field that survived the
+    reload but not the flattening would still be a broken round trip.
+    """
+    from hazard_classifier.model import save
+
+    original = profile.resolve_artifact(GOLDEN_ARTIFACT)
+    save(original, tmp_path)
+    reloaded = profile.resolve_artifact(tmp_path)
+
+    row = input_schema.InputRow(
+        request_id="req-1",
+        prompt_uid="pu-1",
+        response_id="resp-1",
+        prompt_text="How should I store household chemicals?",
+        response_text="Store bleach and ammonia separately; mixing them creates a toxic gas.",
+        supplied_hazard="hte",
+    )
+
+    def _rendered(artifact_path: Path) -> dict:
+        resolved = profile.resolve(
+            profile.RunProfile(artifact_id=str(artifact_path)),
+            provider=_CapturingProvider(),
+            pooling=_StubPooling(),
+        )
+        record = input_schema.build_record(row, resolved.run_context)
+        result = pipeline.run_pipeline(record, resolved.run_context, resolved.registry)
+        view = views.result_view(result)
+        # The artifact id is the one thing that legitimately differs: it is
+        # the path each was loaded from.
+        view["run"] = {k: v for k, v in view["run"].items() if k != "artifact_id"}
+        return view
+
+    assert reloaded.trained_hazards == original.trained_hazards
+    assert json.dumps(_rendered(tmp_path)) == json.dumps(_rendered(GOLDEN_ARTIFACT))
 
 
 def test_resolve_artifact_loads_the_1_1_format() -> None:
