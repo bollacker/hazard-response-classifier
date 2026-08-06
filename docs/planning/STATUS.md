@@ -679,7 +679,26 @@ document. **Its execution plan is written**
 PR 5's and PR 7's, it found defects the queue proposal did not show — a fourth
 data point for `META_PLAN.md` §6's plan-authoring row.
 
-**Slices A, B and C are landed (2026-08-05/06); a session starts at slice D.**
+**Slices A–D are landed (2026-08-05/06); a session starts at slice E**, the
+verification sweep and the close of item 4.
+
+**Slice D** recorded and absorbed [D-80](DECISIONS.md#d-80) and
+[D-81](DECISIONS.md#d-81) rather than re-deciding either. `README.md` now says
+staying **pre-staging is a decision taken on the evidence**, not the default it
+had read as, and carries D-81's point that D-47's document is now
+*substantially writable* — so writability is no longer what keeps 1.1 a
+prototype. **D-47's inventory was regenerated from `../ARCHITECTURE.md` §7's
+table rather than copied**, applying D-47's own generating rule mechanically
+for the first time: six component items (the table's three `placeholder` and
+three `partial` rows), and **the count agreed with the specification for the
+first time in seven sweeps.** Non-component items go five → seven with slices
+B's and C's verification shortfalls. **§7's table is now pinned by a test**
+(`test_architecture_section_7_matches_every_components_real_maturity`,
+verified to fail on a perturbed table) — the countermeasure to six consecutive
+sweeps finding that inventory stale. Absorption verified, not assumed: D-81 in
+the queue proposal and `README.md`, D-80 in §11 (row retained, marked
+not-built) and `views.py`, and all four gate answers carry
+assumed-concurrence rows with reversal scope. **698 tests.**
 
 **Slice C** validated the assembled evaluator and ran it for real —
 [`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) is the record, reproducible via
@@ -719,8 +738,8 @@ records which of B1's five ordered bullets assigned the pair,
 nothing emitted. **658 tests, zero regressions, no result changes**,
 `test_baseline_parity.py` unchanged (D-48). Slice A also closed
 `../ARCHITECTURE.md` §13's A-3 in place and corrected the plan's count of
-unreachable B1 bullets from two to three, taken from §7's table. **Slices D and
-E remain**; slice E is where all of them land in Recently Completed with their
+unreachable B1 bullets from two to three, taken from §7's table. **Only slice
+E remains**; it is where all of them land in Recently Completed with their
 concurrence rows.
 
 The plan opened four gates and **all four are
