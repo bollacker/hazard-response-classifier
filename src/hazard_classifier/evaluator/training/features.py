@@ -30,11 +30,22 @@ in every output.
 row, matching stage 8 exactly rather than batching across rows for speed.
 The full 859-row interim frame takes a few minutes on CPU. Fitting reads
 these features once, outside any per-cell loop.
+
+**The fixed-rule guard runs here too** (added 2026-08-05 by slice E's sweep).
+This module imports seven components by name, so it is the one place in the
+fitter path where `..components.integration` would be an easy import to
+add -- and training text derived through `SCIENCE.md`'s fixed rules is
+exactly what `PREREGISTRATION_LE_STRUCTURE.md` §2.1 disqualifies. The
+property was already checked statically over this whole package
+(`test_no_training_module_imports_the_fixed_rule_module`); what this adds is
+the import-time failure the other fitter modules already had, so the module
+that most needs it does not rely on a test remembering to glob it.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import sys
 
 import numpy as np
 import pandas as pd
@@ -54,6 +65,7 @@ from ..components.hazard import HazardDetectionPlaceholder
 from ..components.narrative import NarrativeDetectionPlaceholder
 from ..components.refusal import RefusalDetectionPlaceholder
 from ..components.repetition import PromptRepetitionDetector
+from ..no_fixed_rules import assert_no_fixed_rule_import
 from ..pipeline import STAGE_ORDER
 from ..record import EvaluationRecord, Flags, TextViews
 from .provenance import ComponentRecord
@@ -286,3 +298,6 @@ def _component_records(
         )
         for component in ordered
     )
+
+
+assert_no_fixed_rule_import(sys.modules[__name__])

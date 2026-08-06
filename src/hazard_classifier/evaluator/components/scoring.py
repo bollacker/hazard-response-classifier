@@ -16,11 +16,33 @@ Neither applies a fixed rule. Both report what the models say the response
 means and supplies, and stop there -- applicability, the disclaimer modifier,
 and the L/E-to-result tables are final integration's alone
 (`ARCHITECTURE.md` §9).
+
+**And that is asserted, not merely stated** (added 2026-08-05 by PR 5 slice
+E's sweep). `PR5_EXECUTION_PLAN.md` §5 requires the fixed-rule import guard
+on "the production fitter **and scorer**". Slice A built it and applied it
+across `training/`, where a second test also checks the whole package
+statically -- and the **scorer half was left uncovered by both**: this
+module neither called the guard nor appeared in any check, while being the
+one that runs on every scored row. `assert_no_fixed_rule_import` at the foot
+of this file makes `PREREGISTRATION_LE_STRUCTURE.md` §2.1 checkable by
+running the code, which is the point of the mechanism: a docstring saying a
+component applies no fixed rule cannot fail.
+
+**Why this module and not any component.** The guard belongs where an L/E
+model is fitted or scored, and this is the only component that scores one.
+It is also the component most exposed to the mistake: it already imports
+`hazard_classifier.rules` for `resolve_component_action` (D-20's allow-list)
+and `ordinal_prediction`, and that module's neighbours include the
+baseline's disclaimer business rule -- which under Release 1.1 belongs to
+phase C and must never be applied twice. The import that is forbidden is
+`evaluator.components.integration`, and nothing here has ever needed it, so
+the assertion changes no behavior.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import sys
 from typing import ClassVar
 
 import numpy as np
@@ -29,6 +51,7 @@ from hazard_classifier.rules import ordinal_prediction, resolve_component_action
 
 from ..artifact import EvaluatorArtifact
 from ..contract import Maturity
+from ..no_fixed_rules import assert_no_fixed_rule_import
 from ..record import ComponentError, ComponentObservation, EvaluationRecord, HazardJudgment, Judgment
 from .embedding import POOLED_VECTOR_FACT
 
@@ -377,3 +400,6 @@ def _pooled_vector(record: EvaluationRecord) -> np.ndarray | None:
         if observation.stage == "embedding":
             return observation.facts.get(POOLED_VECTOR_FACT)
     return None
+
+
+assert_no_fixed_rule_import(sys.modules[__name__])

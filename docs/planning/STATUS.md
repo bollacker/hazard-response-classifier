@@ -1,6 +1,44 @@
 # Status
 
-Last updated: 2026-08-05 — **PR 7 is complete and closed: the Release 1.1
+Last updated: 2026-08-05 — **PR 5 is complete and closed: the Release 1.1
+evaluator ships its own fitted L and E models.** All six slices landed (0 the
+working-text measurement, A the production fitter, B the 1.1 artifact, C the
+scoring component, D the per-outcome report, E the sweep and close).
+**644 tests, zero regressions**, `test_baseline_parity.py` unchanged (D-48).
+**Item 4 stays open — PR 6 is the last PR standing.**
+[`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md) is now a record of what was
+built rather than live work.
+
+**Nothing PR 5 shipped is a quality claim.** Both models are reported *not
+evaluated* — no approved per-outcome criteria exist and none are coming
+([D-63](DECISIONS.md#d-63), [D-77](DECISIONS.md#d-77)) — and
+[D-68](DECISIONS.md#d-68) remains a **null result**: no candidate structure
+beat the incumbent, and on Legitimization the selected one scored below it.
+The dev-slice figures are in [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md), and
+the number worth reading there is not the macro but L2's recall of 0.222.
+
+**The closing sweep found one code defect and seven documentation ones, and
+the code one is worth the most attention.** `PR5_EXECUTION_PLAN.md` §5
+requires the fixed-rule import guard on "the production fitter **and
+scorer**". Slice A applied it across `training/` *and* added a static test
+over that whole package — so the fitter half was checked twice and
+**`components/scoring.py` was checked by neither**, while being the module
+that runs on every scored row and the one already importing
+`hazard_classifier.rules`. The property held; nothing would have caught it
+ceasing to. Closed, and **verified by sabotage rather than by assertion**.
+The rest: `../ARCHITECTURE.md` §3.2's module layout had never gained PR 5's
+six modules and still called stage 9 `partial` (**second consecutive sweep to
+find §3.2 stale**); two `PREREGISTRATION_LE_STRUCTURE.md` §8 amendments where
+the code was right and the document under-said it (§6 omitted the
+standardization vectors an artifact cannot be reloaded without; §7 predicted
+*wide* per-hazard intervals when the measured ones are misleadingly *narrow*);
+a **sixth consecutive** D-47 inventory gap — the re-fit owed once narrative,
+refusal, or hazard detection is built, which PR 5 is the first PR to be able
+to owe; and four stale sentences in `README.md`. **No new decision was made
+and no ledger entry is owed**, so Riki's review agenda still stands at
+twenty-five rows.
+
+Prior update, 2026-08-05 — **PR 7 is complete and closed: the Release 1.1
 evaluator is runnable**, and the one design concern its close raised is
 decided as [D-75](DECISIONS.md#d-75) — §2's all-or-nothing rejection stands,
 but it now names **every** offending row and `hrc-run --check-input` reports
@@ -582,13 +620,17 @@ one item or advance past an Awaiting User item on its own. See
 [D-68](DECISIONS.md#d-68)) are both complete, so what remains is
 implementation.
 
-PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**, and as of
-PR 5 slice C it **scores with the real three-class model**. **PR 5 is in
-progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0, A, B, C and D
-are complete and it waits on nothing external; a session starts at its
-**slice E** — the verification sweep and the close. **All three of PR 5's
-gates are closed** ([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73),
-[D-77](DECISIONS.md#d-77)).
+PRs 1, 2, 3, 4, 7 and **5** are landed — the evaluator is runnable and
+**scores with its own fitted three-class L and E models**. **PR 6 is the only
+PR left** ([D-71](DECISIONS.md#d-71)), and it waits on nothing: it applies the
+fixed rules (largely already built in `integration.py`), drops the continuous
+score ([D-62](DECISIONS.md#d-62)), verifies the single-threaded contract
+([D-61](DECISIONS.md#d-61)), round-trips the artifact format PR 5 built
+([D-49](DECISIONS.md#d-49)), and makes the staging-promotion call
+([D-58](DECISIONS.md#d-58)) with [D-47](DECISIONS.md#d-47)'s limitations
+document. **A session starts by writing PR 6's execution plan** — every other
+PR has had one, and `META_PLAN.md` §6 routes plan authoring to Opus at high
+effort because three of them found defects no queue proposal showed.
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -648,13 +690,16 @@ Detailed phased proposal:
    is next, then PR 6** ([D-71](DECISIONS.md#d-71)). **Item 4 stays open**;
    two PRs remain.
 
-   **PR 5 (L/E training, scoring, and evaluation) is in progress.** Execution
-   plan: [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md). Slice 0 (the
+   **PR 5 (L/E training, scoring, and evaluation) is complete**
+   (2026-08-05). Execution plan:
+   [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md), now a record of what was
+   built rather than live work. All six slices landed — slice 0 (the
    working-text measurement behind [D-72](DECISIONS.md#d-72)), **slice A (the
    production fitter)**, **slice B (the 1.1 artifact)**, **slice C (the
-   scoring component)** and **slice D (the per-outcome report)** are complete;
-   only slice E remains, and **all three gates are closed** — G-3 was answered
-   2026-08-05 as [D-77](DECISIONS.md#d-77), so the sweep waits on nothing. The dev-slice
+   scoring component)**, **slice D (the per-outcome report)** and **slice E
+   (the verification sweep and close)** — and all three gates closed before
+   it, the last being [D-77](DECISIONS.md#d-77). **644 tests, zero
+   regressions.** The dev-slice
    figures are in [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md), **every one of
    them reported *not evaluated*.** Nothing new was decided in any of them —
    they build
@@ -667,8 +712,16 @@ Detailed phased proposal:
    closes [D-49](DECISIONS.md#d-49), and `../ARCHITECTURE.md` §10.1 now
    describes the payload as built. Slice C makes **stage 9 `working`** and
    removes the one D-47 inventory item that had a scheduled end. Slice D
-   publishes the per-outcome numbers. **643 tests, zero regressions**,
-   `test_baseline_parity.py` unchanged.
+   publishes the per-outcome numbers. Slice E's sweep closed a fixed-rule
+   guard the scorer never had, two `PREREGISTRATION_LE_STRUCTURE.md` §8
+   amendments, a D-47 inventory item PR 5 itself created (the re-fit owed once
+   the placeholders are built), and five stale sentences —
+   `test_baseline_parity.py` unchanged throughout.
+
+   **Item 4 stays open. PR 6 is the last PR standing**, and closing item 4
+   before it lands would be the mistake `META_PLAN.md` §5 warns against —
+   PR 6 owns the promotion call (D-58) and D-47's limitations document, which
+   are what decide whether Release 1.1 is anything more than a prototype.
 
    **PR 7 has a written plan:
    [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
@@ -1077,6 +1130,113 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 5 slice E landed, and PR 5 is closed: the Release 1.1
+  evaluator ships its own fitted L and E models.** The verification sweep and
+  the close (`PR5_EXECUTION_PLAN.md` §9). **644 tests, zero regressions**
+  (643 + 1), `test_baseline_parity.py` unchanged since PR 1 slice 0 (D-48).
+  **No new decision was made, so no ledger entry and no assumed-concurrence
+  row is owed** — every finding was a specification catching up to code that
+  was already correct.
+
+  **The one code finding, and the one worth reading.** `PR5_EXECUTION_PLAN.md`
+  §5 requires the fixed-rule import guard on "the production fitter **and
+  scorer**" — the mechanism that makes
+  `PREREGISTRATION_LE_STRUCTURE.md` §2.1 checkable by running the code rather
+  than by trusting a docstring. Slice A built it, applied it across
+  `training/`, **and added a static test over that whole package**. So the
+  fitter half ended up checked twice and **`components/scoring.py` checked by
+  neither** — the module that runs on every scored row, and the one already
+  importing `hazard_classifier.rules`, whose neighbours include the
+  baseline's disclaimer business rule that phase C must apply exactly once.
+  The property held; nothing would have caught it ceasing to. Closed by
+  applying the guard in the scorer and in `training/features.py`, plus a test
+  asserting each **calls** it rather than merely passing it — and **verified
+  by sabotage**: adding the forbidden import fails at import with
+  `FixedRuleImportError`. *(The shape here is worth keeping: the coverage was
+  not thin, it was **misaimed**. A second check on the half already covered
+  reads exactly like thoroughness.)*
+
+  **Two `PREREGISTRATION_LE_STRUCTURE.md` §8 amendments**, both from the
+  checks §9 names, both documentation gaps rather than deviations:
+
+  1. **§6's payload row omitted the standardization statistics.** It named a
+     coefficient matrix and an intercept; the `.npz` carries four arrays per
+     cell — `coef`, `intercept`, `mean`, `scale`. The last two are *fitted
+     parameters*, so an artifact written to §6 as literally worded is one the
+     selected model **cannot be reconstructed from**. Found by the sweep's own
+     instruction to read the §6 payload row against the actual `.npz`.
+  2. **§7 predicted per-hazard intervals "will be wide"; the measured ones are
+     narrow, and narrow is the misleading direction.** Three prompt groups per
+     hazard admit ten distinct cluster resamples, so *fewer* clusters give a
+     *tighter* interval — the opposite of how a table is read.
+     [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) already carried the right
+     caution (slice D found it in the output) while the pre-registration still
+     predicted the opposite. Superseded in place; the original is struck, not
+     deleted.
+
+  **A D-47 inventory item PR 5 itself created — the sixth consecutive sweep to
+  find inventory staleness, and the first where the missing item was not
+  inherited.** The models are fitted on working text filtered through the
+  preceding components (D-72), and three of those components are placeholders,
+  so **a re-fit is owed whenever narrative, refusal, or hazard detection is
+  built**. `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's *work list* has said so since
+  2026-08-04; the *inventory* — the list a limitations document is written
+  from — never carried it, nor did `README.md`'s pre-staging disclosure. It
+  belongs among the non-component entries because it is a property of the
+  **shipped models**: no maturity field on stage 3, 5, or 6 says a fitted
+  artifact depends on it. It is checkable rather than merely disclosed — the
+  manifest records every training-time stage's implementation, version, and
+  maturity.
+
+  **Five documentation defects**, in descending order of what they cost a
+  reader:
+
+  1. **`../ARCHITECTURE.md` §3.2's module layout never gained PR 5's six
+     modules** — `artifact.py`, `no_fixed_rules.py`, and all four of
+     `training/` — and its `scoring.py` line still read "wraps
+     heads.py/model.py, partial", false since slice C. **Second consecutive
+     sweep to find §3.2 stale**; PR 7's added its own four files with a note
+     naming this exact failure. Fixed, and the section now carries the rule
+     that generates the list and the dependency rule `no_fixed_rules.py`
+     enforces.
+  2. **`README.md` said the active work is "a science-to-decision review
+     before any 1.1 architecture or implementation change"** — retired item 1,
+     closed 2026-08-03, with five PRs landed since.
+  3. **`README.md` §Current baseline risks still called D-47 an unapproved
+     proposal** in "`STATUS.md` item 1.9", a retired sub-review, "requir[ing]
+     agreement from Riki and Kurt" — while §Release 1.1 evaluator status cites
+     D-47 as binding a hundred lines below.
+  4. **Two stale enumerations in `README.md`**: the test count (525, PR 7's)
+     and the `scripts/` list, which PR 7's sweep had just corrected and PR 5
+     made stale again. Both fixed; the `scripts/` row now states its
+     generating rule instead of only its members.
+  5. **The "Five limitations" count above `README.md`'s disclosure list**,
+     which became six — the same stated-count-in-front-of-a-growing-list
+     defect the `partial`-count note records one paragraph earlier, in the
+     opposite direction. The count is dropped rather than incremented.
+
+  **What was checked and was clean.** Every PR 5 exit criterion now maps to a
+  named test (`PR5_EXECUTION_PLAN.md` §10's table, filled in). D-77's split is
+  absorbed into `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria and the
+  report it names exists. D-68's selection matches what shipped parameter for
+  parameter and the manifest declares it; D-49 is discharged; D-37 holds by
+  construction and by test. **`PR5_DEV_METRICS.md` and
+  `pr5_results/dev_metrics.json` regenerate byte-identically** from current
+  code and the built artifact — the sweep re-ran `report_le_dev_metrics.py`
+  (57 s) rather than reading the numbers, which is
+  `QUEUE_ITEM_2_EXECUTION_PLAN.md` §10 lesson 2 applied to its own PR. The
+  D-47 inventory's other ten items are still true of `../ARCHITECTURE.md` §7
+  and `README.md`, and §7's prose count of three partials still agrees with
+  its table. `../howto/hrc-run.md` already documents both artifact formats.
+
+  **One thing recorded and deliberately not fixed.** The artifact manifest
+  pins the encoder by name (`BAAI/bge-base-en-v1.5`) with
+  `model_revision: null`, so "runs reproduce results from locked model
+  versions" rests on the cached weights rather than a pinned revision. Filling
+  it is a change to stage 8 and its provider, which PR 5 does not own; D-6's
+  offline default bounds it in practice. Routed to whichever PR next touches
+  the embedding boundary.
 
 - 2026-08-05 — **[D-77](DECISIONS.md#d-77): PR 5's approved-criteria exit
   criterion is discharged by scoping.** Kurt accepted the recommendation

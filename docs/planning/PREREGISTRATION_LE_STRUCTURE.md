@@ -262,7 +262,7 @@ serialize identically and `ARCHITECTURE.md` §10's table stands unchanged:
 
 | Candidate family | `model/` payload |
 |---|---|
-| **Multinomial softmax (`L1`) — SELECTED for both targets, [D-68](DECISIONS.md#d-68)** | coefficient matrix `(n_features, 3)` + intercept `(3,)` per target, `.npz`; class order in JSON. **This is Release 1.1's artifact payload**; no `thresholds.json` is written |
+| **Multinomial softmax (`L1`) — SELECTED for both targets, [D-68](DECISIONS.md#d-68)** | coefficient matrix `(n_features, 3)` + intercept `(3,)` **+ the cell's `mean` and `scale` standardization vectors `(n_features,)`**, per fitted cell, `.npz`; class order in JSON. **This is Release 1.1's artifact payload**; no `thresholds.json` is written |
 | Ordinal cumulative-link (`L2`) | coefficient vector `(n_features,)` + two ordered cutpoints per target, `.npz` + JSON |
 | Two binary heads (`L3` = R) | the baseline's existing `heads.npz` layout, unchanged |
 | Shared parameterization (`S2`) | one shared coefficient block plus two output blocks, same `.npz` conventions |
@@ -270,6 +270,15 @@ serialize identically and `ARCHITECTURE.md` §10's table stands unchanged:
 
 `thresholds.json` is retained only for `L3`; every other candidate decides by
 `argmax` over the distribution and has no thresholds to store.
+
+**The standardization statistics are part of every payload, not an
+implementation detail** (added 2026-08-05; §8). Every candidate standardizes
+its features by the fit rows' mean and standard deviation, `heads.py`'s
+convention with the scale floored at `1e-6`. Those vectors are **fitted
+parameters**: a reloaded model that recomputes them from the rows it is
+scoring, or omits them, does not reproduce the model that was written. The
+table above named only the decision-function parameters until PR 5's closing
+sweep read it against the artifact `evaluator/artifact.py` actually writes.
 
 **No pickle, no `joblib`, for any candidate** — D-37 carries in full.
 
@@ -294,9 +303,24 @@ For the release's limitations disclosure (D-47 inventory, `README.md`).
   response to an attacked prompt; `SCIENCE.md` §Legitimization Training
   requires naive coverage too, and no modification of this data can supply it.
 - **Dev-set numbers only** (§5).
-- **Per-hazard claims are weak.** 224 dev rows across 15 hazards is roughly 15
-  rows per hazard; per-hazard intervals will be wide and should be reported
-  with them, never as point estimates.
+- ~~**Per-hazard claims are weak.** 224 dev rows across 15 hazards is roughly
+  15 rows per hazard; per-hazard intervals will be wide and should be reported
+  with them, never as point estimates.~~ **Per-hazard claims are weak, and the
+  prediction of *how* was wrong in the direction that misleads a reader**
+  (measured 2026-08-05; §8). The row count is right — roughly 15 dev rows per
+  hazard — and reporting intervals rather than point estimates stands. But the
+  intervals came back **narrow, not wide**, and narrow here means the opposite
+  of what a reader takes it to mean. The bootstrap resamples prompt *groups*
+  (§3), and almost every hazard has **three** of them in the dev slice; three
+  groups admit only **ten** distinct resamples in existence, so the interval
+  enumerates a handful of reshufflings instead of describing sampling
+  variability. A hazard with fewer clusters therefore reports a *tighter*
+  interval than one with more. `PR5_DEV_METRICS.md` marks every such row `†`
+  and puts the caution beside the table rather than in a footnote. **The
+  honest summary is that per-hazard reporting is not supportable on this
+  data**; it is published because `SCIENCE.md` requires per-hazard judgments
+  and omitting the table would mislead more than printing it with its own
+  warning.
 - **The selection was measured on different text than Release 1.1 fits on**
   (added 2026-08-05; §1, §8). Candidates were compared on raw `response_text`;
   the shipped models are fitted on the `working` view stages 1–7 produce, as
@@ -536,3 +560,55 @@ rows for a model whose per-hazard cells are ~42 rows each, at the cost that no
 reported number describes the shipped object — and with both models reported
 *not evaluated* regardless, interpretability of the numbers is worth more here
 than the extra rows.
+
+**2026-08-05 — §6's payload row omitted the standardization statistics
+(§6).** Found by PR 5's closing sweep, on its instruction to check §6's
+payload row against the `.npz` the release actually writes. The row named a
+coefficient matrix and an intercept; `model/legitimization.npz` and
+`model/enablement.npz` carry **four** arrays per fitted cell — `coef`,
+`intercept`, `mean`, and `scale`.
+
+**Why it matters rather than being pedantry:** `mean` and `scale` are fitted
+parameters, computed over the fit rows with the scale floored at `1e-6`
+(`heads.py`'s convention, preserved deliberately by `MultinomialSoftmax` and
+by the production fitter). A reader implementing this document's payload
+literally would write an artifact from which the selected model **cannot be
+reconstructed** — the coefficients are meaningless against unstandardized
+features, and recomputing the statistics from the rows being scored is a
+different model, not the same one reloaded. §6 is the artifact specification
+slice B was built to, and the code got it right while the document under-said
+it.
+
+**What changed:** §6's multinomial row names all four arrays, and a paragraph
+below the table states the general rule for every candidate, since every one
+of them standardizes. **What did not change:** the artifact, the writer, the
+reader, or any number. This is a documentation gap, not a deviation — which
+is why it is logged as an amendment (§8's purpose is that the procedure be
+complete and visible) and needs no ledger entry: no decision moved, and
+`META_PLAN.md` §1.1 forbids restating a specification's content in one.
+
+**2026-08-05 — §7 predicted wide per-hazard intervals; they came back narrow,
+and narrow is worse (§7).** Found by PR 5's closing sweep reading §7 against
+slice D's own output. §7 said per-hazard intervals "will be wide" — the
+natural inference from ~15 dev rows per hazard, and the wrong one. §3's
+uncertainty method resamples prompt **groups**, and almost every hazard has
+three; three groups admit ten distinct resamples in total, so the interval
+enumerates reshufflings rather than estimating variability, and a hazard with
+*fewer* clusters reports a *tighter* interval.
+
+**Why this is recorded rather than quietly corrected:** §7 is the disclosure
+list `README.md` and the release's limitations document are written from, and
+the two statements point a reader in opposite directions. "Wide intervals,
+read them cautiously" invites the usual reading of a narrow one as
+confidence. The measured behaviour has to be what the disclosure says,
+because the failure mode is a reader trusting `cse`'s 0.235 (0.222–0.267)
+*more* than `hte`'s 0.524 (0.360–0.643) — which is exactly backwards.
+
+**What changed:** §7's per-hazard bullet is superseded in place with the
+measured version and its mechanism; the original text is struck rather than
+deleted, per `META_PLAN.md` §1's retire-in-place rule, because it is the
+record of what the procedure expected before it ran. `PR5_DEV_METRICS.md`
+already carried the correct caution beside its tables — slice D found it by
+reading the output — so what this closes is the *pre-registration* still
+predicting something its own results had disproved. **No number changed and
+no rule changed**, so no ledger entry is owed here either.

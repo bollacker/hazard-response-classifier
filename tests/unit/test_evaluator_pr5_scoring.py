@@ -347,6 +347,44 @@ def test_the_scorer_applies_no_fixed_rule_from_a_flag(artifact):
     assert plain.provisional_e.distribution == flagged.provisional_e.distribution
 
 
+def test_the_scoring_module_asserts_it_imports_no_fixed_rule():
+    """`PR5_EXECUTION_PLAN.md` §5 requires the fixed-rule import guard on
+    "the production fitter **and scorer**".
+
+    Added 2026-08-05 by slice E's sweep. Slice A applied the guard across
+    `training/`, and `test_no_training_module_imports_the_fixed_rule_module`
+    checks that package statically -- so the **fitter** half was covered
+    twice and the **scorer** half not at all: this module neither called the
+    guard nor appeared in any check, while being the one that runs on every
+    scored row. The property held; nothing would have caught it ceasing to.
+    `training/features.py` gains the import-time call in the same pass, so
+    the module that imports seven components does not depend on a test
+    remembering to glob it.
+
+    This asserts the guard is applied at import time, not merely that the
+    module happens to pass it today -- a guard nobody calls is the vacuous
+    case `no_fixed_rules.py` was written to avoid.
+    """
+    import ast
+    import inspect
+
+    from hazard_classifier.evaluator import no_fixed_rules
+    from hazard_classifier.evaluator.components import scoring
+    from hazard_classifier.evaluator.training import features
+
+    for module in (scoring, features):
+        no_fixed_rules.assert_no_fixed_rule_import(module)
+
+        called = [
+            node
+            for node in ast.walk(ast.parse(inspect.getsource(module)))
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "assert_no_fixed_rule_import"
+        ]
+        assert called, f"{module.__name__} never calls the guard, so it cannot fail"
+
+
 # --- Through the pipeline and into the views ------------------------------
 
 

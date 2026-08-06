@@ -189,6 +189,26 @@ src/hazard_classifier/
                              three output files. Never imports a component.
     entrypoint.py            The in-process entry point (run). cli/run.py
                              (`hrc-run`) is a thin wrapper over it.
+    artifact.py              The 1.1 artifact writer and reader (§10.1).
+                             Separate from the baseline's model.save/load
+                             (D-48/D-49). Takes the RuleSet structurally, so
+                             it carries no fixed rule into the scorer.
+    no_fixed_rules.py        The fixed-rule import guard: no module that fits
+                             or scores an L/E model may import
+                             components/integration.py
+                             (PREREGISTRATION_LE_STRUCTURE.md §2.1). Applied
+                             at import time by every module below that does.
+    training/                Offline fitting. Not imported at serve time.
+      multinomial.py         D-68's estimator and the fitted, pure-NumPy
+                             model it produces — no live estimator survives
+                             a fit, so D-37 holds by construction.
+      features.py            The serve-time feature path run offline: the
+                             real stages 1–7 produce `working`, the real
+                             stage 8 embeds and pools it (D-72).
+      release.py             fit_release_models() — the fit half (D-73), the
+                             L eligibility rule, and the fit provenance.
+      provenance.py          FitProvenance, ComponentRecord, LEModels: what
+                             the manifest's training block is written from.
     components/
       empty.py               stage 1
       decoding.py            stage 2   — wraps preprocess/decode.py
@@ -198,7 +218,10 @@ src/hazard_classifier/
       refusal.py             stage 6   — placeholder
       disclaimer.py          stage 7   — wraps preprocess/flags.py
       embedding.py           stage 8   — EmbeddingProvider/PoolingStrategy (§8)
-      scoring.py             stage 9   — wraps heads.py/model.py, partial
+      scoring.py             stage 9   — two registered implementations:
+                             multinomial_per_hazard (working, reads a 1.1
+                             artifact) and baseline_two_head (partial, wraps
+                             heads.py/model.py). §7 row 9
       integration.py         stage 10  — the final integrator (§9)
     views.py                 Derived outputs (§11).
 ```
@@ -214,10 +237,25 @@ parses every other module in the package and fails if one imports
 `components`, and fails equally if `profile.py` stops importing them (so the
 check cannot pass vacuously).
 
-*(The four modules above `components/` and this paragraph were added
-2026-08-05 by PR 7's closing sweep. §3.2 had listed the layout as of PR 1 and
-never gained PR 7's four files, which is the same specification-goes-stale
-failure `planning/PR7_EXECUTION_PLAN.md` §12 lesson 2 describes.)*
+**A second dependency rule, enforced the same way.** No module that fits or
+scores an L/E model may import `components/integration.py`, which carries
+`SCIENCE.md`'s fixed rules — `PREREGISTRATION_LE_STRUCTURE.md` §2.1
+disqualifies a candidate that applies one, and a model that reapplied phase C
+would double-count it. `no_fixed_rules.py` makes that checkable **by running
+the code**: `artifact.py`, `training/multinomial.py`, `training/release.py`,
+`training/features.py`, and `components/scoring.py` each call
+`assert_no_fixed_rule_import` at import time, so a forbidden import fails the
+moment it is introduced rather than as a scoring difference found later.
+
+*(The four modules above `components/` were added 2026-08-05 by PR 7's
+closing sweep; **PR 5's six and the paragraph above were added by PR 5's**,
+which found §3.2 describing the package as of PR 7 with `scoring.py` still
+annotated "wraps heads.py/model.py, partial" — false since slice C. Two
+consecutive sweeps have now found this section stale, which is the
+specification-goes-stale failure `planning/PR7_EXECUTION_PLAN.md` §12 lesson 2
+describes. It goes stale because it is an enumeration: the rule that
+generates it is "every module in the package", and a reader should check the
+directory against it rather than trust the listing.)*
 
 `Result` and the 1.1 result vocabulary, replacing the baseline's
 `safe`/`unsafe` (sub-review 1.1):

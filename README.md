@@ -30,14 +30,18 @@ installed console scripts, verified against synthetic fixtures and real,
 non-mocked BGE model runs. It has not reached staging and is expected to be
 replaced by the Release 1.1 design.
 
-The Release 1.1 evaluator is being built alongside it and became **runnable**
-on 2026-08-05 (`hrc-run`). The whole repository is backed by 525 tests — unit,
-integration, and science — with the baseline's own outputs held byte-identical
-throughout by `tests/integration/test_baseline_parity.py` (D-48).
+The Release 1.1 evaluator is being built alongside it, became **runnable** on
+2026-08-05 (`hrc-run`), and now scores with its own fitted three-class L and E
+models. The whole repository is backed by 644 tests — unit, integration, and
+science — with the baseline's own outputs held byte-identical throughout by
+`tests/integration/test_baseline_parity.py` (D-48).
 
-The active work is a science-to-decision review before any 1.1 architecture
-or implementation change. [`STATUS.md`](docs/planning/STATUS.md) is the live
-queue. [`DECISIONS.md`](docs/planning/DECISIONS.md) is the provenance record —
+The active work is **building Release 1.1**: the science-to-decision review
+closed 2026-08-03 and the L/E structure selection closed 2026-08-05, so what
+remains is implementation. [`STATUS.md`](docs/planning/STATUS.md) is the live
+queue and the current source for which phase is in flight — this paragraph
+names the kind of work, not the step.
+[`DECISIONS.md`](docs/planning/DECISIONS.md) is the provenance record —
 why each choice was made and what was rejected — with an index mapping every
 decision to the specification that now carries it.
 
@@ -76,7 +80,7 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | `tests/` | `unit/`, `integration/` (needs the real BGE model, cached after first run), `science/` (statistical/metric correctness) |
 | `examples/sample_input.csv` | 12-row synthetic fixture used in every doc's smoke-test example |
 | `data/` | Real labeled datasets, not synthetic fixtures — see that directory's own note below |
-| `scripts/` | Reproducible probes and one-off validation runs — each is the quotable source for a number quoted in a planning document, so a figure can be re-derived rather than trusted (`run_real_data_is9.py` + `is9_real_data_metrics.json`, `probe_disclaimer_scope.py`, `probe_working_text_delta.py`, `probe_runner_throughput.py`, the interim-split and sweep scripts) |
+| `scripts/` | Reproducible probes, builders, and one-off validation runs. **The rule, not the list:** every number quoted in a planning document has a script here that re-derives it, so a figure can be checked rather than trusted. Today that includes the probes (`probe_disclaimer_scope.py`, `probe_working_text_delta.py`, `probe_runner_throughput.py`, `run_real_data_is9.py`), the interim-split and structure-sweep scripts, `build_release_artifact.py` (the Release 1.1 L/E artifact), and `report_le_dev_metrics.py` (which generates `docs/planning/PR5_DEV_METRICS.md` and its JSON record together, so the two cannot drift) |
 | `docs/` | This documentation set |
 | `docs/planning/` | The process apparatus this project runs on: |
 | `docs/planning/PLAN.md` | The implemented baseline specification, binding until amended |
@@ -105,9 +109,18 @@ and D-8:
 
 Real-data validation confirms that the pipeline runs end to end, but the
 prototype's published reference numbers were never reproduced exactly because
-its source data were unavailable. `STATUS.md` item 1.9 proposes moving a
-standalone limitations document to the staging or release-version gate; that
-proposal requires agreement from Riki and Kurt.
+its source data were unavailable (D-34).
+
+Where that disclosure lives is settled: **`DECISIONS.md` D-47** moves the
+standalone limitations document to the staging / release-version gate and
+keeps a **pre-staging floor** — a prototype still states its known statistical
+and validity limitations inline, which is what this section and
+[§Release 1.1 evaluator status](#release-11-evaluator-status) are.
+*(Corrected 2026-08-05 by PR 5's closing sweep: this paragraph still described
+D-47 as an unapproved proposal in `STATUS.md` item 1.9, and had done since
+before that item was locked on 2026-08-03 and retired. Approval is now
+single-approver under `META_PLAN.md` §1.2, with Riki's concurrence recorded as
+assumed rather than confirmed in `STATUS.md` §Assumed concurrence.)*
 
 ## Release 1.1 evaluator status
 
@@ -146,14 +159,19 @@ nothing about what is *known* about it** — see the next section: both models
 are still reported as *not evaluated*, and the structure they use was selected
 on a null result.
 
-**Five limitations are stated here directly** rather than left to
+**These limitations are stated here directly** rather than left to
 `ARCHITECTURE.md` §7's table (added 2026-08-04; `DECISIONS.md` D-54 through
-D-62, plus the disclaimer-coverage entry added 2026-08-05 under D-70). The
-first three and the last are not components at all and appear in no table; the
-**disclaimer** entry is the exception, and deliberately so — it *is* a §7
-component, but what its `partial` marking costs a reader of a result cannot be
-read off a maturity field (corrected 2026-08-05, PR 4's closing sweep, which
-found this sentence claiming all five were non-components):
+D-62, the disclaimer-coverage entry added 2026-08-05 under D-70, and the
+re-fit obligation added 2026-08-05 by PR 5's closing sweep). *(Written as
+"Five limitations" until 2026-08-05, when the list grew to six — a stated
+count in front of a list that grows each PR is the same defect the
+`partial`-count note above records, one paragraph earlier and in the opposite
+direction. It is now written without one: read the list.)* All but one of
+them are not components at all and appear in no table; the
+**disclaimer** entry is the single exception, and deliberately so — it *is* a
+§7 component, but what its `partial` marking costs a reader of a result cannot
+be read off a maturity field (corrected 2026-08-05, PR 4's closing sweep, which
+found this sentence claiming every entry was a non-component):
 
 - **Some final-integration rules cannot be reached by the pipeline.** Three of
   `SCIENCE.md` phase B1's five bullets never fire from a real detection, for
@@ -201,6 +219,19 @@ found this sentence claiming all five were non-components):
 - **The prompt-disambiguation exception is unexercised** (D-60). The models
   receive response-derived text only; nobody has determined what prompt
   context the Assessment Standard actually permits.
+- **The L and E models were fitted through the placeholders, so a re-fit is
+  owed** (added 2026-08-05 by PR 5's closing sweep). `SCIENCE.md` requires
+  both models be trained on working text *filtered through the preceding
+  components*, and they are (D-72) — but three of those components are the
+  placeholders listed above. **The working text a 1.1 model was fitted on is
+  therefore not the text a release with real narrative, refusal, and hazard
+  detection will produce**, and building any one of them obliges a re-fit
+  before its output can be trusted. This is checkable rather than remembered:
+  the artifact's `manifest.json` records the implementation, version, and
+  maturity of every stage that produced its training text, so comparing that
+  set against a run's says exactly where the gap is. It applies to the shipped
+  models rather than to any one component, which is why it is stated here and
+  not read off `ARCHITECTURE.md` §7's table.
 
 **The L/E model structure was selected without demonstrating an improvement**
 (D-68, added 2026-08-05). Release 1.1 uses a per-hazard flat three-class

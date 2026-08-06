@@ -658,7 +658,7 @@ assembled evaluator works.
      `working`, `partial`, and `placeholder`.
 
      **The inventory grew again on 2026-08-04** and is no longer derivable
-     from §7's table alone. Four entries are *not* components:
+     from §7's table alone. These entries are *not* components:
 
      - **Phase B1's unreachable bullets** (D-54) — B1's first, second, and
        fourth bullets never fire from a real detection, for **two distinct
@@ -679,6 +679,28 @@ assembled evaluator works.
      - **Multi-hazard correctness** (`ARCHITECTURE.md` §12.1) —
        unevaluated in 1.1, and the cross-hazard backstop was withdrawn.
      - **The unexercised prompt-disambiguation exception** (D-60).
+     - **The L/E models were fitted through the placeholders, so a re-fit is
+       owed** (added 2026-08-05 by PR 5's closing sweep). The models are
+       fitted on working text filtered through the preceding components, as
+       `SCIENCE.md` requires ([D-72](DECISIONS.md#d-72)) — but three of those
+       components are placeholders, so the text they were fitted on is **not**
+       the text a release with real narrative, refusal, and hazard detection
+       will produce. This PR's own work list has carried the obligation since
+       2026-08-04 ("a re-fit is owed whenever any of them is built"); what it
+       had never reached is the *inventory*, which is the list a limitations
+       document is written from. It belongs here rather than under a component
+       because it is a property of the **shipped models**, not of any one
+       stage: no maturity field on stages 3, 5, or 6 says that a fitted
+       artifact depends on them. **It is checkable, not merely disclosed** —
+       the artifact's manifest records the implementation, version, and
+       maturity of every stage that produced its training text
+       (`ARCHITECTURE.md` §10.1), so comparing that set against a run's names
+       the gap exactly.
+
+       *(This is the sixth consecutive sweep to find D-47 inventory staleness,
+       and the first where the missing item was created by the PR doing the
+       sweeping rather than inherited: before PR 5 there was no fitted model
+       for the gap to be a property of.)*
 
      Under [D-58](DECISIONS.md#d-58) Release 1.1 ships **pre-staging**, so
      this inventory is disclosed inline in `README.md` §Release 1.1
