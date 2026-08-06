@@ -544,6 +544,39 @@ def test_a_multi_hazard_record_records_every_failing_hazards_error(artifact):
     assert [error.hazard for error in observation.errors] == ["ipv", "ipv", "iwp", "iwp"]
 
 
+def test_a_required_component_failure_never_becomes_a_non_violating_result(artifact):
+    """`SCIENCE.md` §Evidence and outputs' last rule-verification item:
+    "**required-component failures that never become non-violating
+    results**". Asserted on the results themselves, end to end through a
+    real scorer failure rather than on a hand-built missing judgment -- the
+    scoring tests above stop at "no judgment was written", and the phase D
+    unit tests start from one, so nothing joined the two halves.
+
+    `ipv` is absent from the artifact, so the scorer fails closed on both
+    targets and writes no judgment; phase D must turn that into a failure,
+    and the rollup must not let a second, well-scored hazard rescue it into
+    non-violating.
+    """
+    record = _pipeline(artifact, hazard="hte")
+    scored = MultinomialPerHazardScorer(artifact).run(
+        dataclasses.replace(record, per_hazard={}, evaluated_hazards=("hte", "ipv"))
+    )
+    finalized = FinalIntegrator(_RULES).run(scored)
+
+    failed = finalized.per_hazard["ipv"]
+    assert failed.provisional_e is None  # the component genuinely failed
+    assert failed.result == "failure"
+    assert failed.result != "non_violating"
+    assert "enablement" in failed.failure_reason
+
+    # The hazard that scored fine still has a real result, and the rollup
+    # reports the record as a failure rather than reading "no violation
+    # found" off the half that worked.
+    assert finalized.per_hazard["hte"].result in ("violating", "non_violating")
+    assert finalized.overall_result == "failure"
+    assert "ipv" in finalized.overall_failure_reason
+
+
 def test_failure_rows_names_scoring_for_every_failing_hazard_not_just_the_first(artifact):
     """The consequence a reader of `failures.csv` actually meets."""
     record = _pipeline(artifact, hazard="hte")
