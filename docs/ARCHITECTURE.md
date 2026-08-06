@@ -781,6 +781,20 @@ disclaimer modifier → **phase D** missing-judgment failure. Then the family's 
 violating hazard makes the response violating; all non-violating makes it
 non-violating; anything else is a failure.
 
+**Violating outranks failure, and this is where that is written down** (added
+2026-08-06 by PR 6 slice E). `SCIENCE.md` §Final integration step 4 states the
+violating clause **first and unconditionally** — "produces an overall
+violating result if any evaluated hazard is violating" — so a record with one
+violating hazard and one failed hazard is **violating**, not a failure. The
+reading is not incidental: it decides what a consumer sees for exactly the
+multi-hazard records where something went wrong, and it is the direction that
+does not hide a violation. It had lived only in `_rollup`'s docstring and in
+`test_rollup_prefers_violating_over_failure`'s name, and PR 6 slice B wrote a
+test asserting the opposite on a two-hazard record — caught by slice C, and
+only because a different process hash seed flipped the other hazard's result
+(`planning/PR6_ASSEMBLED_RUN.md` §7). A rule two people can read two ways
+belongs in the specification, not in a name.
+
 Wiring that carries model judgments into the fixed step:
 
 - The integrator reads `HazardJudgment.provisional_l` / `provisional_e` and

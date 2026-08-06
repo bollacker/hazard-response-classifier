@@ -32,7 +32,7 @@ replaced by the Release 1.1 design.
 
 The Release 1.1 evaluator is being built alongside it, became **runnable** on
 2026-08-05 (`hrc-run`), and now scores with its own fitted three-class L and E
-models. The whole repository is backed by 697 tests — unit, integration, and
+models. The whole repository is backed by 698 tests — unit, integration, and
 science — with the baseline's own outputs held byte-identical throughout by
 `tests/integration/test_baseline_parity.py` (D-48).
 
@@ -80,7 +80,7 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | `tests/` | `unit/`, `integration/` (needs the real BGE model, cached after first run), `science/` (statistical/metric correctness) |
 | `examples/sample_input.csv` | 12-row synthetic fixture used in every doc's smoke-test example |
 | `data/` | Real labeled datasets, not synthetic fixtures — see that directory's own note below |
-| `scripts/` | Reproducible probes, builders, and one-off validation runs. **The rule, not the list:** every number quoted in a planning document has a script here that re-derives it, so a figure can be checked rather than trusted. Today that includes the probes (`probe_disclaimer_scope.py`, `probe_working_text_delta.py`, `probe_runner_throughput.py`, `run_real_data_is9.py`), the interim-split and structure-sweep scripts, `build_release_artifact.py` (the Release 1.1 L/E artifact), and `report_le_dev_metrics.py` (which generates `docs/planning/PR5_DEV_METRICS.md` and its JSON record together, so the two cannot drift) |
+| `scripts/` | Reproducible probes, builders, and one-off validation runs. **The rule, not the list:** every number quoted in a planning document has a script here that re-derives it, so a figure can be checked rather than trusted. Today that includes the probes (`probe_disclaimer_scope.py`, `probe_working_text_delta.py`, `probe_runner_throughput.py`, `probe_pr6_assembled_run.py`, `run_real_data_is9.py`), the interim-split and structure-sweep scripts, `build_release_artifact.py` (the Release 1.1 L/E artifact), and `report_le_dev_metrics.py` (which generates `docs/planning/PR5_DEV_METRICS.md` and its JSON record together, so the two cannot drift). *(`probe_pr6_assembled_run.py` was added to this list 2026-08-06 by PR 6 slice E's sweep, having been written by slice C two commits earlier — this row says "the rule, not the list" precisely because the list is what goes stale, and it did.)* |
 | `docs/` | This documentation set |
 | `docs/planning/` | The process apparatus this project runs on: |
 | `docs/planning/PLAN.md` | The implemented baseline specification, binding until amended |
@@ -384,5 +384,12 @@ the procedure did not produce.
 No quality, coverage, or scientific-success claim is made for any component
 §7 marks `partial` or `placeholder`, per `SCIENCE.md` §Evidence and outputs'
 not-evaluated rule, nor for anything in the list immediately above. Release
-1.1 ships as a **pre-staging prototype** (`DECISIONS.md` D-58); whether to
-promote it is an explicit PR 6 decision.
+1.1 ships as a **pre-staging prototype**, and that is now a decision taken
+rather than a question left open: `DECISIONS.md` **D-81** (2026-08-05)
+discharged D-58's explicit PR 6 exit item on the evidence — see the top of
+this section. *(Corrected 2026-08-06 by PR 6 slice E. This sentence said
+"whether to promote it is an explicit PR 6 decision" and cited D-58, which
+contradicted the paragraph opening this same section once slice D added it.
+The two readings differ in the one way that matters to a reader outside this
+repository: one says the release is a prototype **pending** a call, the other
+says the call was made and the answer was prototype.)*

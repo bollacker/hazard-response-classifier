@@ -1,5 +1,23 @@
 # PR 6 execution plan — final integration and release validation
 
+> **This document is now a record of what was built, not live work**
+> (2026-08-06). All five slices landed — A the phase-B1 audit record and the
+> `Flags` defect under it, B the rule-verification walk
+> ([`PR6_RULE_VERIFICATION.md`](PR6_RULE_VERIFICATION.md)), C the assembled
+> evaluator and its real run ([`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md)),
+> D the release posture and the D-47 inventory, E this sweep and the close.
+> **698 tests, zero regressions**, `test_baseline_parity.py` unchanged.
+> §9 carries the exit criteria against the tests that verify each.
+> **Queue item 4 is closed with it** (§11) — the *build* is closed, not the
+> release: 1.1 stays pre-staging ([D-81](DECISIONS.md#d-81)) and both L/E
+> models remain *not evaluated*.
+>
+> Where this plan and what shipped disagree, what shipped is right and §9 says
+> so. Two places it was wrong on its own terms are worth keeping: §1's test
+> count is PR 5's and the plan says to re-run rather than trust it, and §4's
+> struck bullet count was corrected by slice A from the table rather than from
+> the sentence — §12 lesson 5 landing inside the plan that states it.
+
 Written 2026-08-05, after PR 5 closed. This is the working plan for
 `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6, the last slice of `STATUS.md` queue
 item 4. Written to be run from a clean session: everything a session needs is
@@ -559,21 +577,26 @@ inventory is a reason to check it, not to skip it.
 
 ## 9. Exit criteria → how each is verified
 
-To be filled in by slice E with named tests. Stated here as what each row must
-end up pointing at.
+**Filled in at the close by slice E, 2026-08-06.** Every row names a test that
+actually runs, not the slice that was supposed to produce it — and every test
+named here was collected and run for this table, not matched by name.
+`PR7_EXECUTION_PLAN.md` §11 is the format. **698 tests, zero regressions**,
+`tests/integration/test_baseline_parity.py` unchanged since PR 1 slice 0
+([D-48](DECISIONS.md#d-48) — it carries exactly one commit in its whole
+history, checked with `git log`, not assumed).
 
 | PR 6 exit criterion | Verified by |
 |---|---|
-| Every evaluated hazard has exactly one final result or failure | The per-hazard loop's construction plus the family-table and phase-D tests; slice C's real run over three families and a failure |
-| The overall result follows the approved rollup | `test_rollup_*`, including `test_rollup_prefers_violating_over_failure` — whose precedence reading (**violating wins over failure**) currently lives only in a docstring and a test name, and should be stated where the rule is |
-| The same carried record, model versions, and rule version always produce the same output | `test_the_same_input_produces_byte_identical_outputs`, `test_run_is_deterministic_across_two_identical_calls`, plus the artifact provenance set |
-| Tests cover every L/E table cell and every fixed finalization rule | Slice B's walk of `SCIENCE.md`'s rule-verification list, item by item |
-| Tests cover multiple hazards, placeholders, component replacement, artifact round trips, interfaces, and concurrency | Slice C's table. **Continuous integration is no longer in this criterion** ([D-78](DECISIONS.md#d-78)) — removed from `SCIENCE.md`'s list rather than scoped, so there is nothing to verify and nothing to disclose |
-| Every working implementation is tested | Enumerate from `ARCHITECTURE.md` §7's `working` rows and name a test for each |
-| Every placeholder is visible and creates no judgment | PR 4 slice C's forcing function; re-run rather than cited |
-| Component-quality results are published only where ground truth and approved criteria exist | True by construction — none exist, so nothing is published as a quality result. Slice D's disclosure is what makes it checkable |
-| Every reported benchmark metric carries an uncertainty estimate and its method | `PR5_DEV_METRICS.md`'s cluster-bootstrap intervals and stated method; no other metric is reported |
-| D-47's limitations document | Discharged by the pre-staging floor — [D-81](DECISIONS.md#d-81) keeps 1.1 pre-staging, so `README.md` §Release 1.1 evaluator status is the disclosure and no standalone versioned document is required. Slice D regenerates the inventory from `../ARCHITECTURE.md` §7's table |
+| Every evaluated hazard has exactly one final result or failure | `test_evaluator_pr5_scoring.py::test_every_evaluated_hazard_gets_its_own_judgment` (one judgment per hazard, not per supplied hazard) and the per-hazard loop's construction. That every judgment gets *exactly one* terminal value is the three family-table walks (`test_default_family_table_every_cell`, `test_specialized_advice_family_table_every_cell`, `test_enablement_only_family_table_every_cell` — 21 cells, 24 cases) against phase D's four failure tests, since the two are the only writers. **Exercised for real** by slice C's run over all three family tables ([`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) §2), reproducible with `scripts/probe_pr6_assembled_run.py` and **re-run by this sweep**, output identical. *(§6 asked for "three families **and a failure**"; slice C established the failure half is **unreachable in a real 1.1 run** and why — §4 there — so the failure path is verified by named tests against an artifact with a genuinely unavailable cell instead, and the gap is disclosed in `README.md` rather than papered over.)* |
+| The overall result follows the approved rollup | `test_evaluator_integration.py::test_rollup_is_non_violating_only_when_every_hazard_is`, `::test_rollup_is_violating_when_any_hazard_is`, `::test_rollup_is_failure_when_a_hazard_fails_and_none_violate`, `::test_rollup_prefers_violating_over_failure`, plus `test_evaluator_pr3_hazard_routing.py::test_rollup_is_violating_when_any_hazard_is_through_the_full_pipeline` for the same rule through a real pipeline. **The precedence reading is now stated where the rule is** — `../ARCHITECTURE.md` §9 gained it at this close. It had lived only in `_rollup`'s docstring and a test name, and slice B wrote a test asserting the opposite ([`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) §7), which is the evidence that a name is not a specification |
+| The same carried record, model versions, and rule version always produce the same output | `test_evaluator_runner.py::test_the_same_input_produces_byte_identical_outputs`, `test_evaluator_entrypoint.py::test_run_is_deterministic_across_two_identical_calls`, and `test_evaluator_pr5_scoring.py::test_scoring_is_deterministic_for_the_same_record` at the component. Provenance: `test_evaluator_pr5_scoring.py::test_the_model_version_names_the_artifact_not_the_component` and `::test_a_run_records_the_selected_scoring_implementation`; `RuleSet.version` is frozen into `RunContext.rule_version` (§9) |
+| Tests cover every L/E table cell and every fixed finalization rule | Slice B's item-by-item walk of `SCIENCE.md`'s six-item rule-verification list — [`PR6_RULE_VERIFICATION.md`](PR6_RULE_VERIFICATION.md), which names a test per item and **records the two it cannot meet** (S-1, S-2). All 21 table cells parametrized; four missing interaction tests written, two of them named in the standard's own minimum list. **Met, with S-1 and S-2 recorded unmet and disclosed** — not met in full, and the row says so |
+| Tests cover multiple hazards, placeholders, component replacement, artifact round trips, interfaces, and concurrency | Slice C's table — [`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) §1, six properties, each to named tests, three of which slice C had to write. Component replacement is `test_evaluator_scoring_pipeline.py::test_every_component_can_be_swapped_for_a_stub_without_editing_another`, parametrized over **all ten stages** end to end through `run_pipeline`; artifact round trips are covered for **both** formats after `test_evaluator_profile.py::test_the_baseline_format_round_trips_as_behavior_through_the_evaluator`; the concurrency **contract** by `test_evaluator_runner.py::test_the_evaluator_builds_no_parallelism_anywhere` and `::test_run_batch_scores_rows_sequentially_in_input_order`, which is what D-61 had been discharged by nothing. **Continuous integration is no longer in this criterion** ([D-78](DECISIONS.md#d-78)) — removed from `SCIENCE.md`'s list rather than scoped, so there is nothing to verify and nothing to disclose |
+| Every working implementation is tested | Enumerated from the built registry rather than from prose — four `working` implementations, one per §7 `working` row. **stage 1 `whitespace_trim`**: `test_evaluator_pipeline.py::test_exhaustion_at_stage_1_empty_response_reaches_final_integration_directly` (parametrized), `test_evaluator_real_bge.py::test_an_empty_response_never_reaches_the_encoder`. **stage 8 `shared_single_pass`**: `test_evaluator_real_bge.py::test_real_provider_is_called_exactly_once_per_response`, `test_evaluator_pr4_text_view.py::test_default_text_view_is_working_and_recorded_in_the_observation`. **stage 9 `multinomial_per_hazard`**: `test_evaluator_pr5_scoring.py::test_both_targets_emit_a_well_formed_three_class_distribution`, `::test_the_label_is_the_argmax_of_the_distribution`, `::test_the_component_declares_itself_working_with_its_own_implementation_id`, and on real embeddings `test_evaluator_real_bge.py::test_the_1_1_scorer_emits_a_real_three_class_distribution_on_real_embeddings`. **stage 10 `science_v1_4`**: the whole of `test_evaluator_integration.py`. *(PR 1's `baseline_two_head` stays registered and stays `partial`; it is not what a 1.1 artifact runs — `test_evaluator_profile.py::test_stage_9s_implementation_follows_the_artifact`.)* |
+| Every placeholder is visible and creates no judgment | `test_evaluator_pipeline.py::test_placeholder_flags_stay_not_evaluated_never_not_detected` — PR 4 slice C's forcing function, asserting the text passes through, the outcome is `not_evaluated` and never `not_detected`, and no judgment is created — with `::test_operational_content_survives_narrative_and_refusal_placeholders`. **Re-run at this close rather than cited**, as §9 required |
+| Component-quality results are published only where fixed human ground truth and approved criteria exist | True by construction — no approved per-outcome criteria exist ([D-63](DECISIONS.md#d-63), [D-77](DECISIONS.md#d-77)), so nothing is published as a quality result and both models are reported *not evaluated*. What makes it **checkable** rather than asserted is slice D's disclosure and `test_evaluator_profile.py::test_architecture_section_7_matches_every_components_real_maturity`, which pins the maturity table the disclosure is generated from — re-verified as a real forcing function by this sweep, by sabotage |
+| Every reported benchmark metric carries an uncertainty estimate and the method that produced it | [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) — a 95% cluster-bootstrap interval over prompt groups, 1000 resamples, seeded, for **every** figure, with the method stated beside the table; regenerated byte-identically by `scripts/report_le_dev_metrics.py`, which writes the document and `pr5_results/dev_metrics.json` together so the two cannot drift. No other benchmark metric is reported anywhere in the release. Pinned by `test_report_le_dev_metrics.py` |
+| D-47's limitations document | Discharged by the pre-staging floor — [D-81](DECISIONS.md#d-81) keeps 1.1 pre-staging, so `README.md` §Release 1.1 evaluator status is the disclosure and no standalone versioned document is required. Slice D regenerated the inventory's **component half** from `../ARCHITECTURE.md` §7's table (three `placeholder` + three `partial` = six) and pinned that table with a test; the **non-component half is seven** and has no generating rule, so this sweep re-read it item by item against `README.md` — all seven present, including slices B's and C's two new ones. **The first sweep in seven not to find the inventory stale**, and the pinning test is why |
 
 ## 10. Explicitly out of scope for PR 6
 
@@ -678,6 +701,29 @@ named test checks what the criterion says" are different claims, and only the
 second discharges anything.
 
 ## Open Questions
+
+**At the close, 2026-08-06 (slice E): none.** Nothing PR 6 did raised a
+question a slice could not answer from the specifications, and **no slice made
+a decision** — A built to a specification D-79 had already amended, B and C
+recorded shortfalls rather than resolving them, D absorbed D-80 and D-81 rather
+than re-deciding them, and E's six findings were each a document catching up to
+code that was already correct. **So no new ledger entry and no new
+assumed-concurrence row is owed**, and Riki's agenda stays at twenty-nine rows.
+That is the same shape PR 5's close had, and it is worth stating rather than
+leaving to be inferred from the absence of an entry.
+
+**Two things are left open by Release 1.1 and are not PR 6's to close**, named
+here because "no open questions" should not be read as "nothing is
+outstanding". `STANDARDS_REQUEST.md`'s **Ask A** (a fixed, in-version
+human-labeled evaluation set) and **Ask B** (approved per-outcome criteria) are
+what would close S-1, S-2, and both models' *not evaluated* status;
+[D-63](DECISIONS.md#d-63) records that neither is arriving, and no
+implementation substitutes for either. And **Riki's batch review** of the
+assumed-concurrence table is the one thing `META_PLAN.md` §1.2 says
+single-approver mode cannot do without — Release 1.1's entire build ran under
+it.
+
+**The four gates, answered before any code:**
 
 **None open.** All four were answered by Kurt on 2026-08-05 and absorbed into
 the specifications the same day — the order the entry gate requires. Recorded

@@ -5,6 +5,17 @@ direction, not confirmed on record — see `STATUS.md`). This is the phased
 backlog for Release 1.1 and it **authorizes implementation** of the phases
 below, in the order given, subject to each PR's own entry conditions.
 
+> **All seven PRs are complete as of 2026-08-06**, and `STATUS.md` queue item 4
+> — the item that executed this document — is closed and retired. The order run
+> was PR 1 → 2 → 3 → 4 → 7 → 5 → 6 ([D-56](DECISIONS.md#d-56),
+> [D-71](DECISIONS.md#d-71)). **This document is now the specification of what
+> was built**, not a backlog: each PR's exit criteria are the checklist the
+> build was closed against, and `PR6_EXECUTION_PLAN.md` §9 maps PR 6's to the
+> tests that verify them. **Closing the build is not shipping the release** —
+> 1.1 stays pre-staging ([D-81](DECISIONS.md#d-81)) and its two central models
+> are *not evaluated*; §Release outcome below is what was delivered, and
+> `README.md` §Release 1.1 evaluator status is what it does not support.
+
 `STATUS.md` remains the live queue; this document is the plan its item 4
 executes. Nothing here amends a decision on its own — an amendment still goes
 through `DECISIONS.md`, and `SCIENCE.md` still governs any behavioral
@@ -529,7 +540,7 @@ assembled evaluator works.
   meaning again.
 - Apply the fixed empty-response, prompt-only, applicability, disclaimer,
   and failure rules in `SCIENCE.md`.
-- **Record which phase B1 bullet decided a result.** Inherited from PR 4
+- ~~**Record which phase B1 bullet decided a result.** Inherited from PR 4
   (`ARCHITECTURE.md` §13's A-3, and `PR4_EXECUTION_PLAN.md` §8, which ruled it
   out of PR 4's scope and routed it here). `integration.py::
   _phase_b1_terminal_state` computes a `_reason` and discards it, so
@@ -537,7 +548,34 @@ assembled evaluator works.
   and B1's bullet *ordering* is load-bearing, which is why this is an
   auditability gap rather than a cosmetic one. Added to this work list
   2026-08-05 by PR 4's closing sweep, which found A-3 was the only place it
-  was written down.
+  was written down.~~ **Done 2026-08-06 by PR 6 slice A, as
+  [D-79](DECISIONS.md#d-79).** `HazardJudgment.b1_bullet` records which of
+  B1's five ordered bullets assigned the pair, `results.jsonl` carries it at
+  `RESULT_VIEW_VERSION` 3, and `decided_by`'s declared vocabulary narrowed to
+  `"B1" | "B2" | "C"` — nothing had ever emitted `"A"`.
+
+  **The item could not be closed without first fixing a defect underneath
+  it.** `integrate` reassigned `flags` inside its per-hazard loop while B1's
+  blank-payload bullet returns flags with `refusal="detected"` — which
+  `SCIENCE.md` requires — so the mutated object became the *next* hazard's B1
+  input, where `refusal` is the **first** bullet. A two-hazard blank-payload
+  record recorded `blank_payload` for the first hazard and `refusal` for the
+  second. **Identical L/E either way**, which is why five PRs of tests never
+  caught it, and why writing this field first would have shipped an audit
+  record that was wrong for every hazard after the first. B1 is now evaluated
+  **once per record**, before the loop, which makes "every hazard of an
+  exhausted record carries the same terminal state" true by construction
+  (`ARCHITECTURE.md` §4, §9). Nothing else about the field is a behavior
+  change: no L/E pair, table lookup, per-hazard result or rollup moved.
+
+  **Only two of the five bullets are reachable in a Release 1.1 run** —
+  `prompt_repetition` and `blank_payload`. Refusal and narrative detection are
+  placeholders so neither flag is ever set, and the disclaimer bullet cannot
+  fire for §13's A-3 structural reason. The field is the first thing that
+  makes that visible in a record rather than inferred from the maturity
+  table; it is disclosed in `README.md` and the bullets are not removed,
+  because the rule they encode is the standard's and outlives 1.1's component
+  maturity.
 - Produce final per-hazard L/E values.
 - Apply the correct L/E-to-result table for each hazard family.
 - Produce a per-hazard violating or non-violating result, or a failure.
@@ -606,9 +644,11 @@ assembled evaluator works.
   removal**: no future release inherits the obligation under that document
   either, which is the difference from how [D-54](DECISIONS.md#d-54),
   [D-55](DECISIONS.md#d-55) and [D-65](DECISIONS.md#d-65) recorded genuine
-  shortfalls. The verification *content* is built and green — 644 tests, six
-  PRs, zero regressions, `test_baseline_parity.py` byte-identical since PR 1 —
-  and has only ever been run by hand.
+  shortfalls. The verification *content* is built and green — **698 tests at
+  PR 6's close**, seven PRs, zero regressions, `test_baseline_parity.py`
+  byte-identical since PR 1 — and has only ever been run by hand. *(Read 644
+  and six PRs when D-78 was written on 2026-08-05; updated 2026-08-06 by
+  PR 6 slice E from a run, not from the previous close's number.)*
 - Every working implementation is tested.
 - Every placeholder is visible and creates no judgment.
 - Component-quality results are published only where fixed human ground truth
@@ -758,11 +798,28 @@ assembled evaluator works.
        single-class ([D-45](DECISIONS.md#d-45)) makes it reachable again.
 
      **So the inventory stands at six component items and seven
-     non-component ones.** Both halves were regenerated from
-     `ARCHITECTURE.md` §7's table on 2026-08-06 rather than copied — the
-     component half is exactly the table's three `placeholder` and three
-     `partial` rows, and the count agreed with this list for the first time
-     in seven sweeps.
+     non-component ones.** The **component half was regenerated from
+     `ARCHITECTURE.md` §7's table** on 2026-08-06 rather than copied — it is
+     exactly the table's three `placeholder` and three `partial` rows, and the
+     count agreed with this list for the first time in seven sweeps. The
+     **non-component half has no such generating rule**, which is the point of
+     the paragraph above: those entries are not components and no table
+     produces them, so they are maintained by hand and re-read item by item at
+     each sweep. *(Corrected 2026-08-06 by PR 6 slice E, which found this
+     sentence claiming both halves came from §7 — a generating rule that would
+     yield nothing for the half that most needs one. D-47's own history is of
+     this list drifting; saying where each half comes from is what makes the
+     drift checkable.)*
+
+     **The component half is now pinned by a test**, which is why the count
+     agreed:
+     `test_evaluator_profile.py::test_architecture_section_7_matches_every_components_real_maturity`
+     parses §7's rows and compares each against the maturity the registered
+     component actually declares, then asserts the generated inventory is
+     three `partial` and three `placeholder`. Re-verified as a real forcing
+     function by slice E's sweep, by sabotage: flipping stage 1's row to
+     `partial` turns it red. **Nothing pins the non-component half**, and a
+     sweep should read it against `README.md` rather than assume it.
 
      Release 1.1 ships **pre-staging** — decided 2026-08-05 as
      [D-81](DECISIONS.md#d-81) on the evidence, discharging

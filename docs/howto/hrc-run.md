@@ -5,8 +5,10 @@ pipeline in [`../ARCHITECTURE.md`](../ARCHITECTURE.md), not the baseline
 scorer. No labels, no retraining.
 
 > **Read [`../../README.md` §Release 1.1 evaluator status](../../README.md#release-11-evaluator-status)
-> before using any output.** Release 1.1 is a **pre-staging prototype**
-> (`DECISIONS.md` D-58): three of its ten stages are visible placeholders,
+> before using any output.** Release 1.1 is a **pre-staging prototype** — a
+> posture decided on the evidence and not a default (`DECISIONS.md` D-81,
+> 2026-08-05, discharging D-58's exit item): three of its ten stages are
+> visible placeholders,
 > three more ship `partial`, and no component has an approved success
 > criterion, so every one of them is reported as *not evaluated* under
 > `SCIENCE.md` §Evidence and outputs. **That includes the L and E models,
