@@ -586,8 +586,9 @@ PRs 1, 2, 3, 4 and 7 are landed — **the evaluator is runnable**, and as of
 PR 5 slice C it **scores with the real three-class model**. **PR 5 is in
 progress**, then PR 6 ([D-71](DECISIONS.md#d-71)). Its slices 0, A, B, C and D
 are complete and it waits on nothing external; a session starts at its
-**slice E** — the verification sweep and the close, which is what gate G-3
-blocks.
+**slice E** — the verification sweep and the close. **All three of PR 5's
+gates are closed** ([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73),
+[D-77](DECISIONS.md#d-77)).
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -652,7 +653,8 @@ Detailed phased proposal:
    working-text measurement behind [D-72](DECISIONS.md#d-72)), **slice A (the
    production fitter)**, **slice B (the 1.1 artifact)**, **slice C (the
    scoring component)** and **slice D (the per-outcome report)** are complete;
-   only slice E remains, and gate G-3 is what it waits on. The dev-slice
+   only slice E remains, and **all three gates are closed** — G-3 was answered
+   2026-08-05 as [D-77](DECISIONS.md#d-77), so the sweep waits on nothing. The dev-slice
    figures are in [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md), **every one of
    them reported *not evaluated*.** Nothing new was decided in any of them —
    they build
@@ -833,7 +835,7 @@ item added and decided 2026-08-05 ([D-76](DECISIONS.md#d-76)).
 queue item 2 has since closed ([D-68](DECISIONS.md#d-68), 2026-08-05); PR 5
 waits on nothing external and has a selected structure to build. One
 action remains with Kurt — schedule Riki's concurrence review, now covering
-twenty-eight calls. Queue items 1, 2 and 3 are complete and retired, and both
+twenty-five rows. Queue items 1, 2 and 3 are complete and retired, and both
 architecture-pass findings (A-1, A-2) are resolved and applied to
 `SCIENCE.md`. The calls awaiting Riki's concurrence are in force under an
 assumed concurrence.
@@ -847,18 +849,51 @@ labels, which is the only route to either model being *evaluated* rather than
 *not evaluated* — but nothing waits on it. One action sits with Kurt:
 schedule Riki's concurrence review.
 
-**Riki's review now has fifteen rows, covering twenty-eight calls** (2026-08-05:
-D-67's coverage call and D-68's structure selection are the newest two; 2026-08-04:
+**Riki's review now has twenty-five rows** (2026-08-05:
+[D-76](DECISIONS.md#d-76)'s observation-error amendment and
+[D-77](DECISIONS.md#d-77)'s scoping of PR 5's approved-criteria exit criterion
+are the newest two — **read D-77 first**, since it is the row that records
+Release 1.1 shipping without approved criteria at all; 2026-08-04:
 the decision-debt sweep added nine in one row, the interim-data pivot four
-more, and `META_PLAN.md` §1.2 one). **This table is the review agenda**, and
+more, and `META_PLAN.md` §1.2 one).
+
+**The row count was corrected 2026-08-05 from "fifteen rows, covering
+twenty-eight calls", which was wrong on both numbers** — the table had
+twenty-three rows at the time, and no derivation of "twenty-eight" survives.
+It is now stated as rows only, because **the row is the review unit**: several
+rows deliberately group decisions made together on one footing (PR 2's scope
+calls, the interim-data pivot, the decision-debt sweep's nine), so a count of
+individual calls is a different and less useful number than it appears. This
+is `QUEUE_ITEM_2_EXECUTION_PLAN.md` §10 lesson 2 — a summary figure that looks
+authoritative and was never recomputed from the table it summarizes — landing
+in the one table `META_PLAN.md` §1.2 says must be maintained per decision. A
+reviewer who trusts a stale count cannot tell whether they have seen
+everything, which is precisely what this table exists to let them do.
+
+**This table is the review agenda**, and
 `META_PLAN.md` §1.2 now makes maintaining it per decision a requirement rather
 than a habit — the reversal-scope column is what lets a dissent be costed
 instead of guessed at. Kurt directed that the review be
 **scheduled independently rather than coupled to a PR boundary**, and that
-building continue meanwhile — which is how the table reached twenty. The
-reversal scope in each row is what that trade buys; the last two rows are the
-ones to read first, since between them they remove a safeguard, scope two
-`SCIENCE.md` success criteria, and set the release's staging posture.
+building continue meanwhile — which is how the table reached twenty-five. The
+reversal scope in each row is what that trade buys.
+
+**Where to start, named rather than positioned** (corrected 2026-08-05: this
+pointed at "the last two rows", which stopped meaning the intended rows the
+moment the table grew — a positional reference into a growing table is worse
+than a stale count, because it silently redirects the reviewer rather than
+merely misinforming them). The four rows that give up the most:
+
+- **PR 5's approved-criteria exit criterion discharged by scoping**
+  ([D-77](DECISIONS.md#d-77)) — records Release 1.1 shipping with **no
+  approved success criteria at all**.
+- **Cross-hazard completeness withdrawn** — **removes a safeguard**.
+- **PR 2 scope calls** ([D-50](DECISIONS.md#d-50),
+  [D-51](DECISIONS.md#d-51)) — **two shortfalls against a `SCIENCE.md`
+  success criterion**, met by disclosure rather than by building.
+- **Decision-debt sweep** — carries [D-58](DECISIONS.md#d-58), which sets the
+  release's **pre-staging posture**, and D-54/D-55, two more `SCIENCE.md`
+  shortfalls.
 
 The phase B fold,
 the withdrawal of cross-hazard completeness, and **D-48's scoping of the
@@ -949,6 +984,7 @@ as though it were. This is the one item to close at Riki's next review.
 | **A rejection names every offending row; `--check-input` added** (2026-08-05): §2's condition (1) is unchanged — still run-level, still aborts before any row is scored, still writes nothing — but the message now names **every** offending row and its resolved scope, and `hrc-run --check-input` reports the same list without scoring. Locked as **[D-75](DECISIONS.md#d-75)** | In force | `../ARCHITECTURE.md` §2's enforcement paragraph; `../howto/hrc-run.md`; `evaluator/runner.py`, `evaluator/entrypoint.py`, `cli/run.py`; `PR7_EXECUTION_PLAN.md`'s Open Questions. **Ergonomics only, and the cheapest row here to reverse** — no rejection condition changes, so dissent costs one CLI flag, one entry point, and a fuller error message; `hrc-run` with no flag behaves as it did. The row worth Riki's eye is the *rejected* alternative recorded inside it: routing a bad supplied hazard to `failures.csv` and continuing, which is what most benchmark harnesses do and what §2 forbids. Choosing that instead means amending §2, which would make the supplied hazard a per-row data condition rather than part of the run's input contract, and would let a run silently score a subset of what it was handed |
 | **PR 5's two fitting calls** (2026-08-05): **[D-72](DECISIONS.md#d-72)** the models are fitted on pipeline **working text**, not the raw `response_text` D-68's selection used, and the selection is **not** re-run; **[D-73](DECISIONS.md#d-73)** the shipped artifact is fitted on the **fit split only**. Grouped: decided together, on one footing, each with its own reversal scope | In force | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5, §7, §8; `PR5_EXECUTION_PLAN.md` §3, slices A/B/D. **D-72 closes a `SCIENCE.md` training shortfall and opens a stated assumption in its place** — that D-68's ranking survives the change of input view, which the procedure did not test; reverting means either re-running the selection (spending a budget §2.4 fixed) or accepting that 285 of 859 rows are scored in a form the model never saw. `scripts/probe_working_text_delta.py` is the evidence and reproduces it. **D-73 costs ~35% of the rows** for a per-hazard fit already at ~42 rows/cell; reverting it buys them back and makes every reported number describe a model that is not the one shipped |
 | **PR 5 sequenced before PR 6** (2026-08-05): the remaining order is PR 7 → PR 5 → PR 6. Locked as **[D-71](DECISIONS.md#d-71)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6 sequencing notes; this file's queue item 4 and §Current Phase; `PR5_EXECUTION_PLAN.md` §1. **Ordering only — no PR's scope changes**, so reverting costs the order and nothing built. What reverting re-creates is the inversion D-71 fixed: PR 6's "artifact round trips" exit criterion depends on the artifact format [D-49](DECISIONS.md#d-49) assigns to PR 5, and PR 6's promotion call (D-58) and limitations document (D-47) would describe a release whose L/E models PR 5 has not yet replaced. Note that D-56 never decided PR 5's position — the old "PR 7 → PR 6 → PR 5 (D-56)" formula over-attributed |
+| **PR 5's approved-criteria exit criterion discharged by scoping** (2026-08-05): the criterion is **split** — "on evaluation rows excluded from fitting" is met by D-73's fit-half-only artifact; "meet approved per-outcome criteria" cannot be met and is replaced by a per-outcome dev report with both models *not evaluated*. Locked as **[D-77](DECISIONS.md#d-77)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria (**absorbed**); `PR5_EXECUTION_PLAN.md` §3's G-3 and §10; [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) and `pr5_results/dev_metrics.json`; `README.md`'s summary table. **This is the row that records Release 1.1 shipping without approved criteria**, so dissent does not restore them — it either blocks PR 5's close until `STANDARDS_REQUEST.md` Ask B arrives (which D-63 says it will not), or means writing criteria in this repository after seeing the numbers, which is the first rejected alternative inside the entry and would make every downstream claim unfalsifiable. The narrower thing worth Riki's eye is the **split** itself: recording it as one wholly unmet criterion would overstate the shortfall, recording it as met would understate it, and only one of those two readings is currently on paper anywhere else |
 | **A component observation records every error** (2026-08-05): `ComponentObservation.error` becomes `errors: tuple[ComponentError, ...]`. Locked as **[D-76](DECISIONS.md#d-76)** | In force | `../ARCHITECTURE.md` §4 (**absorbed**); `evaluator/record.py`, every component, `pipeline.py`, `runner.py`, `views.py`; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's work list, which it closes. **Auditability only — no result changes.** The per-hazard verdict comes from phase D via `HazardJudgment.failure_reason`, and a `failures.csv` row is emitted from `judgment.result == "failure"`, never from an observation; what changed is that the row can now name the stage that caused it instead of falling back to `final_integration`. Reverting means restoring the single field, re-losing every failing hazard's error but the first in a multi-hazard record, and re-opening a gap two consecutive sweeps recorded. It also bumps `RESULT_VIEW_VERSION` 1 → 2, so a consumer of `results.jsonl` sees `errors` (a list) where it saw `error` (an object or null) — the one externally visible cost |
 | **`META_PLAN.md` §6 amended again** (2026-08-05): a **plan authoring** row added — Opus at high effort, on the evidence that PR 4's, PR 5's and PR 7's plans each found defects by reading modules against the specifications describing them (six findings, four of them now locked decisions). Without the row the nearest match was fix-proposal → Sonnet 5 | In force | `META_PLAN.md` §6. Process bookkeeping, not science — same footing as the §5, §1.2 and sweep amendments. Recorded here rather than as a ledger entry per §1.1's rule against restating a specification's content. Reverting routes plan authoring to the cheapest matching row, which is what the six findings argue against |
 | **`META_PLAN.md` §6 amended** (2026-08-05): a verification sweep is a critique pass, not bookkeeping — routed to Opus at high effort, with a preference for a fresh context that did not write the specification being checked. Justified by PR 2's and PR 3's sweeps each finding a D-47 absorption gap on a check expected to be clean, and by queue item 2's five selection-rule defects | In force | `META_PLAN.md` §6. Process bookkeeping, not science — the same lowest-stakes footing as the §5 amendment. Reverting sends PR closes back to the cheapest model, which is what the three cited findings argue against |
@@ -1041,6 +1077,36 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **[D-77](DECISIONS.md#d-77): PR 5's approved-criteria exit
+  criterion is discharged by scoping.** Kurt accepted the recommendation
+  [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md) §3 carried as gate G-3.
+  **All three of PR 5's gates are now closed and nothing blocks slice E.**
+
+  **The criterion is split, not waived**, which is the part worth reading.
+  "The selected models meet approved per-outcome criteria **on evaluation rows
+  excluded from fitting**" has two halves and only one is buildable. The
+  excluded-rows half is **met** — [D-73](DECISIONS.md#d-73) fits the shipped
+  artifact on the fit half alone, so the dev slice is genuinely held out. The
+  approved-criteria half **cannot be met**: those are a policy judgment about
+  acceptable risk, not a measurement, and `STANDARDS_REQUEST.md` Ask B is not
+  arriving ([D-63](DECISIONS.md#d-63)). Recording it as one wholly unmet
+  criterion would overstate the shortfall; recording it as met would
+  understate it.
+
+  **What replaces the unmet half** is slice D's per-outcome dev report, with
+  both models reported *not evaluated* whatever the figures show
+  ([`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md)).
+  `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria carry the change — the
+  criterion is struck, the split stated, and the replacement named, the same
+  shape [D-54](DECISIONS.md#d-54) and [D-55](DECISIONS.md#d-55) used for PR 4.
+
+  **The rejected alternative that matters most is the first one in the entry:**
+  setting per-outcome criteria in this repository so the criterion could be
+  met. Criteria written by the people who built and measured the model, after
+  seeing its numbers, are not approved criteria — calling them one would make
+  every downstream claim unfalsifiable, which is exactly what `SCIENCE.md`'s
+  not-evaluated rule exists to prevent.
 
 - 2026-08-05 — **PR 5 slice D: the per-outcome report, every figure marked
   *not evaluated*.** `scripts/report_le_dev_metrics.py` scores the dev slice

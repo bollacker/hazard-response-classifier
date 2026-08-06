@@ -36,15 +36,19 @@ all three before starting.**
    approved per-outcome criteria" — approved criteria are Ask B, which
    [D-63](DECISIONS.md#d-63) established is not arriving. That is a scoping
    decision and needs a ledger entry, the way D-54 and D-55 scoped PR 4's.
+   **Decided 2026-08-05 as [D-77](DECISIONS.md#d-77):** the criterion is
+   **split**, not waived — "on rows excluded from fitting" is met, "approved
+   criteria" is not and is replaced by slice D's report. §3's G-3 carries it.
 
 **Six slices** (`META_PLAN.md` §5): 0 the measurement the gate needs, A the
 production fitter, B the artifact, C the scoring component, D evaluation and
 reporting, E the sweep and close. **Slices 0, A, B, C and D have run** (all
 2026-08-05, §4–§8) and **§3's gate questions G-1 and G-2 are answered and
 absorbed** ([D-72](DECISIONS.md#d-72), [D-73](DECISIONS.md#d-73)): fit on
-pipeline working text, fit split only. **A session starts at slice E** — the
-verification sweep and the close. G-3 is the one thing still open, and it
-blocks exactly that.
+pipeline working text, fit split only. **G-3 is answered too**
+([D-77](DECISIONS.md#d-77)): PR 5's approved-criteria exit criterion is
+discharged by scoping. **All three gates are closed. A session starts at
+slice E** — the verification sweep and the close, and nothing blocks it.
 
 ---
 
@@ -149,10 +153,11 @@ it (slice A's equivalence test).
 > **G-1 and G-2 were decided by Kurt on 2026-08-05 and absorbed into
 > `PREREGISTRATION_LE_STRUCTURE.md` before any code**, as the entry gate
 > requires. **G-1: fit on pipeline working text** ([D-72](DECISIONS.md#d-72)).
-> **G-2: fit split only** ([D-73](DECISIONS.md#d-73)). **G-3 remains open** and
-> blocks only the close. Nothing below is live work except G-3 — read G-1 and
-> G-2 as the record of what was decided and why, not as questions to re-derive.
-> **A session starts at slice A.**
+> **G-2: fit split only** ([D-73](DECISIONS.md#d-73)). **G-3 was answered the
+> same day** ([D-77](DECISIONS.md#d-77)) once slice D had produced the report
+> that replaces the criterion. **Nothing in §3 is live work** — read all three
+> as the record of what was decided and why, not as questions to re-derive.
+> **A session starts at slice E.**
 
 Per `META_PLAN.md` §3, these were stopped on rather than chosen.
 
@@ -238,7 +243,16 @@ decision with numbers under it.
 Either way the artifact manifest records which, and slice D's report states it
 in the same sentence as every metric.
 
-### G-3 — How is PR 5's first exit criterion discharged? *(blocks only the close)*
+### G-3 — How is PR 5's first exit criterion discharged? — **answered: by scoping**
+
+> **Decided 2026-08-05 (Kurt), locked as [D-77](DECISIONS.md#d-77) and
+> absorbed into `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria.** The
+> criterion is **split**: "on evaluation rows excluded from fitting" is met by
+> D-73's fit-half-only artifact; "meet approved per-outcome criteria" is **not
+> met and cannot be**, and is replaced by slice D's per-outcome dev report with
+> both models reported *not evaluated*. **All three gates are now closed and
+> nothing blocks slice E.** The rest of this section is the reasoning behind
+> that call.
 
 "The selected models meet approved per-outcome criteria on evaluation rows
 excluded from fitting" **cannot be met in 1.1** — approved criteria are Ask B,
@@ -247,7 +261,17 @@ same shape as D-54's and D-55's scoping of PR 4's criteria, and it needs the
 same treatment: **a ledger entry** recording that the criterion is met by
 scoping rather than by building, what replaces it (per-outcome dev-class
 metrics with uncertainty, reported as *not evaluated*), and its reversal scope.
-Recommended as a new entry at the close, drafted in slice E.
+
+**What made it a split rather than a waiver.** Approved criteria are a policy
+judgment about acceptable risk, not a measurement — no dataset and no
+engineering substitutes for one, which is exactly why `SCIENCE.md` says to
+report the model *not evaluated* in their absence rather than to invent a
+threshold. The *other* half of the criterion has no such dependency and is
+met in full. Recording it as one unmet criterion would have overstated the
+shortfall; recording it as met would have understated it. **The entry's most
+important rejected alternative is the first**: setting per-outcome criteria in
+this repository, after seeing the numbers, would make every downstream claim
+unfalsifiable.
 
 ## 4. Slice 0 — Measure the train/serve text delta
 
@@ -686,7 +710,10 @@ and PR 4's sweeps each found real gaps on checks predicted to be clean.
 - Full suite green, including `tests/integration/test_baseline_parity.py`
   (D-48). PR 5 writes a *new* artifact format and must not perturb the old one.
 - **Map each PR 5 exit criterion to what verifies it** (§10's table), and record
-  every criterion met by scoping with a ledger entry — G-3's entry at minimum.
+  every criterion met by scoping with a ledger entry. **G-3's is written**
+  ([D-77](DECISIONS.md#d-77)) — the sweep's job is to check it was *absorbed*,
+  not to draft it: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria must
+  carry the split, and the report it names must exist.
 - **Re-check D-68's, D-49's, and D-37's absorption against what shipped**, and
   the pre-registration §6 payload row against the actual `.npz`.
 - **The D-47 inventory, item by item.** PR 5 both removes an item (stage 9's
@@ -703,7 +730,7 @@ and PR 4's sweeps each found real gaps on checks predicted to be clean.
 
 | PR 5 exit criterion | Verified by |
 |---|---|
-| The selected models meet approved per-outcome criteria on evaluation rows excluded from fitting | **Cannot be met in 1.1** — approved criteria are Ask B, not arriving (D-63). G-3's ledger entry records the scoping; slice D's per-outcome dev-class report with uncertainty is what replaces it, under the not-evaluated rule |
+| The selected models meet approved per-outcome criteria on evaluation rows excluded from fitting | **Split by [D-77](DECISIONS.md#d-77).** "Excluded from fitting" is **met** — D-73's fit-half-only artifact. "Approved per-outcome criteria" **cannot be met in 1.1** (Ask B, not arriving, D-63) and is replaced by slice D's per-outcome dev report with cluster-bootstrap intervals, both models reported *not evaluated*. Verified by the absorption into `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria, and by `PR5_DEV_METRICS.md` existing |
 | All three L outcomes and all three E outcomes are evaluated separately | Slice D's per-class metrics with cluster-bootstrap intervals |
 | Fitting and scoring are independently testable | Slice A's fitter tests (no pipeline, no record) and slice C's component tests (loaded artifact, no fitting); the golden 1.1 artifact is what decouples them |
 | Runs reproduce results from locked model, rule, data, split, and metric versions | Slice B's manifest provenance set + slice C's `component_selections` recording; a same-input-same-output test |
@@ -766,16 +793,17 @@ it.
 
 ## Open Questions
 
-**One open, and it blocks only the close.** Two of the three were answered on
-2026-08-05 and absorbed the same day, before any code — the order the entry
-gate requires. Recorded here because a fresh session's first instinct on
-finding a settled question in a plan is to re-derive it.
+**None open.** All three were answered on 2026-08-05 and absorbed the same
+day — G-1 and G-2 before any code, the order the entry gate requires, and G-3
+once slice D had produced the report that replaces the criterion. Recorded
+here because a fresh session's first instinct on finding a settled question in
+a plan is to re-derive it.
 
 | Question | Answer | Where it now lives |
 |---|---|---|
 | **G-1** — fit on pipeline `working` text, on raw `response_text`, or re-run the selection? | **Working text.** The selection is *not* re-run; that its ranking survives the change of view is a recorded assumption. Slice 0 bounded the risk: 8 of 859 rows lose any text, none exhaust, the difference is overwhelmingly decoding rather than deletion — while *not* refitting would leave 285 rows scored in a decoded form the model never saw | [D-72](DECISIONS.md#d-72); `PREREGISTRATION_LE_STRUCTURE.md` §1, §7, §8; slice A |
 | **G-2** — fit split, or all 859 rows? | **Fit split only** — 635 rows for E, 563 for L. The dev slice stays held out, so slice D's numbers describe the artifact that ships rather than a differently-fitted sibling | [D-73](DECISIONS.md#d-73); `PREREGISTRATION_LE_STRUCTURE.md` §1, §5; slice B's manifest, slice D's framing |
-| **G-3** — how is the approved-criteria exit criterion discharged? | **Open.** It cannot be met (D-63). Scoping a stated exit criterion requires a ledger entry with reversal scope, as D-54/D-55 did for PR 4 | A new `DECISIONS.md` entry, drafted in slice E |
+| **G-3** — how is the approved-criteria exit criterion discharged? | **By scoping, and the criterion is split rather than waived.** "Excluded from fitting" is met (D-73); "meet approved per-outcome criteria" cannot be — they are a policy judgment about acceptable risk, not a measurement — and is replaced by slice D's per-outcome dev report, both models reported *not evaluated*. Writing criteria here, after seeing the numbers, was the first rejected alternative | [D-77](DECISIONS.md#d-77); `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria; `PR5_DEV_METRICS.md`; slice E's sweep checks the absorption |
 
 Nothing else in PR 5 is open. The structure, the payload format, the data, the
 split, the input view, and the not-evaluated reporting rule are all settled by

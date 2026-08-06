@@ -419,8 +419,32 @@ replaces.
 
 ### Exit criteria
 
-- The selected models meet approved per-outcome criteria on evaluation rows
-  excluded from fitting.
+- ~~The selected models meet approved per-outcome criteria on evaluation rows
+  excluded from fitting.~~ **Split, and half of it is not met
+  ([D-77](DECISIONS.md#d-77), 2026-08-05).**
+
+  - **"On evaluation rows excluded from fitting" is met.**
+    [D-73](DECISIONS.md#d-73) fits the shipped artifact on the fit half alone,
+    so the dev slice is genuinely held out and every reported number describes
+    the model that ships rather than a differently-fitted sibling.
+  - **"Meet approved per-outcome criteria" is not met, and cannot be in 1.1.**
+    Approved criteria are `STANDARDS_REQUEST.md` Ask B and
+    [D-63](DECISIONS.md#d-63) established the Standards team's inputs are not
+    arriving. They are a **policy judgment about acceptable risk**, not a
+    measurement — which is why `SCIENCE.md` §Legitimization/Enablement Scoring
+    require the model be reported *not evaluated* in their absence rather than
+    a threshold be invented. Replaced by the criterion below.
+
+- **A per-outcome report over the held-out dev slice exists, and both models
+  are reported *not evaluated*** (D-77, replacing the struck half above).
+  L0, L1, L2, E0, E1, E2 each carry precision, recall, and F1 with a cluster
+  bootstrap interval and the method that produced it.
+  [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) and `pr5_results/dev_metrics.json`
+  are the deliverable; `README.md` §Release 1.1 evaluator status carries the
+  summary. **Nothing in it is a benchmark result** — dev-class under
+  [D-66](DECISIONS.md#d-66), out-of-version labels under D-63, attacked
+  prompts only under [D-65](DECISIONS.md#d-65), from a structure selected on a
+  null result ([D-68](DECISIONS.md#d-68)).
 - All three L outcomes and all three E outcomes are evaluated separately.
 - Fitting and scoring are independently testable.
 - Runs reproduce results from locked model, rule, data, split, and metric
