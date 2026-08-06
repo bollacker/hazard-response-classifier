@@ -562,7 +562,25 @@ Results include:
 Verification covers component replacement, order and data passing,
 placeholder behavior, one embedding call, fit/score separation, holdout
 isolation, deterministic fitting, artifact round trips, per-hazard results,
-CLI and Python interfaces, concurrency, and continuous integration.
+CLI and Python interfaces, and concurrency.
+
+> **"and continuous integration" was struck 2026-08-05** (Kurt; Riki's
+> concurrence assumed, not confirmed on record), locked as
+> [`planning/DECISIONS.md` D-78](planning/DECISIONS.md#d-78). Every remaining
+> item in this list is a **property of the system being verified**, discharged
+> by a test that passes or does not. Continuous integration was the sole
+> exception: it describes *when and by whom* the verification apparatus is
+> run, not what it establishes about the evaluator, and a document whose
+> subject is the scientific standard and its evidence requirements is the
+> wrong home for a statement about build automation.
+>
+> **This is a removal, not a shortfall.** No release owes continuous
+> integration under this document, in 1.1 or later. Automating the suite may
+> still be good engineering practice; what is removed is the claim that a
+> scientific evidence standard is unmet while it is absent. The concurrency
+> item beside it was *narrowed* rather than removed
+> ([D-61](planning/DECISIONS.md#d-61)), because a concurrency contract **is** a
+> property of the system.
 
 Rule verification includes:
 

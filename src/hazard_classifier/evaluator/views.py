@@ -14,19 +14,25 @@ Three of §11's four views are built here:
   slice C alongside the batch runner that produces the records it reads
   (`docs/planning/PR7_EXECUTION_PLAN.md` §6).
 
-`metrics.json` is still not built, and the reason has narrowed rather than
-gone away (updated 2026-08-05, PR 5 slice D). It needs the per-outcome
-metrics and uncertainty estimates `SCIENCE.md` §Estimability requires, which
-were blocked on two things: PR 5's real three-class model **and** the
-Standards team's approved criteria. **The first has cleared** -- PR 5
-produces exactly those figures, per outcome, each with a cluster-bootstrap
-interval (`scripts/report_le_dev_metrics.py`,
-`docs/planning/PR5_DEV_METRICS.md`). The second has not, and it is the one
-that decides whether a *shipped view* is honest: without approved criteria
-every figure is reported *not evaluated*, and a `metrics.json` sitting in an
-output directory is read as a scorecard no matter what its fields say.
-So PR 5 produces the **report**; whether the **view** ships is PR 6's call
-alongside the promotion decision (D-58). Naming it as unbuilt is the point.
+`metrics.json` is **not built in Release 1.1, and that is now a decision
+rather than an omission** (D-80, 2026-08-05, answering the call PR 5 slice D
+routed to PR 6). It needs the per-outcome metrics and uncertainty estimates
+`SCIENCE.md` §Estimability requires, which were blocked on two things: PR 5's
+real three-class model **and** the Standards team's approved criteria. **The
+first cleared** -- PR 5 produces exactly those figures, per outcome, each with
+a cluster-bootstrap interval (`scripts/report_le_dev_metrics.py`,
+`docs/planning/PR5_DEV_METRICS.md`). **The second did not and will not**
+(D-63), and it is the one that decides whether a *shipped view* is honest:
+without approved criteria every figure is reported *not evaluated*, and a
+`metrics.json` sitting in an output directory is read as a scorecard no matter
+what its fields say.
+
+So the numbers ship as a **report** that can carry the not-evaluated framing
+in prose, beside the figures rather than beneath them, and no view ships at
+all. A JSON payload cannot do that: a consumer reads its keys, not its
+caveats. `docs/ARCHITECTURE.md` §11 carries the decision; this docstring had
+recorded the blockers across three PRs without recording an answer, which is
+how an unbuilt view becomes unbuilt-by-omission instead of by choice.
 
 **Run rejections are not in `failures.csv`** (§11 row 4, §2). A rejection
 aborts the run before any row is scored, so it produces no record for a view

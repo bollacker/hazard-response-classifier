@@ -311,6 +311,10 @@ Retired numbers are never reused, so both forms keep resolving.
 | [D-75](#d-75) | A run rejection names **every** offending row, and `hrc-run --check-input` reports them without scoring | `../ARCHITECTURE.md` §2; `howto/hrc-run.md` | carried; ergonomics only — §2's all-or-nothing rejection is unchanged |
 | [D-76](#d-76) | A component observation records **every** error it produced (`errors`), not only the first | `../ARCHITECTURE.md` §4 | carried; auditability only — no result changes, `failures.csv` stops naming the wrong stage |
 | [D-77](#d-77) | PR 5's approved-criteria exit criterion is **discharged by scoping**; a per-outcome dev report, reported *not evaluated*, replaces it | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5 exit criteria | carried; records an unmet criterion rather than restating it as met — same shape as D-54/D-55 |
+| [D-78](#d-78) | Continuous-integration verification is **removed** from the standard's list, not recorded as a shortfall | `../SCIENCE.md` §Evidence and outputs; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 | carried; the only list item that was a development practice rather than a system property — **removal, so no future release inherits it either** |
+| [D-79](#d-79) | The record names which phase B1 bullet decided a result (`b1_bullet`); `decided_by` drops `"A"` | `../ARCHITECTURE.md` §4 | carried; auditability only — no result changes. Fixes a loop-carried `Flags` defect first, and bumps `RESULT_VIEW_VERSION` 2 → 3 |
+| [D-80](#d-80) | `metrics.json` is **not built** in Release 1.1 | `../ARCHITECTURE.md` §11 | carried; the view's second blocker (approved criteria) never cleared, and a JSON payload cannot carry the *not evaluated* framing |
+| [D-81](#d-81) | Release 1.1 **stays pre-staging** — decided on the evidence, not on D-58's original reason | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit criteria; `README.md` | carried; discharges D-58's exit item and **partially supersedes its rationale** — the limitations document is now writable, and that was never what made 1.1 a prototype |
 
 ### Absorption gaps
 
@@ -4986,3 +4990,287 @@ met by building. It does not retire `STANDARDS_REQUEST.md` Ask B: if approved
 criteria ever arrive, this scoping lapses and the criterion becomes live again
 against whatever model is then shipping — which, under D-66, also triggers a
 fresh structure selection rather than a re-scoring of this one.
+
+<a id="d-78"></a>
+## D-78: Continuous-integration verification is removed from the standard, not recorded as a shortfall
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05, on `PR6_EXECUTION_PLAN.md` §3's gate G-1.
+**Riki's concurrence assumed on Kurt's direction, not confirmed on record.**
+
+Decision: **"continuous integration" is struck from `../SCIENCE.md` §Evidence
+and outputs' verification list.** It is not recorded as an unmet requirement,
+not scoped, and not deferred to a later release: it is removed, because it does
+not belong in that document. `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6's exit
+criteria drop it with the same reasoning.
+
+Rationale: every other item in that list — component replacement, order and
+data passing, placeholder behavior, one embedding call, fit/score separation,
+holdout isolation, deterministic fitting, artifact round trips, per-hazard
+results, CLI and Python interfaces, concurrency — is a **property of the
+system being verified**, and each is discharged by a test that either passes or
+does not. Continuous integration is the sole exception: it is a property of the
+**development process**, describing *when and by whom* the verification
+apparatus is run rather than *what* it establishes about the evaluator. A
+document whose subject is the scientific standard and its evidence
+requirements is the wrong home for a statement about build automation.
+
+`META_PLAN.md` §1.1 is what makes this a repository decision rather than an
+Assessment amendment: repository decisions "may constrain how the evaluator
+implements, exposes, tests, versions, or records that standard" but "may not
+replace an Assessment requirement." Continuous integration constrains *how
+testing is operated* and asserts nothing about hazard assessment, so removing
+it replaces no Assessment requirement. [D-48](#d-48) is the precedent for
+amending §Evidence and outputs under single-approver mode.
+
+**What removal gives up, stated so it is a chosen consequence and not a
+discovery.** A recorded shortfall — the treatment [D-54](#d-54), [D-55](#d-55)
+and [D-65](#d-65) received — says *we owe this and did not do it*, and carries
+the obligation forward to the release that can. **Removal says the requirement
+was misplaced, so no future release owes it under this document either.** That
+is the intended difference. Automating the test suite may still be good
+engineering practice and nothing here argues otherwise; what is removed is the
+claim that a *scientific evidence standard* is unmet while it is absent.
+
+**The state of the thing being removed, recorded because the entry should not
+imply the verification is weak.** There is no CI in this repository — no
+`.github/`, no workflow file, no `tox.ini`, no `noxfile.py`, no Makefile
+(checked at PR 6's planning pass, not assumed). All 644 tests have only ever
+been run by a person invoking `pytest`. Across six PRs that has held: zero
+regressions, and `tests/integration/test_baseline_parity.py` byte-identical
+since PR 1 slice 0. The verification *content* the list describes is built and
+green; what never existed is the automation.
+
+Rejected alternatives: (1) **splitting the criterion** on [D-77](#d-77)'s
+precedent — content met, automation not met — which was
+`PR6_EXECUTION_PLAN.md` §3's recommendation. Rejected as working around a
+requirement rather than fixing it: the split would leave a permanent
+"unmet" row in D-47's inventory for something that is not an evidence
+shortfall, and every future release would inherit it. (2) **Building a
+workflow in PR 6.** Rejected on two counts: it could not be observed to run
+from this environment (no GitHub CLI or token on this machine), so the file
+would be an untested claim that verification happens automatically; and the
+integration tests need the ~0.4 GB BGE model against `allow_download=False`
+([D-6](#d-6)), so the workflow would have to cache it, download it, or skip
+those tests — and the skip path reports green for a subset while claiming the
+criterion, which is the failure `QUEUE_ITEM_2_EXECUTION_PLAN.md` §10 lesson 5
+names. (3) **Recording it as a shortfall against the standard.** Rejected as
+the same category error the removal fixes.
+
+Touches: `../SCIENCE.md` §Evidence and outputs (**absorbed** — the item is
+struck from the verification list); `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit
+criteria (**absorbed**); `PR6_EXECUTION_PLAN.md` §3's G-1, §6 and §9.
+
+Boundary: this removes **one item from one verification list**. It does not
+weaken any other item in it, does not touch `SCIENCE.md`'s rule-verification
+paragraph, and takes no position on whether this repository should have CI as
+an engineering matter — only that its absence is not a scientific evidence
+shortfall. [D-61](#d-61)'s concurrency scoping is untouched and remains the
+adjacent item that *was* narrowed rather than removed, because a concurrency
+contract is a property of the system.
+
+<a id="d-79"></a>
+## D-79: The record names which phase B1 bullet decided a result; `decided_by` drops `"A"`
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05, on `PR6_EXECUTION_PLAN.md` §3's gate G-2.
+**Riki's concurrence assumed on Kurt's direction, not confirmed on record.**
+
+Decision: three parts, in this order.
+
+1. **`integration.py` evaluates phase B1 once, before its per-hazard loop.**
+   Its inputs (`exhausted_at`, `flags`) and its output are record-level, so
+   every evaluated hazard of an exhausted record gets the same terminal state
+   **by construction**. Lands as its own change, with a test that fails
+   without it, **before** part 2.
+2. **`HazardJudgment` gains `b1_bullet: str | None`** — which of `SCIENCE.md`
+   phase B1's five ordered bullets assigned the L/E pair, one of `refusal`,
+   `sa_disclaimer`, `prompt_repetition`, `narrative`, `blank_payload`, and
+   `None` on every non-B1 path. `../ARCHITECTURE.md` §4 carries it, and
+   `views.RESULT_VIEW_VERSION` goes **2 → 3** because `results.jsonl`'s shape
+   changes.
+3. **`"A"` is removed from `decided_by`'s declared vocabulary**, which becomes
+   `"B1" | "B2" | "C"`.
+
+Rationale, part by part.
+
+**Part 1 is a defect fix and it is why the order is fixed.** `integrate`
+reassigned `flags` inside its per-hazard loop, and B1's blank-payload bullet
+returns flags with `refusal="detected"` — which `SCIENCE.md` requires ("no
+other flag (a blank payload) → L0/E0 **with the refusal flag set**"). That
+mutated object was then what the *next* hazard's B1 evaluation read, and
+`refusal` is B1's **first** bullet. Measured on a two-hazard blank-payload
+record at PR 6's planning pass: the first hazard's bullet is `blank_payload`,
+the second's is `refusal`. **The L/E outcome is identical either way**, which
+is why five PRs of tests never caught it — and why it would have stopped being
+invisible the moment part 2 recorded the bullet. Part 2 before part 1 ships an
+audit field that is wrong for every hazard after the first.
+
+**Part 2 is an auditability gap `../ARCHITECTURE.md` §13's A-3 already named**
+and `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 inherited from PR 4's closing sweep:
+`_phase_b1_terminal_state` computed a reason and the caller discarded it, so
+`decided_by == "B1"` did not say which bullet governed — and **B1's bullet
+ordering is load-bearing**, which is what makes this an auditability gap rather
+than a cosmetic one. The five values are the strings the function already
+computes, so this plumbs an existing value through rather than deriving a new
+one. A separate field rather than encoding into `decided_by` (as
+`"B1:refusal"`): that spelling would break every consumer testing
+`decided_by == "B1"`.
+
+**Part 3 aligns a declared vocabulary with five PRs of consistent behavior.**
+§4 declared `decided_by` may be `"A"` and nothing has ever emitted it: a `prv`
+row whose final L phase A fixes to `N/A` reports `"B2"` (verified by running
+it). `decided_by` names the phase that produced the row's **terminal state**,
+and phase A is an applicability fact that holds for every `prv`/`sxc_prn` row
+regardless of which terminal state follows. **Phase A's effect is already
+recorded and already auditable**: `legitimization_applies` is written into both
+`results.jsonl` and `predictions.csv`, so an auditor can distinguish an N/A
+fixed by rule from a model judgment without `decided_by` carrying it. Emitting
+`"A"` would additionally collide with phase C, which likewise fixes only L.
+
+Rejected alternatives: (1) **making `decided_by` per-`Judgment`** so L and E
+each name the phase that decided them. The most accurate model — phase A and
+phase C both fix L while the model decides E — but it changes every consumer
+of the field to buy auditability nobody has requested. Recorded because it is
+the right answer if `decided_by` is ever revisited. (2) **Emitting `"A"`**
+rather than removing it: changes recorded output for every enablement-only row
+and requires resolving the phase-C collision first. (3) **Recording the bullet
+without fixing the loop**: rejected as shipping a known-wrong audit field.
+
+Touches: `../ARCHITECTURE.md` §4 (**absorbed** — the field and the narrowed
+vocabulary); `evaluator/components/integration.py`, `evaluator/record.py`,
+`evaluator/views.py` (`RESULT_VIEW_VERSION` 2 → 3);
+`RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6's work list, which it closes;
+`../ARCHITECTURE.md` §13's A-3, whose named gap this fills;
+`PR6_EXECUTION_PLAN.md` §3's G-2 and §4.
+
+Boundary: **no result changes.** Every L/E pair, every table lookup, every
+per-hazard result and the rollup are exactly what they were; what changes is
+what the record says about *how* a B1 result was reached. `PREDICTION_ROWS_VERSION`
+and `FAILURES_VERSION` deliberately do **not** move — neither view's columns
+change, and moving them in sympathy would make a future change to one look
+like a change to all three (§11: every view is versioned separately). This is
+[D-76](#d-76)'s shape and its precedent for a §4 amendment raised before a
+slice rather than from inside one.
+
+<a id="d-80"></a>
+## D-80: `metrics.json` is not built in Release 1.1
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05, on `PR6_EXECUTION_PLAN.md` §3's gate G-3.
+**Riki's concurrence assumed on Kurt's direction, not confirmed on record.**
+
+Decision: Release 1.1 **does not build or ship the `metrics.json` view.**
+`../ARCHITECTURE.md` §11's view table records it as specified-but-not-built
+for 1.1, with the reason, rather than listing it as though it exists. The
+per-outcome numbers a consumer would look for are published instead as
+[`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) and
+`pr5_results/dev_metrics.json`, generated together by
+`scripts/report_le_dev_metrics.py`.
+
+Rationale: the view had two blockers and only one cleared. PR 5 supplied the
+real three-class model and the per-outcome figures with cluster-bootstrap
+intervals; **approved per-outcome criteria did not arrive and are not coming**
+([D-63](#d-63), [D-77](#d-77)). The second is the one that decides whether a
+shipped view is honest. Without criteria every figure is reported *not
+evaluated* — and **a `metrics.json` sitting in an output directory is read as a
+scorecard no matter what its fields say.** `PR5_DEV_METRICS.md` carries the
+same numbers in a form that can hold the not-evaluated framing in prose,
+beside the figures rather than beneath them; a JSON payload structurally
+cannot, because a consumer reads its keys and not its caveats.
+
+Deciding it here also stops the pattern: `views.py` has recorded the blockers
+in three successive PRs without anyone recording an answer, which is how an
+unbuilt view becomes unbuilt-by-omission rather than by choice.
+
+Rejected alternatives: (1) **building it with every figure marked not
+evaluated** — rejected on the reading above, and because it is
+[D-77](#d-77)'s first rejected alternative arriving through a file format
+instead of a document: the pressure to attach a threshold to a machine-readable
+metrics file is exactly what the not-evaluated rule exists to resist.
+(2) **Building it empty or null-valued**, on the shape [D-52](#d-52) and
+[D-62](#d-62) rejected: a view no component populates describes something that
+never happens. (3) **Deferring the call again** to whichever release gains
+approved criteria — rejected because that is the status quo that produced
+three restatements of the same blockers.
+
+Touches: `../ARCHITECTURE.md` §11 (**absorbed** — the row records
+not-built-in-1.1 and why); `evaluator/views.py`'s module docstring, which
+records the decision in place of the blockers; `RELEASE_1_1_QUEUE_PROPOSAL.md`
+PR 6; `PR6_EXECUTION_PLAN.md` §3's G-3 and §7.
+
+Boundary: this decides **Release 1.1** only. `../SCIENCE.md` §Evidence and
+outputs' Estimability requirement is untouched and still governs every reported
+metric — which is why `PR5_DEV_METRICS.md` states its uncertainty method
+beside every figure. When approved criteria arrive, the view becomes buildable
+and this decision lapses rather than needing reversal; under [D-66](#d-66) that
+same arrival triggers a fresh structure selection, so the view would describe a
+different model than 1.1's.
+
+<a id="d-81"></a>
+## D-81: Release 1.1 stays pre-staging — decided on the evidence, not on D-58's original reason
+Date: 2026-08-05
+Status: locked
+Approved by: Kurt, 2026-08-05, on `PR6_EXECUTION_PLAN.md` §3's gate G-4.
+**Riki's concurrence assumed on Kurt's direction, not confirmed on record.**
+
+Decision: Release 1.1 is **not promoted to staging and is not assigned a
+release point version.** It ships as a pre-staging prototype under
+[D-47](#d-47)'s disclosure floor, with `README.md` §Release 1.1 evaluator
+status as the inline disclosure. This discharges [D-58](#d-58)'s explicit PR 6
+exit item — the posture is now a decision **taken**, not a default inherited.
+
+Rationale: **the evidence does not support promotion**, and that is the whole
+of the reason. What ships is three placeholder components and three partial
+ones; multi-hazard correctness is unevaluated and its cross-hazard backstop was
+withdrawn (`../ARCHITECTURE.md` §12.1); both the Legitimization and Enablement
+models are reported *not evaluated* for want of approved per-outcome criteria
+([D-77](#d-77)) and rest on a structure selected by a **null result**
+([D-68](#d-68)); and a re-fit is owed the moment narrative, refusal, or hazard
+detection is built, because the models were fitted on working text filtered
+through those placeholders ([D-72](#d-72)). A staging promotion or a release
+point version would assert a maturity none of that supports.
+
+**Why this entry exists rather than a citation of D-58, and this is the part
+worth reading.** D-58 deferred promotion partly on the grounds that D-47's
+full limitations document **could not be completed**: it requires, for every
+published metric, the uncertainty estimate and the method that produced it,
+and D-58 recorded that "the metrics themselves depend on PR 5's model." PR 5
+has since landed, and `PR5_DEV_METRICS.md` states a cluster-bootstrap interval
+and its method for every figure it publishes. Note that D-47 narrowing 2
+requires the method be **stated**, not **approved** — approval is
+`STANDARDS_REQUEST.md` Ask B's separate ask. **So that half of D-58's stated
+reason has largely dissolved, and the document is substantially more writable
+than when D-58 was written.**
+
+Recording the current reason matters concretely: an entry that repeated
+D-58's "the document cannot be written" would leave a later session free to
+observe that it now can, and read promotion as unblocked. **The gate is
+evidence, not paperwork.** Writability of the disclosure was never what made
+the release a prototype.
+
+Rejected alternatives: (1) **promoting to staging and writing the full
+document.** Now buildable in a way it was not in August's first week, and
+rejected anyway on the evidence above — the document would enumerate six
+component shortfalls and two unevaluated models, which is a description of a
+prototype. (2) **Assigning a release point version without staging promotion**
+— rejected because D-47 gates both on the same document and the same
+disclosure, and a point version is the more consequential of the two claims
+outside this repository. (3) **Leaving the posture as D-58's default** without
+a PR 6 entry — rejected because D-58 made the decision an explicit exit item,
+and "we did not promote" is an omission rather than a decision.
+
+Touches: `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit criteria (**absorbed** —
+the promotion item is discharged); `README.md` §Release 1.1 evaluator status,
+which remains the disclosure floor and carries the posture;
+[D-58](#d-58), whose exit item this closes and whose stated rationale this
+partially supersedes; [D-47](#d-47), whose pre-staging exemption continues to
+apply; `PR6_EXECUTION_PLAN.md` §3's G-4 and §7.
+
+Boundary: this decides **Release 1.1's posture**, not D-47's rule and not any
+component's maturity. The standalone versioned limitations document remains
+required before any future staging promotion or release point version, and
+narrowing 1's floor is undiminished: a prototype is exempt from the separate
+document, never from disclosure. Nothing here makes any component evaluated,
+and nothing here is a quality claim — the assembly being complete is not
+evidence that its judgments are right.

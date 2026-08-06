@@ -359,7 +359,8 @@ HazardJudgment
   provisional_e: Judgment | None
   final_l: "L0" | "L1" | "L2" | "N/A" | None
   final_e: "E0" | "E1" | "E2" | None
-  decided_by: str                           # "A" | "B1" | "B2" | "C"
+  decided_by: str                           # "B1" | "B2" | "C"
+  b1_bullet: str | None                     # which B1 bullet assigned L/E
   result: Result
   failure_reason: str | None
 
@@ -397,6 +398,38 @@ still is.
 `decided_by` is what makes the result decomposable (`SCIENCE.md` §Scientific
 requirements): every final L/E says which phase produced it, so an auditor can
 tell a model judgment from a rule-fixed one without re-deriving the phases.
+
+**`b1_bullet` names which of phase B1's five ordered bullets assigned the
+pair** (added 2026-08-05, [`planning/DECISIONS.md` D-79](planning/DECISIONS.md#d-79)),
+one of `refusal`, `sa_disclaimer`, `prompt_repetition`, `narrative`,
+`blank_payload`, and `None` on every non-B1 path. `decided_by == "B1"` says a
+terminal state was assigned from the accumulated flags; it does not say which
+flag won, and **B1's bullet order is load-bearing** — an unordered reading of
+the same flags gives L1 where L0 is correct. §13's A-3 recorded the gap; this
+field closes it. `views.RESULT_VIEW_VERSION` goes **2 → 3** with it, since
+`results.jsonl`'s shape changes; `PREDICTION_ROWS_VERSION` and
+`FAILURES_VERSION` deliberately do not move (§11: every view is versioned
+separately).
+
+**Phase B1 is evaluated once per record, not once per hazard.** Its inputs —
+`exhausted_at` and `flags` — are record-level and so is its result, so every
+evaluated hazard of an exhausted record carries the same terminal state and the
+same `b1_bullet` **by construction**. This is not merely an optimization: the
+blank-payload bullet sets the refusal flag (`SCIENCE.md` phase B1), and an
+implementation that evaluated B1 per hazard while carrying that mutation
+forward would report `blank_payload` for the first hazard and `refusal` for
+every one after it — identical L/E, wrong provenance. D-79 records the defect
+this replaced.
+
+**`decided_by` does not carry `"A"`**, and never has. Phase A is an
+applicability fact that holds for a `prv`/`sxc_prn` row regardless of which
+terminal state follows, not a terminal state of its own — and its effect is
+already recorded, auditably, in `legitimization_applies`, which every view
+carries. The declared vocabulary said `"A"` from PR 1 until 2026-08-05 while no
+code path emitted it; D-79 narrowed the declaration to what the integrator
+produces rather than adding an emission. If `decided_by` is ever revisited, the
+alternative recorded there — one per `Judgment`, since phase A and phase C both
+fix L while the model decides E — is the more accurate model.
 
 ## 5. Text views
 
@@ -829,8 +862,29 @@ record itself, and every view is versioned separately.
 |---|---|---|
 | `results.jsonl` | The full record | One record per response; the only lossless output |
 | `predictions.csv` | Per-hazard tabular results | Explicit, versioned flattening rule; one row per (response, hazard) |
-| `metrics.json` | Evaluation | Per-outcome metrics with an uncertainty estimate and its method (`SCIENCE.md` Estimability) |
+| `metrics.json` | Evaluation | Per-outcome metrics with an uncertainty estimate and its method (`SCIENCE.md` Estimability). **Specified, and not built in Release 1.1** ([`planning/DECISIONS.md` D-80](planning/DECISIONS.md#d-80)) — see below |
 | `failures.csv` | Failed rows | Run rejections are **not** in here — they abort the run before anything is scored (§2). Built by PR 7 (D-56), which supplies the batch runner it needs. A failed row still appears in `results.jsonl`: the record is canonical, this is the narrow view, and the two are not exclusive |
+
+**`metrics.json` is not built in Release 1.1** (decided 2026-08-05,
+[`planning/DECISIONS.md` D-80](planning/DECISIONS.md#d-80)). It had two
+blockers and one cleared: PR 5 supplied the real three-class model and the
+per-outcome figures with cluster-bootstrap intervals, while **approved
+per-outcome criteria did not arrive and are not coming**
+([D-63](planning/DECISIONS.md#d-63), [D-77](planning/DECISIONS.md#d-77)). The
+second blocker is the one that decides whether a shipped view is honest:
+without criteria every figure is *not evaluated*, and a `metrics.json` sitting
+in an output directory is read as a scorecard whatever its fields say. The
+numbers are published instead as `planning/PR5_DEV_METRICS.md` and
+`planning/pr5_results/dev_metrics.json`, in a form that can carry the
+not-evaluated framing **beside** the figures rather than beneath them — which
+a JSON payload structurally cannot, because a consumer reads its keys and not
+its caveats.
+
+The row above is left in the table rather than deleted: the view is
+*specified*, and `SCIENCE.md` §Evidence and outputs' Estimability requirement
+that produced it is untouched. What changed is that its absence is now a
+recorded decision instead of an omission — `views.py` had carried the blockers
+across three PRs without anyone recording an answer.
 
 This answers two of proposal 3's recorded counterarguments directly.
 **Flattening** is a named, versioned contract per view rather than an implicit

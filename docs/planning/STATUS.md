@@ -1,6 +1,52 @@
 # Status
 
-Last updated: 2026-08-05 — **PR 5 is complete and closed: the Release 1.1
+Last updated: 2026-08-05 — **PR 6's four entry gates are decided and absorbed
+([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81)); a PR 6 session starts at
+slice A.** The gates were raised by
+[`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md) §3 and answered the same day,
+**before any code** — the order the entry gate requires, and the round trip
+[D-76](DECISIONS.md#d-76) cost when PR 5 slice C hit the same wall from inside
+a slice.
+
+- **[D-78](DECISIONS.md#d-78) — continuous-integration verification is
+  *removed* from `../SCIENCE.md`, not recorded as a shortfall.** It was the
+  only item in §Evidence and outputs' verification list describing a
+  **development practice** rather than a property of the system: it says *when
+  and by whom* the suite runs, not what it establishes about the evaluator.
+  **This is stronger than the plan recommended** (a split, on D-77's
+  precedent), and deliberately so — a shortfall carries forward to the release
+  that can close it, whereas removal means **no future release inherits the
+  obligation** under that document either. The repository has no CI and never
+  has; the verification *content* is built and green.
+- **[D-79](DECISIONS.md#d-79) — the record names which phase B1 bullet decided
+  a result.** `HazardJudgment` gains `b1_bullet`, `decided_by` narrows to
+  `"B1" | "B2" | "C"` (nothing ever emitted `"A"`), and **B1 is evaluated once
+  per record instead of once per hazard** — which fixes the loop-carried
+  `Flags` defect PR 6's planning pass measured. `RESULT_VIEW_VERSION` 2 → 3.
+  **No result changes.**
+- **[D-80](DECISIONS.md#d-80) — `metrics.json` is not built in 1.1.** One
+  blocker cleared with PR 5, approved criteria did not, and that is the one
+  deciding whether a shipped view is honest.
+- **[D-81](DECISIONS.md#d-81) — Release 1.1 stays pre-staging**, discharging
+  D-58's explicit PR 6 exit item. **Decided on the evidence, and the reason has
+  changed:** PR 5's metrics made D-47's limitations document substantially
+  writable, so D-58's "it cannot be completed" has largely dissolved. What
+  keeps 1.1 a prototype is three placeholders, three partials, unevaluated
+  multi-hazard correctness, and two *not evaluated* models on a null-result
+  structure — not the paperwork.
+
+**Riki's agenda is twenty-nine rows**, recounted from the table rather than
+incremented. Item 4 stays open; **PR 6 is the last PR**, and its close is
+item 4's.
+
+Prior update, 2026-08-05 — **PR 6 has a written plan
+([`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md))**, and it opened the four
+gates above. Writing it was a critique pass (`META_PLAN.md` §6) and it found
+three things invisible from the queue proposal — nine of PR 6's ten work items
+are **already built**, and the tenth exposed the `Flags` defect D-79 fixes.
+`SCIENCE.md`'s CI requirement was the third; D-78 answers it.
+
+Prior update, 2026-08-05 — **PR 5 is complete and closed: the Release 1.1
 evaluator ships its own fitted L and E models.** All six slices landed (0 the
 working-text measurement, A the production fitter, B the 1.1 artifact, C the
 scoring component, D the per-outcome report, E the sweep and close).
@@ -35,8 +81,8 @@ standardization vectors an artifact cannot be reloaded without; §7 predicted
 a **sixth consecutive** D-47 inventory gap — the re-fit owed once narrative,
 refusal, or hazard detection is built, which PR 5 is the first PR to be able
 to owe; and four stale sentences in `README.md`. **No new decision was made
-and no ledger entry is owed**, so Riki's review agenda still stands at
-twenty-five rows.
+and no ledger entry is owed** by the sweep itself. *(Riki's agenda has since
+grown to twenty-nine rows with PR 6's four gate answers, D-78–D-81.)*
 
 Prior update, 2026-08-05 — **PR 7 is complete and closed: the Release 1.1
 evaluator is runnable**, and the one design concern its close raised is
@@ -628,9 +674,19 @@ score ([D-62](DECISIONS.md#d-62)), verifies the single-threaded contract
 ([D-61](DECISIONS.md#d-61)), round-trips the artifact format PR 5 built
 ([D-49](DECISIONS.md#d-49)), and makes the staging-promotion call
 ([D-58](DECISIONS.md#d-58)) with [D-47](DECISIONS.md#d-47)'s limitations
-document. **A session starts by writing PR 6's execution plan** — every other
-PR has had one, and `META_PLAN.md` §6 routes plan authoring to Opus at high
-effort because three of them found defects no queue proposal showed.
+document. **Its execution plan is written**
+([`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md), 2026-08-05) and, like PR 4's,
+PR 5's and PR 7's, it found defects the queue proposal did not show — a fourth
+data point for `META_PLAN.md` §6's plan-authoring row.
+
+**A session starts at slice A.** The plan opened four gates and **all four are
+decided and absorbed** ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81),
+2026-08-05): continuous integration **removed** from `SCIENCE.md`'s
+verification list rather than scoped; the phase-B1 audit field and the narrowed
+`decided_by` written into `../ARCHITECTURE.md` §4 before any code;
+`metrics.json` not built in 1.1; and the release confirmed **pre-staging**,
+discharging D-58's exit item. Slice D therefore *records* the last two rather
+than deciding them, and slice C owes nothing for CI.
 
 Detailed phased proposal:
 [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md).
@@ -883,12 +939,22 @@ across schemes:
 ## Awaiting User
 
 Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot); one
-item added and decided 2026-08-05 ([D-76](DECISIONS.md#d-76)).
-**Nothing here blocks anything.** D-63 removed the last external gate, and
+item added and decided 2026-08-05 ([D-76](DECISIONS.md#d-76)); **PR 6's four
+entry gates added 2026-08-05 and open**.
+
+**Nothing here blocks.** PR 6's four gates were raised and answered the same
+day ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81)) and are absorbed into
+the specifications, so a PR 6 session starts at slice A. That the block lasted
+hours rather than a slice is the point: the plan raised an
+`../ARCHITECTURE.md` §4 amendment **before** slice A rather than from inside
+it, which is the round trip [D-76](DECISIONS.md#d-76) cost when PR 5 slice C
+hit the same wall.
+
+D-63 removed the last external gate, and
 queue item 2 has since closed ([D-68](DECISIONS.md#d-68), 2026-08-05); PR 5
 waits on nothing external and has a selected structure to build. One
 action remains with Kurt — schedule Riki's concurrence review, now covering
-twenty-five rows. Queue items 1, 2 and 3 are complete and retired, and both
+twenty-nine rows. Queue items 1, 2 and 3 are complete and retired, and both
 architecture-pass findings (A-1, A-2) are resolved and applied to
 `SCIENCE.md`. The calls awaiting Riki's concurrence are in force under an
 assumed concurrence.
@@ -902,7 +968,14 @@ labels, which is the only route to either model being *evaluated* rather than
 *not evaluated* — but nothing waits on it. One action sits with Kurt:
 schedule Riki's concurrence review.
 
-**Riki's review now has twenty-five rows** (2026-08-05:
+**Riki's review now has twenty-nine rows** — recounted from the table on
+2026-08-05, not incremented (`QUEUE_ITEM_2_EXECUTION_PLAN.md` §10 lesson 2;
+this figure has been wrong before). **PR 6's four gate answers are the newest
+four** ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81)) — **read D-78
+first**, since it is the one that *removes* a `SCIENCE.md` requirement rather
+than recording it unmet, and D-81 second, since it records the release's
+posture and notes that D-58's original reason for it has largely dissolved.
+Earlier (2026-08-05:
 [D-76](DECISIONS.md#d-76)'s observation-error amendment and
 [D-77](DECISIONS.md#d-77)'s scoping of PR 5's approved-criteria exit criterion
 are the newest two — **read D-77 first**, since it is the row that records
@@ -957,6 +1030,33 @@ stated in the entry itself. **D-50 through D-52** (one grouped row) set PR 2's
 scope; two of them are shortfalls against a `SCIENCE.md` success criterion and
 land in the limitations document rather than being met. The `META_PLAN.md` §5
 amendment is process bookkeeping. See the assumed-concurrence table.
+
+### ~~PR 6's four entry gates~~ — all four decided 2026-08-05
+
+**Raised by [`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md) §3 and answered
+the same day**, before any code, which is the order the entry gate requires.
+Locked as **[D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81)** and absorbed
+into the specifications; reversal scope for each is in §Assumed concurrence.
+**Nothing here blocks: a PR 6 session starts at slice A.** Left in place as the
+record of what was asked, per `META_PLAN.md` §1's retire-in-place rule.
+
+| Gate | Answer |
+|---|---|
+| **G-1** — continuous integration | **Removed from `SCIENCE.md`'s verification list** ([D-78](DECISIONS.md#d-78)) — not scoped, not recorded as a shortfall. **This is stronger than the plan's recommendation**, which was to split it: CI was the only item in that list describing a *development practice* rather than a property of the system, so its absence was never an evidence shortfall, and a split would have left a permanent "unmet" row in D-47's inventory that every future release inherited. PR 6 owes nothing here — no workflow, no disclosure line |
+| **G-2** — the phase-B1 audit field | **Fix the loop-carried `Flags` first and separately; then add `b1_bullet`; then narrow `decided_by` to `"B1" \| "B2" \| "C"`** ([D-79](DECISIONS.md#d-79)). `../ARCHITECTURE.md` §4 carries all three, so slice A builds to a specification that already describes it. `RESULT_VIEW_VERSION` 2 → 3; **no result changes** |
+| **G-3** — does `metrics.json` ship? | **Not built in 1.1** ([D-80](DECISIONS.md#d-80)). Its second blocker — approved criteria — never cleared, and it is the one deciding whether a shipped view is honest. `../ARCHITECTURE.md` §11 and `views.py` carry the decision in place of a fourth restatement of the blockers |
+| **G-4** — promotion | **Stays pre-staging** ([D-81](DECISIONS.md#d-81)), discharging D-58's explicit exit item. **Decided on the evidence, and the reason has changed**: PR 5's metrics made D-47's document substantially writable, so D-58's "the document cannot be completed" has largely dissolved. What keeps 1.1 a prototype is three placeholders, three partials, unevaluated multi-hazard correctness, and two *not evaluated* models on a null-result structure |
+
+**The defect behind G-2, because it is the one worth reading.** `integrate`
+reassigns `flags` inside its per-hazard loop, and B1's blank-payload bullet
+returns flags with `refusal="detected"` — which `SCIENCE.md` requires. That
+mutated object is what the *next* hazard's B1 evaluation reads, and `refusal`
+is B1's **first** bullet. Measured on a two-hazard blank-payload record: the
+first hazard's bullet is `blank_payload`, the second's is `refusal`. **The L/E
+outcome is identical either way**, which is exactly why no test caught it —
+and why it stops being invisible the moment PR 6 records the bullet. The fix
+is structural rather than a patch: B1's inputs and output are record-level, so
+it should be evaluated **once, before the loop**.
 
 ### ~~Should a component observation carry every error, or only the first?~~ — decided
 
@@ -1038,6 +1138,10 @@ as though it were. This is the one item to close at Riki's next review.
 | **PR 5's two fitting calls** (2026-08-05): **[D-72](DECISIONS.md#d-72)** the models are fitted on pipeline **working text**, not the raw `response_text` D-68's selection used, and the selection is **not** re-run; **[D-73](DECISIONS.md#d-73)** the shipped artifact is fitted on the **fit split only**. Grouped: decided together, on one footing, each with its own reversal scope | In force | `PREREGISTRATION_LE_STRUCTURE.md` §1, §5, §7, §8; `PR5_EXECUTION_PLAN.md` §3, slices A/B/D. **D-72 closes a `SCIENCE.md` training shortfall and opens a stated assumption in its place** — that D-68's ranking survives the change of input view, which the procedure did not test; reverting means either re-running the selection (spending a budget §2.4 fixed) or accepting that 285 of 859 rows are scored in a form the model never saw. `scripts/probe_working_text_delta.py` is the evidence and reproduces it. **D-73 costs ~35% of the rows** for a per-hazard fit already at ~42 rows/cell; reverting it buys them back and makes every reported number describe a model that is not the one shipped |
 | **PR 5 sequenced before PR 6** (2026-08-05): the remaining order is PR 7 → PR 5 → PR 6. Locked as **[D-71](DECISIONS.md#d-71)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5/PR 6 sequencing notes; this file's queue item 4 and §Current Phase; `PR5_EXECUTION_PLAN.md` §1. **Ordering only — no PR's scope changes**, so reverting costs the order and nothing built. What reverting re-creates is the inversion D-71 fixed: PR 6's "artifact round trips" exit criterion depends on the artifact format [D-49](DECISIONS.md#d-49) assigns to PR 5, and PR 6's promotion call (D-58) and limitations document (D-47) would describe a release whose L/E models PR 5 has not yet replaced. Note that D-56 never decided PR 5's position — the old "PR 7 → PR 6 → PR 5 (D-56)" formula over-attributed |
 | **PR 5's approved-criteria exit criterion discharged by scoping** (2026-08-05): the criterion is **split** — "on evaluation rows excluded from fitting" is met by D-73's fit-half-only artifact; "meet approved per-outcome criteria" cannot be met and is replaced by a per-outcome dev report with both models *not evaluated*. Locked as **[D-77](DECISIONS.md#d-77)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's exit criteria (**absorbed**); `PR5_EXECUTION_PLAN.md` §3's G-3 and §10; [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) and `pr5_results/dev_metrics.json`; `README.md`'s summary table. **This is the row that records Release 1.1 shipping without approved criteria**, so dissent does not restore them — it either blocks PR 5's close until `STANDARDS_REQUEST.md` Ask B arrives (which D-63 says it will not), or means writing criteria in this repository after seeing the numbers, which is the first rejected alternative inside the entry and would make every downstream claim unfalsifiable. The narrower thing worth Riki's eye is the **split** itself: recording it as one wholly unmet criterion would overstate the shortfall, recording it as met would understate it, and only one of those two readings is currently on paper anywhere else |
+| **Continuous-integration verification removed from the standard** (2026-08-05): struck from `../SCIENCE.md` §Evidence and outputs' list and from `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6's exit criteria. Locked as **[D-78](DECISIONS.md#d-78)** | In force | `../SCIENCE.md` §Evidence and outputs; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6; `PR6_EXECUTION_PLAN.md` §3's G-1, §6, §9. **This is a removal, not a shortfall, and that is the row Riki is most likely to want to argue with.** D-54, D-55 and D-65 each recorded a `SCIENCE.md` requirement as *owed and unmet*, carrying it forward; this one says the requirement was misplaced, so **no future release inherits it either**. The argument is that CI was the only item in that list describing a development practice rather than a property of the system — it says *when and by whom* the suite runs, not what it establishes about the evaluator. Dissent restores the item and, with it, the choice the plan recommended: split it (content met, automation absent) or record it wholly unmet. Note that reverting buys no CI — the repository has none, and building one from this environment cannot be observed to run (no GitHub CLI or token on this machine) |
+| **PR 6's phase-B1 audit field** (2026-08-05): `HazardJudgment` gains `b1_bullet`, `decided_by` narrows to `"B1" \| "B2" \| "C"`, and B1 is evaluated once per record rather than per hazard. Locked as **[D-79](DECISIONS.md#d-79)** | In force | `../ARCHITECTURE.md` §4 (**absorbed**); `evaluator/components/integration.py`, `record.py`, `views.py` (`RESULT_VIEW_VERSION` 2 → 3); `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6's work list, which it closes; `../ARCHITECTURE.md` §13's A-3. **Auditability only — no result changes**, the same footing as D-76. It also fixes a real defect: `integrate` carried a mutated `Flags` across its per-hazard loop, so a two-hazard blank-payload record would have recorded bullet `blank_payload` for the first hazard and `refusal` for the second — identical L/E, wrong provenance. Reverting means the B1 bullet stays unrecorded, A-3's gap stays open, and the view version does not move; the *defect* fix should survive a dissent on the field, since it is wrong independently |
+| **`metrics.json` is not built in Release 1.1** (2026-08-05). Locked as **[D-80](DECISIONS.md#d-80)** | In force | `../ARCHITECTURE.md` §11 (**absorbed** — the row is retained and marked not-built); `evaluator/views.py`; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6. **Reverting means building the view and deciding what it says with no approved criteria**, which is [D-77](DECISIONS.md#d-77)'s first rejected alternative arriving through a file format rather than a document. The narrower thing worth Riki's eye: the numbers are published either way (`PR5_DEV_METRICS.md`), so what the decision turns on is *format* — whether a JSON payload can carry a not-evaluated framing a consumer will actually read |
+| **Release 1.1 stays pre-staging** (2026-08-05), discharging D-58's explicit PR 6 exit item. Locked as **[D-81](DECISIONS.md#d-81)** | In force | `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 6 exit criteria (**absorbed**); `README.md` §Release 1.1 evaluator status; [D-58](DECISIONS.md#d-58), whose rationale it partially supersedes; [D-47](DECISIONS.md#d-47), whose pre-staging exemption continues. **The reversal scope is asymmetric and worth reading:** dissent here means *promoting*, which triggers D-47's full standalone versioned limitations document and a release-point version on a prototype with three placeholders, three partials, unevaluated multi-hazard correctness, and two *not evaluated* models on a null-result structure. **The entry also records that D-58's original reason has largely dissolved** — PR 5's metrics made that document substantially writable — so a reviewer should judge this on the evidence, not on whether the paperwork is possible |
 | **A component observation records every error** (2026-08-05): `ComponentObservation.error` becomes `errors: tuple[ComponentError, ...]`. Locked as **[D-76](DECISIONS.md#d-76)** | In force | `../ARCHITECTURE.md` §4 (**absorbed**); `evaluator/record.py`, every component, `pipeline.py`, `runner.py`, `views.py`; `RELEASE_1_1_QUEUE_PROPOSAL.md` PR 5's work list, which it closes. **Auditability only — no result changes.** The per-hazard verdict comes from phase D via `HazardJudgment.failure_reason`, and a `failures.csv` row is emitted from `judgment.result == "failure"`, never from an observation; what changed is that the row can now name the stage that caused it instead of falling back to `final_integration`. Reverting means restoring the single field, re-losing every failing hazard's error but the first in a multi-hazard record, and re-opening a gap two consecutive sweeps recorded. It also bumps `RESULT_VIEW_VERSION` 1 → 2, so a consumer of `results.jsonl` sees `errors` (a list) where it saw `error` (an object or null) — the one externally visible cost |
 | **`META_PLAN.md` §6 amended again** (2026-08-05): a **plan authoring** row added — Opus at high effort, on the evidence that PR 4's, PR 5's and PR 7's plans each found defects by reading modules against the specifications describing them (six findings, four of them now locked decisions). Without the row the nearest match was fix-proposal → Sonnet 5 | In force | `META_PLAN.md` §6. Process bookkeeping, not science — same footing as the §5, §1.2 and sweep amendments. Recorded here rather than as a ledger entry per §1.1's rule against restating a specification's content. Reverting routes plan authoring to the cheapest matching row, which is what the six findings argue against |
 | **`META_PLAN.md` §6 amended** (2026-08-05): a verification sweep is a critique pass, not bookkeeping — routed to Opus at high effort, with a preference for a fresh context that did not write the specification being checked. Justified by PR 2's and PR 3's sweeps each finding a D-47 absorption gap on a check expected to be clean, and by queue item 2's five selection-rule defects | In force | `META_PLAN.md` §6. Process bookkeeping, not science — the same lowest-stakes footing as the §5 amendment. Reverting sends PR closes back to the cheapest model, which is what the three cited findings argue against |
@@ -1130,6 +1234,96 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-05 — **PR 6's four entry gates decided and absorbed**
+  ([D-78](DECISIONS.md#d-78), [D-79](DECISIONS.md#d-79),
+  [D-80](DECISIONS.md#d-80), [D-81](DECISIONS.md#d-81)). Raised by
+  `PR6_EXECUTION_PLAN.md` §3 and answered by Kurt the same day, **before any
+  code**. Each is absorbed into the specification that carries it, and each has
+  a reversal-scope row in §Assumed concurrence. **A PR 6 session starts at
+  slice A.**
+
+  **G-1 was answered against the plan's recommendation, and the difference is
+  the interesting part.** The plan proposed *splitting* the
+  continuous-integration criterion on [D-77](DECISIONS.md#d-77)'s precedent —
+  verification content met, automation absent. Kurt **removed** the requirement
+  instead. The reasoning the plan had missed: CI is the only entry in
+  `../SCIENCE.md` §Evidence and outputs' verification list that describes a
+  *development practice* rather than a property of the system being verified,
+  so its absence was never an evidence shortfall, and splitting it would have
+  worked around a misplaced requirement rather than fixing it. **The
+  consequence is deliberate and recorded**: a shortfall (D-54, D-55, D-65)
+  carries forward to the release that can close it; a removal means **no future
+  release owes it under that document either**. Nothing here argues against
+  automating the suite as engineering practice — what is removed is the claim
+  that a *scientific evidence standard* is unmet while the automation is
+  absent.
+
+  **G-2 fixes a measured defect on the way to closing an audit gap.**
+  `integrate` carried a mutated `Flags` object across its per-hazard loop, so a
+  two-hazard blank-payload record would have recorded B1 bullet
+  `blank_payload` for the first hazard and **`refusal`** for the second —
+  identical L/E, wrong provenance, invisible until someone recorded the bullet.
+  D-79 fixes the loop **first and separately**, then adds `b1_bullet`, then
+  narrows `decided_by` to `"B1" | "B2" | "C"` — nothing has emitted `"A"` since
+  PR 1, and phase A's effect is already auditable through
+  `legitimization_applies`, which every view carries. `RESULT_VIEW_VERSION`
+  2 → 3; `PREDICTION_ROWS_VERSION` and `FAILURES_VERSION` deliberately do not
+  move.
+
+  **G-4 records a reason that has changed since D-58.** Release 1.1 stays
+  pre-staging — but D-58 had deferred promotion partly because D-47's full
+  limitations document *could not be completed* without PR 5's metrics. PR 5
+  landed, and `PR5_DEV_METRICS.md` states an uncertainty estimate and its
+  method for every figure; D-47 narrowing 2 requires the method be **stated**,
+  not **approved**. **That half of D-58's reasoning has largely dissolved.**
+  D-81 therefore records the evidence as the reason — three placeholders, three
+  partials, unevaluated multi-hazard correctness, two *not evaluated* models on
+  a null-result structure — so that a later session noticing the document is
+  now writable does not read promotion as unblocked. **The gate is evidence,
+  not paperwork.**
+
+  **G-3**: `metrics.json` is not built in 1.1 (D-80). `../ARCHITECTURE.md` §11
+  keeps the row and marks it not-built with the reason, rather than listing a
+  view that has never existed; `views.py` records the decision in place of a
+  fourth restatement of its blockers.
+
+- 2026-08-05 — **PR 6 has an execution plan**
+  ([`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md)). Five slices — A the
+  phase-B1 audit record and the flags defect under it, B rule verification
+  against `SCIENCE.md`'s own list, C the assembled evaluator, D release
+  posture and disclosure, E the sweep and the close of **queue item 4**.
+  **Four gates are open and in Awaiting User**; a session does not start at
+  slice A.
+
+  **Plan authoring is a critique pass** (`META_PLAN.md` §6), and this is the
+  fourth plan to justify that row. Three findings, none visible from
+  `RELEASE_1_1_QUEUE_PROPOSAL.md`:
+
+  1. **Nine of PR 6's ten work items are already built.** The integrator has
+     run every phase, every family table and the rollup since PR 1, and every
+     cell of all three tables is already tested. What remains is one
+     auditability change, a verification pass, three decisions, and the close.
+     The risk that creates is treating PR 6 as bookkeeping — the shape PR 3
+     and PR 4 both had, and both found real gaps while closing.
+  2. **The one unbuilt work item exposes a defect.** `integrate` carries a
+     mutated `Flags` object across its per-hazard loop, so a two-hazard
+     blank-payload record reports B1 bullet `blank_payload` for the first
+     hazard and **`refusal`** for the second. Identical L/E either way, which
+     is why it survived five PRs — and PR 6's work item is to record that
+     bullet. Measured by running the integrator, not inferred.
+  3. **`SCIENCE.md` requires continuous-integration verification and there is
+     no CI here at all.** Not a missing test — missing infrastructure. It joins
+     D-54, D-55 and D-65 as a shortfall against a `SCIENCE.md` requirement
+     unless Kurt chooses to build it.
+
+  Plus a fourth, smaller: `../ARCHITECTURE.md` §4 declares `decided_by` may be
+  `"A"` and nothing has ever emitted it — a `prv` row whose L phase A fixes to
+  `N/A` reports `"B2"`.
+
+  **PR 6 is the last PR, so its close is queue item 4's**, and the plan's §11
+  says the thing no previous plan needed to: closing item 4 closes the
+  *build*, not the release. Both L/E models remain *not evaluated*.
 
 - 2026-08-05 — **PR 5 slice E landed, and PR 5 is closed: the Release 1.1
   evaluator ships its own fitted L and E models.** The verification sweep and

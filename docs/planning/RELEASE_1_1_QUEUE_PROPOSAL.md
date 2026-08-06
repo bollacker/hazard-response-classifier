@@ -551,11 +551,27 @@ assembled evaluator works.
   so no record field, view column, or return value is built for it.
   `SCIENCE.md` §Continuous score is unchanged and governs whenever one
   arrives.
-- Decide whether Release 1.1 is promoted to staging or assigned a release
-  point version. It ships as a **pre-staging prototype**
-  ([D-58](DECISIONS.md#d-58)) under D-47's disclosure floor; promotion
-  triggers D-47's full limitations document, whose per-metric uncertainty
-  half depends on Ask B.
+- ~~Decide whether Release 1.1 is promoted to staging or assigned a release
+  point version.~~ **Decided 2026-08-05 as [D-81](DECISIONS.md#d-81): it
+  stays pre-staging**, neither promoted to staging nor assigned a release
+  point version, under [D-47](DECISIONS.md#d-47)'s disclosure floor with
+  `README.md` §Release 1.1 evaluator status as the inline disclosure. This
+  discharges [D-58](DECISIONS.md#d-58)'s explicit exit item — the posture is a
+  decision **taken**, not a default inherited.
+
+  **Decided on the evidence, and the reason has changed since D-58.** D-58
+  deferred partly because D-47's full document could not be completed without
+  PR 5's metrics; PR 5 has landed and `PR5_DEV_METRICS.md` states an
+  uncertainty estimate and its method for every figure — and D-47 narrowing 2
+  requires the method be *stated*, not *approved*. **That half of D-58's
+  reasoning has largely dissolved: the document is now substantially
+  writable.** What keeps 1.1 pre-staging is the evidence — three placeholders
+  and three partials ship, multi-hazard correctness is unevaluated with its
+  backstop withdrawn, both L/E models are *not evaluated* on a null-result
+  structure, and a re-fit is owed the moment any placeholder is built. The
+  gate is evidence, not paperwork, and D-81 says so explicitly so that a later
+  session noticing the document is writable does not read promotion as
+  unblocked.
 - Return:
   - request, prompt, and response identity;
   - original, decoded, and current text;
@@ -576,10 +592,23 @@ assembled evaluator works.
   same output.
 - Tests cover every L/E table cell and every fixed finalization rule.
 - Tests cover multiple hazards, placeholders, component replacement, artifact
-  round trips, interfaces, concurrency, and continuous integration. **The
+  round trips, interfaces, and concurrency. **The
   concurrency criterion verifies the single-threaded contract**
   ([D-61](DECISIONS.md#d-61)) — that a single-threaded run is correct and
   reproducible — not thread-safety, which Release 1.1 does not claim.
+
+  ~~and continuous integration~~ — **removed 2026-08-05
+  ([D-78](DECISIONS.md#d-78)), not scoped and not recorded as a shortfall.**
+  Every other item here is a property of the system being verified; continuous
+  integration described *when and by whom* the suite is run, which is a
+  development practice rather than an evidence requirement, and
+  `SCIENCE.md` §Evidence and outputs no longer carries it. **This is a
+  removal**: no future release inherits the obligation under that document
+  either, which is the difference from how [D-54](DECISIONS.md#d-54),
+  [D-55](DECISIONS.md#d-55) and [D-65](DECISIONS.md#d-65) recorded genuine
+  shortfalls. The verification *content* is built and green — 644 tests, six
+  PRs, zero regressions, `test_baseline_parity.py` byte-identical since PR 1 —
+  and has only ever been run by hand.
 - Every working implementation is tested.
 - Every placeholder is visible and creates no judgment.
 - Component-quality results are published only where fixed human ground truth
