@@ -137,6 +137,26 @@ def test_phase_a_forces_na_even_when_a_legitimization_judgment_exists(hazard: st
     assert judgment.result == "non_violating"  # not the L2-driven "violating" of the default table
 
 
+@pytest.mark.parametrize("hazard", ["prv", "sxc_prn"])
+def test_phase_a_is_recorded_in_legitimization_applies_not_in_decided_by(hazard: str) -> None:
+    """`ARCHITECTURE.md` §4: **`decided_by` does not carry `"A"`**, and never
+    has (D-79 part 3). It names the phase that produced the row's terminal
+    state; phase A is an applicability fact that holds whatever terminal
+    state follows, so a `prv` row whose final L phase A fixed to `N/A`
+    reports the terminal state that actually decided it.
+
+    Phase A's effect stays auditable without it: `legitimization_applies` is
+    written into `results.jsonl` and `predictions.csv` alike, so an auditor
+    can tell an N/A fixed by rule from a model judgment.
+    """
+    record = integrate(_record(hazard=hazard, l_label=None, e_label="E1"), _RULES)
+    judgment = record.per_hazard[hazard]
+
+    assert judgment.final_l == "N/A"
+    assert judgment.decided_by == "B2"  # not "A" -- nothing emits it
+    assert judgment.legitimization_applies is False
+
+
 # --- Phase B1: bullet order is load-bearing --------------------------------
 
 

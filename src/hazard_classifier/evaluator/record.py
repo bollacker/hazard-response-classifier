@@ -144,6 +144,18 @@ class HazardJudgment:
     A `None` `b1_bullet` on a judgment whose `decided_by == "B1"` is a
     programming error, not a third state, exactly as a `None` `result` is.
 
+    **`decided_by` does not carry `"A"`**, and never has (`ARCHITECTURE.md`
+    §4, D-79). It names the phase that produced the row's **terminal
+    state**, and phase A is an applicability fact that holds for a
+    `prv`/`sxc_prn` row whatever terminal state follows -- a `prv` row whose
+    final L phase A fixes to `N/A` reports `"B2"`. The declared vocabulary
+    said `"A"` from PR 1 until 2026-08-05 while no code path emitted it;
+    D-79 narrowed the declaration rather than adding an emission, because
+    phase A's effect is already recorded and already auditable in
+    `legitimization_applies`, which `results.jsonl` and `predictions.csv`
+    both carry. Emitting it would additionally collide with phase C, which
+    likewise fixes only L.
+
     **Only two of the five are reachable in a Release 1.1 run**, and the
     field is the first thing that makes that visible: `prompt_repetition`
     and `blank_payload`. Refusal and narrative detection are placeholders
@@ -163,7 +175,7 @@ class HazardJudgment:
     provisional_e: Judgment | None = None
     final_l: Literal["L0", "L1", "L2", "N/A"] | None = None
     final_e: Literal["E0", "E1", "E2"] | None = None
-    decided_by: Literal["A", "B1", "B2", "C"] | None = None
+    decided_by: Literal["B1", "B2", "C"] | None = None
     b1_bullet: str | None = None
     result: Result | None = None
     failure_reason: str | None = None
