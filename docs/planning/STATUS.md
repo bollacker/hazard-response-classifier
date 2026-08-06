@@ -1,6 +1,44 @@
 # Status
 
-Last updated: 2026-08-05 — **PR 6's four entry gates are decided and absorbed
+Last updated: 2026-08-06 — **PR 6 is complete and closed, and with it queue
+item 4: the Release 1.1 build is finished.** All five slices landed (A the
+phase-B1 audit record and the `Flags` defect under it, B the rule-verification
+walk, C the assembled evaluator and its real run, D the release posture and the
+D-47 inventory, E the sweep and the close). **698 tests, zero regressions**,
+`tests/integration/test_baseline_parity.py` unchanged since PR 1 slice 0
+([D-48](DECISIONS.md#d-48)). Item 4 is retired by number under *Retired item
+numbers*; **the queue is now empty**.
+[`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md) is a record of what was built
+rather than live work.
+
+**Closing item 4 closes the *build*, not the release, and the difference is the
+one sentence in this file most likely to be quoted out of it.** Release 1.1
+stays **pre-staging** ([D-81](DECISIONS.md#d-81)); three placeholder components
+and three partial ones ship; multi-hazard correctness is unevaluated with its
+cross-hazard backstop withdrawn; `SCIENCE.md`'s own rule-verification list is
+not fully satisfied; the failure path is real code no real run reaches; and
+**both the Legitimization and Enablement models remain *not evaluated*** on a
+structure selected by a null result ([D-68](DECISIONS.md#d-68)). What PR 6
+proved is that the pieces fit and the rules fire in order. It is not evidence
+that the judgments are right, and nothing in item 4's closure makes any
+component evaluated.
+
+**Slice E's sweep found six documentation defects and no code defect** — the
+seventh consecutive sweep to find something on checks predicted to be clean,
+and the first in seven **not** to find the D-47 inventory stale. The sharpest
+two: `README.md`'s §Release 1.1 evaluator status **contradicted itself about
+the promotion decision** — slice D added "staying pre-staging is a decision
+taken" at the top while the section still closed with "whether to promote it is
+an explicit PR 6 decision" (D-58), so the release's own disclosure floor said
+the call was still open; and
+[`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md) PR 6's work
+list still carried the `b1_bullet` item as **live work with a now-false
+description of the code**, though [D-79](DECISIONS.md#d-79) records that it
+closes it. Both are absorption gaps of the kind every sweep in this project has
+found. **No new decision was made and no ledger entry or assumed-concurrence row
+is owed** by the sweep itself; Riki's agenda stays at twenty-nine rows.
+
+Prior update, 2026-08-05 — **PR 6's four entry gates are decided and absorbed
 ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81)); a PR 6 session starts at
 slice A.** The gates were raised by
 [`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md) §3 and answered the same day,
@@ -661,26 +699,92 @@ one item or advance past an Awaiting User item on its own. See
 
 ## Current Phase
 
-**Building Release 1.1** (queue item 4). The science-to-decision review
-(retired item 1) and the L/E structure selection (retired item 2,
-[D-68](DECISIONS.md#d-68)) are both complete, so what remains is
-implementation.
+**Nothing is in flight, and the queue is empty.** Release 1.1's build closed
+2026-08-06 with PR 6 and queue item 4 (retired below). The science-to-decision
+review (retired item 1), the L/E structure selection (retired item 2,
+[D-68](DECISIONS.md#d-68)), the architecture review (retired item 3) and the
+build (retired item 4) are all complete.
 
-PRs 1, 2, 3, 4, 7 and **5** are landed — the evaluator is runnable and
-**scores with its own fitted three-class L and E models**. **PR 6 is the only
-PR left** ([D-71](DECISIONS.md#d-71)), and it waits on nothing: it applies the
-fixed rules (largely already built in `integration.py`), drops the continuous
-score ([D-62](DECISIONS.md#d-62)), verifies the single-threaded contract
-([D-61](DECISIONS.md#d-61)), round-trips the artifact format PR 5 built
-([D-49](DECISIONS.md#d-49)), and makes the staging-promotion call
-([D-58](DECISIONS.md#d-58)) with [D-47](DECISIONS.md#d-47)'s limitations
-document. **Its execution plan is written**
-([`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md), 2026-08-05) and, like PR 4's,
-PR 5's and PR 7's, it found defects the queue proposal did not show — a fourth
-data point for `META_PLAN.md` §6's plan-authoring row.
+**What that does and does not mean.** All seven PRs of
+[`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md) are landed:
+the evaluator is replaceable end to end, runnable over an unlabeled CSV
+(`hrc-run`), scores with its own fitted three-class L and E models, and applies
+the fixed rules in one auditable module. **Release 1.1 remains a pre-staging
+prototype** ([D-81](DECISIONS.md#d-81)) whose two central models are *not
+evaluated*, and `README.md` §Release 1.1 evaluator status is the disclosure
+that says why. A session reading "the build is closed" as "the release is done"
+has misread this section.
 
-**Slices A–D are landed (2026-08-05/06); a session starts at slice E**, the
-verification sweep and the close of item 4.
+**What a next session would pick up, if anything.** Nothing is queued, and
+`META_PLAN.md` §5 forbids a session inventing a queue item for itself. The
+live *external* dependency is unchanged and is not a queue item:
+[`STANDARDS_REQUEST.md`](STANDARDS_REQUEST.md)'s Ask A (a fixed, in-version
+human-labeled evaluation set) and Ask B (approved per-outcome criteria), which
+[D-63](DECISIONS.md#d-63) records are not arriving — they are what would close
+the release's largest shortfalls, and no amount of implementation substitutes
+for either. Riki's batch review of the twenty-nine assumed-concurrence rows
+below is the other standing item.
+
+**PR 6 is complete** (2026-08-06). Its execution plan
+([`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md), 2026-08-05) is now a record
+of what was built; like PR 4's, PR 5's and PR 7's it found defects the queue
+proposal did not show — a fourth data point for `META_PLAN.md` §6's
+plan-authoring row — and its §9 maps every exit criterion to the tests that
+verify it. All five slices landed.
+
+**Slice E** was the verification sweep and the close (`PR6_EXECUTION_PLAN.md`
+§8, §11). **698 tests, zero regressions**, `test_baseline_parity.py` unchanged
+— confirmed by `git log`, which shows exactly one commit in that file's whole
+history. **No code defect, six documentation ones**, on a set of checks the
+plan predicted would be clean:
+
+1. **`README.md` contradicted itself about the promotion decision.** Slice D
+   added "staying pre-staging is a decision taken, not a default"
+   ([D-81](DECISIONS.md#d-81)) at the top of §Release 1.1 evaluator status
+   while the section still closed with "whether to promote it is an explicit
+   PR 6 decision", citing D-58. That section **is** the release's disclosure
+   floor under [D-47](DECISIONS.md#d-47), and the two readings differ in the
+   way that matters outside this repository: a prototype *pending* a call
+   versus a call *made*. Corrected.
+2. **[D-79](DECISIONS.md#d-79)'s absorption never reached
+   `RELEASE_1_1_QUEUE_PROPOSAL.md`.** PR 6's work list still carried "record
+   which phase B1 bullet decided a result" as live work — with the now-false
+   claim that `_phase_b1_terminal_state` "computes a `_reason` and discards
+   it" — although D-79's `Touches` says it closes that item, and the
+   precedent for how (a strike-through plus what shipped) is
+   [D-76](DECISIONS.md#d-76) one PR earlier in the same document. Struck, with
+   the `Flags` defect recorded under it.
+3. **The D-47 generating rule was overstated.** The same document said "both
+   halves were regenerated from `ARCHITECTURE.md` §7's table" three paragraphs
+   after saying the non-component half "is no longer derivable from §7's table
+   alone". Only the component half has a generating rule; the non-component
+   half is maintained by hand and must be re-read. Corrected, and the
+   distinction is now stated where the inventory is.
+4. **`README.md` said 697 tests; the suite is 698.** Slice D wrote 697 — read
+   from slice C's record — **in the same commit that added the §7 pinning
+   test**. `PR6_EXECUTION_PLAN.md` §12 lesson 2 is "compute, then write", and
+   this is it landing on the PR that states it.
+5. **`README.md` §Manifest's `scripts/` row omitted
+   `probe_pr6_assembled_run.py`**, written by slice C two commits earlier. The
+   row's own text says "the rule, not the list", which is exactly why the list
+   went stale.
+6. **The rollup's precedence lived only in a docstring and a test name.**
+   `../ARCHITECTURE.md` §9 now states that **violating outranks failure**, as
+   `PR6_EXECUTION_PLAN.md` §9 asked. The evidence it needed stating is slice
+   B's own test asserting the opposite, which passed on a lucky hash seed and
+   was caught by slice C.
+
+**Four checks came back genuinely clean, which is worth recording because two
+of them have not been before.** `../ARCHITECTURE.md` §3.2's module layout
+matches the directory (**two consecutive prior sweeps found it stale**);
+D-47's inventory is six component items and seven non-component ones, item by
+item against `README.md` (**six consecutive prior sweeps found it stale** —
+slice D's pinning test is the reason, and this sweep re-verified that test is a
+real forcing function by sabotage rather than trusting slice D's claim); all
+122 test names cited across PR 6's records exist and were collected; and no
+test file anywhere carries a duplicate `def test_` name, re-running slice C's
+own sweep independently. Slice C's real run was also re-run and reproduces its
+recorded table exactly.
 
 **Slice D** recorded and absorbed [D-80](DECISIONS.md#d-80) and
 [D-81](DECISIONS.md#d-81) rather than re-deciding either. `README.md` now says
@@ -699,6 +803,14 @@ sweeps finding that inventory stale. Absorption verified, not assumed: D-81 in
 the queue proposal and `README.md`, D-80 in §11 (row retained, marked
 not-built) and `views.py`, and all four gate answers carry
 assumed-concurrence rows with reversal scope. **698 tests.**
+*(Slice E qualified the absorption claim: slice D verified D-81 reached
+`README.md` and stopped at the paragraph it had just written, while the same
+section still closed by calling promotion an open PR 6 decision — and
+[D-79](DECISIONS.md#d-79)'s absorption into the queue proposal's work list had
+never been checked by any slice. Both are corrected above. The lesson is
+narrow and worth keeping: checking that a decision **arrived** somewhere is not
+the same as checking that nothing else in the document still says the
+opposite.)*
 
 **Slice C** validated the assembled evaluator and ran it for real —
 [`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) is the record, reproducible via
@@ -738,9 +850,11 @@ records which of B1's five ordered bullets assigned the pair,
 nothing emitted. **658 tests, zero regressions, no result changes**,
 `test_baseline_parity.py` unchanged (D-48). Slice A also closed
 `../ARCHITECTURE.md` §13's A-3 in place and corrected the plan's count of
-unreachable B1 bullets from two to three, taken from §7's table. **Only slice
+unreachable B1 bullets from two to three, taken from §7's table. ~~**Only slice
 E remains**; it is where all of them land in Recently Completed with their
-concurrence rows.
+concurrence rows.~~ **Slice E has since landed** — see above; every slice is in
+Recently Completed, and no slice made a decision, so the assumed-concurrence
+table gains no row beyond the four gate answers it already carried.
 
 The plan opened four gates and **all four are
 decided and absorbed** ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81),
@@ -756,197 +870,13 @@ Detailed phased proposal:
 
 ## Queue
 
-4. [ ] **Build the approved 1.1 modular release.**
-
-   **PR 1 is complete** (2026-08-04): slices 0, 1A, 1B, 1C plus D-48/D-49,
-   pushed as `9bfa845`. Its plan,
-   [`PR1_EXECUTION_PLAN.md`](PR1_EXECUTION_PLAN.md), is now a record of what
-   was built rather than live work.
-
-   **PR 2 is complete** (2026-08-04): slices A and B, pushed as `a285656`
-   plus slice B's commit. Its plan,
-   [`PR2_EXECUTION_PLAN.md`](PR2_EXECUTION_PLAN.md), is now a record of what
-   was built rather than live work. Slice B's verification sweep found and
-   closed a second `DECISIONS.md` D-47 absorption gap: `README.md` §Current
-   baseline risks documented only the pre-staging baseline's statistical
-   warts (D-2, D-8), never the five 1.1 evaluator shortfalls PR 1 actually
-   shipped — closed by a new `README.md` §Release 1.1 evaluator status
-   section and a corrective note on D-47. 287 tests, zero regressions,
-   including two new real-BGE integration tests and `test_baseline_parity.py`
-   unchanged (D-48 still holds).
-
-   **PR 3 is complete** (2026-08-04): slices A and B, both landed in this
-   session (see Recently Completed). Its plan,
-   [`PR3_EXECUTION_PLAN.md`](PR3_EXECUTION_PLAN.md), is now a record of what
-   was built rather than live work, the same way `PR1_EXECUTION_PLAN.md` and
-   `PR2_EXECUTION_PLAN.md` are.
-
-   **PR 4 (narrative, refusal, and disclaimer detection) is in progress.**
-   Execution plan: [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md). Four
-   slices, no gates — the three calls the plan raised are decided
-   ([D-69](DECISIONS.md#d-69), [D-70](DECISIONS.md#d-70), and
-   `../ARCHITECTURE.md` §13's A-3) and absorbed into the specifications.
-   **PR 4 turned out to carry two real code changes rather than none**, both
-   found by reading the code against the specifications: the model-input text
-   view was a literal attribute access while §5 claimed it was
-   configuration-selected, and stage 7's broadest disclaimer pattern was
-   firing on bare risk vocabulary in the one direction phase C can only move
-   toward non-violating. The earlier note here that PR 4 "builds nothing new"
-   is superseded by those two.
-
-   **PR 4 is complete** (2026-08-05): all four slices landed —
-   `EmbeddingComponent` takes `text_view` as a construction argument, stage 7
-   now ships three of the four inherited disclaimer patterns, the
-   placeholder/B1-reachability verification named in §5 is pinned by named
-   tests rather than left as an inference from other tests passing, and slice
-   D's sweep closed five documentation findings (see Recently Completed). Its
-   plan, [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md), is now a record of
-   what was built rather than live work. 433 tests, zero regressions,
-   `test_baseline_parity.py` unchanged.
-
-   **PR 7 (evaluator runner) is complete** (2026-08-05) — input schema, run
-   profile, batch runner, CLI, and `failures.csv`, all five slices. **PR 5
-   is next, then PR 6** ([D-71](DECISIONS.md#d-71)). **Item 4 stays open**;
-   two PRs remain.
-
-   **PR 5 (L/E training, scoring, and evaluation) is complete**
-   (2026-08-05). Execution plan:
-   [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md), now a record of what was
-   built rather than live work. All six slices landed — slice 0 (the
-   working-text measurement behind [D-72](DECISIONS.md#d-72)), **slice A (the
-   production fitter)**, **slice B (the 1.1 artifact)**, **slice C (the
-   scoring component)**, **slice D (the per-outcome report)** and **slice E
-   (the verification sweep and close)** — and all three gates closed before
-   it, the last being [D-77](DECISIONS.md#d-77). **644 tests, zero
-   regressions.** The dev-slice
-   figures are in [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md), **every one of
-   them reported *not evaluated*.** Nothing new was decided in any of them —
-   they build
-   D-68's structure, on D-72's text, over D-73's rows, and write the payload
-   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) §6
-   already fixed. Slice A's central claim is **verified rather than stated**:
-   on the real fit split's working-text features the production fitter and
-   `experiments.candidates.MultinomialSoftmax` agree exactly
-   (`max|diff| = 0.0`, both targets, identical unavailable-cell sets). Slice B
-   closes [D-49](DECISIONS.md#d-49), and `../ARCHITECTURE.md` §10.1 now
-   describes the payload as built. Slice C makes **stage 9 `working`** and
-   removes the one D-47 inventory item that had a scheduled end. Slice D
-   publishes the per-outcome numbers. Slice E's sweep closed a fixed-rule
-   guard the scorer never had, two `PREREGISTRATION_LE_STRUCTURE.md` §8
-   amendments, a D-47 inventory item PR 5 itself created (the re-fit owed once
-   the placeholders are built), and five stale sentences —
-   `test_baseline_parity.py` unchanged throughout.
-
-   **Item 4 stays open. PR 6 is the last PR standing**, and closing item 4
-   before it lands would be the mistake `META_PLAN.md` §5 warns against —
-   PR 6 owns the promotion call (D-58) and D-47's limitations document, which
-   are what decide whether Release 1.1 is anything more than a prototype.
-
-   **PR 7 has a written plan:
-   [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md)** (2026-08-05). Five
-   slices — A input schema and record construction, B run profile and artifact
-   resolution, C batch runner and `failures.csv`, D the two entry points, E a
-   real run plus the sweep and close. Everything it drives is built; what is
-   missing was the shell. **All five slices are complete** (see Recently
-   Completed) — `evaluator/input_schema.py`, `evaluator/profile.py`,
-   `evaluator/runner.py`, `views.py`'s third view, `evaluator/entrypoint.py`,
-   `cli/run.py`, the new `hrc-run` script entry,
-   `tests/integration/test_evaluator_runner_real_bge.py`,
-   `scripts/probe_runner_throughput.py`, and `docs/howto/hrc-run.md`;
-   **none yet committed**. Its plan,
-   [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md), is now a record of what
-   was built rather than live work. The plan's one gate question — whether
-   the run profile carries the model-input text view — was answered before
-   slice B started and is built, not merely decided:
-   [D-74](DECISIONS.md#d-74) (2026-08-05), the profile carries `text_view`
-   as a construction parameter flowing profile -> `build_registry` ->
-   `EmbeddingComponent(...)`, and the end-to-end test at
-   `text_view: "disclaimer_stripped"` is the conditional test D-74 required
-   before the field could ship — extended at the close to read the resolved
-   view back out of a written `results.jsonl`.
-
-   **The one design concern PR 7's close raised is now decided**
-   ([D-75](DECISIONS.md#d-75), 2026-08-05, see Recently Completed). §2's
-   all-or-nothing rejection **stands** — Kurt took the mitigation, not the
-   amendment: a rejection now names every offending row rather than the
-   first, and `hrc-run --check-input` reports them without scoring. The
-   close's claim that a bad code discards a long run's work was **wrong** and
-   is corrected there; pass 1 runs before any scoring, so a 10,000-row file
-   is rejected in about two seconds. **Nothing in PR 7 is open.**
-
-   **PR 5 has a written plan:
-   [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md)** (2026-08-05). Six
-   slices — 0 measurement, A production fitter, B the 1.1 artifact, C the
-   scoring component, D evaluation and reporting, E the sweep and close.
-   Queue item 2 already did the selection half ([D-68](DECISIONS.md#d-68)),
-   so PR 5 is a build, not a study. **Slice 0 has run and the entry gate is
-   clear** (see Recently Completed): the train/serve text gap is measured
-   (`scripts/probe_working_text_delta.py`), and **G-1 and G-2 are decided and
-   absorbed** — fit on pipeline **working text**
-   ([D-72](DECISIONS.md#d-72)), **fit split only**
-   ([D-73](DECISIONS.md#d-73)). **A PR 5 session starts at slice A.** One gate
-   remains, G-3 — how PR 5's unmeetable approved-criteria exit criterion is
-   discharged — and it blocks only the close, where its ledger entry is
-   drafted.
-
-   **The decision-debt sweep of 2026-08-04 cleared PR 4 through PR 6's
-   blockers and added a PR.** Nine entries, [D-54](DECISIONS.md#d-54) through
-   [D-62](DECISIONS.md#d-62), lock the calls; `RELEASE_1_1_QUEUE_PROPOSAL.md`,
-   `../ARCHITECTURE.md`, and this file carry them. The sequence is now:
-
-   > ~~PR 4 → **PR 7** (evaluator runner, D-56) → PR 6 → PR 5~~
-   > **PR 4 → PR 7** (evaluator runner, D-56) **→ PR 5 → PR 6**
-   > ([D-71](DECISIONS.md#d-71), 2026-08-05)
-
-   PR 7 is numbered 7 and runs sixth because `META_PLAN.md` §5 forbids
-   renumbering an identifier other documents already cite. ~~PR 5 moves last
-   because it is the only phase that cannot start without the Standards
-   team's data.~~
-
-   **PR 5 moved ahead of PR 6 on 2026-08-05, locked as
-   [D-71](DECISIONS.md#d-71).** Two reasons, either sufficient. PR 6's exit
-   criteria require testing **artifact round trips**, and
-   [D-49](DECISIONS.md#d-49) makes the artifact *format* PR 5's while making
-   the *round trip* PR 6's — so PR 6 running first has nothing to round-trip.
-   And PR 6 owns the staging-promotion call ([D-58](DECISIONS.md#d-58)) and
-   triggers [D-47](DECISIONS.md#d-47)'s limitations document, both of which
-   would describe a release whose L/E models are still PR 1's wrapped baseline
-   if PR 5 had not run.
-
-   **Two corrections that came with it.** PR 5's old reason for being last —
-   the Standards-team data gate — was removed by [D-63](DECISIONS.md#d-63) on
-   2026-08-04, the same day it was written, and PR 5 has since gained a
-   selected structure ([D-68](DECISIONS.md#d-68), 2026-08-05); it waits on
-   nothing external. And the sequence was being cited to D-56 in this file and
-   others, when **D-56 decided only that PR 7 comes before PR 6** and said
-   nothing about PR 5 — so D-71 reverses no decision, it corrects an order that
-   had outlived its reason.
-
-   What each PR now owes, in short: **PR 4** is mostly verification —
-   narrative and refusal stay placeholders (D-54) and the disclaimer view stays
-   `working` (D-55) — plus the two code changes D-69 and D-70 added on
-   2026-08-05 and the disclosure they carry. **PR 7** builds the input schema,
-   run profile, batch runner, CLI, and `failures.csv`. **PR 6** applies the
-   fixed rules (largely already built in `integration.py`), drops the
-   continuous score (D-62), verifies the single-threaded contract (D-61), and
-   makes the staging-promotion call (D-58). ~~**PR 5** waits on Ask A, but owes
-   its pre-registration now (D-59).~~ **PR 5** no longer waits on Ask A
-   (D-63) and its pre-registration is done — that is
-   [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md), which
-   queue item 2 executed to completion under [D-68](DECISIONS.md#d-68). What
-   PR 5 owes now is the fitted three-class model that selection chose — on
-   interim, dev-class data, since [D-66](DECISIONS.md#d-66) reserves a fresh
-   selection for a real evaluation set rather than a re-fit.
-   *(Corrected 2026-08-05 with the sequencing note above; both halves of this
-   sentence were overtaken by D-63 and D-68.)*
-
- Deliver working decoding,
-   Legitimization, Enablement, and final integration; partial
-   prompt-repetition and disclaimer detection; visible placeholders for
-   hazard, narrative, and refusal detection; one shared, replaceable embedding
-   pass per scoring batch; and stable component contracts. Placeholders pass
-   content through and are reported as not evaluated until populated. Execute
-   the approved phases in `RELEASE_1_1_QUEUE_PROPOSAL.md` in order.
+**Nothing is queued.** Queue item 4 — build the approved 1.1 modular release
+— closed 2026-08-06 and is retired by number below. `META_PLAN.md` §5 governs
+what happens next: a session reads this file, takes one *startable* item, and
+stops. With no item here there is nothing to take, and a session must not
+invent one. The standing non-queue items are Riki's batch review of the
+assumed-concurrence table and `STANDARDS_REQUEST.md`'s two asks, neither of
+which is work this repository can do.
 
 ### Retired item numbers
 
@@ -993,6 +923,39 @@ across schemes:
   three parked proposals are resolved there (§3.1 exhaustion, §6 no-fallback,
   §4/§11 canonical record). Two `SCIENCE.md` defects it found are in Awaiting
   User.
+- **4** — Build the approved 1.1 modular release. **Closed 2026-08-06** with
+  PR 6, the last of the seven PRs in
+  [`RELEASE_1_1_QUEUE_PROPOSAL.md`](RELEASE_1_1_QUEUE_PROPOSAL.md), which is
+  the specification of what was built and carries each PR's exit criteria. The
+  order run was PR 1 → 2 → 3 → 4 → 7 → 5 → 6 ([D-56](DECISIONS.md#d-56),
+  [D-71](DECISIONS.md#d-71)). Each PR has an execution plan, now a record
+  rather than live work:
+  [`PR1_EXECUTION_PLAN.md`](PR1_EXECUTION_PLAN.md),
+  [`PR2_EXECUTION_PLAN.md`](PR2_EXECUTION_PLAN.md),
+  [`PR3_EXECUTION_PLAN.md`](PR3_EXECUTION_PLAN.md),
+  [`PR4_EXECUTION_PLAN.md`](PR4_EXECUTION_PLAN.md),
+  [`PR7_EXECUTION_PLAN.md`](PR7_EXECUTION_PLAN.md),
+  [`PR5_EXECUTION_PLAN.md`](PR5_EXECUTION_PLAN.md),
+  [`PR6_EXECUTION_PLAN.md`](PR6_EXECUTION_PLAN.md) — the last carrying, in its
+  §9, every PR 6 exit criterion against the tests that verify it. Supporting
+  records: [`PR6_RULE_VERIFICATION.md`](PR6_RULE_VERIFICATION.md) (the walk of
+  `SCIENCE.md`'s rule-verification list), [`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md)
+  (the real end-to-end run), [`PR5_DEV_METRICS.md`](PR5_DEV_METRICS.md) (the
+  per-outcome figures, every one *not evaluated*), and
+  [`PREREGISTRATION_LE_STRUCTURE.md`](PREREGISTRATION_LE_STRUCTURE.md) (the
+  structure selection item 2 executed). The full narrative is in Recently
+  Completed; the decisions are D-47 through D-81. **698 tests, zero
+  regressions**, `tests/integration/test_baseline_parity.py` unchanged
+  throughout ([D-48](DECISIONS.md#d-48)).
+
+  **This closed the build, not the release.** Release 1.1 remains a
+  **pre-staging prototype** ([D-81](DECISIONS.md#d-81)) with three placeholder
+  components, three partial ones, unevaluated multi-hazard correctness, an
+  unsatisfied `SCIENCE.md` rule-verification list, and two *not evaluated* L/E
+  models on a null-result structure ([D-68](DECISIONS.md#d-68)).
+  `README.md` §Release 1.1 evaluator status is the disclosure D-47 requires and
+  the place to read what the release does not support. Closing this item was
+  never a promotion, and no future session should read it as one.
 - **5** — Implement D-46, `hrc-train`'s blank-ordinal-label error. Closed
   2026-08-03; landed in code.
 - **6** — Implement D-45, removing the constant-probability substitute. Closed
@@ -1002,12 +965,21 @@ across schemes:
 ## Awaiting User
 
 Updated 2026-08-04 (decision-debt sweep, then the interim-data pivot); one
-item added and decided 2026-08-05 ([D-76](DECISIONS.md#d-76)); **PR 6's four
-entry gates added 2026-08-05 and open**.
+item added and decided 2026-08-05 ([D-76](DECISIONS.md#d-76)); ~~**PR 6's four
+entry gates added 2026-08-05 and open**~~ **all four decided the same day and
+absorbed** ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81)); reviewed
+again 2026-08-06 at PR 6's close, when **nothing new was added** — PR 6 raised
+no question a slice could not answer from the specifications.
 
-**Nothing here blocks.** PR 6's four gates were raised and answered the same
+**Nothing here blocks, and with queue item 4 closed nothing here is waiting on
+a session either.** What remains is one standing action with Kurt: Riki's batch
+review of the twenty-nine assumed-concurrence rows below. That review is the
+one thing `META_PLAN.md` §1.2 says this mode cannot do without, and Release 1.1
+shipped its whole build under it.
+
+PR 6's four gates were raised and answered the same
 day ([D-78](DECISIONS.md#d-78)–[D-81](DECISIONS.md#d-81)) and are absorbed into
-the specifications, so a PR 6 session starts at slice A. That the block lasted
+the specifications, so a PR 6 session started at slice A. That the block lasted
 hours rather than a slice is the point: the plan raised an
 `../ARCHITECTURE.md` §4 amendment **before** slice A rather than from inside
 it, which is the round trip [D-76](DECISIONS.md#d-76) cost when PR 5 slice C
@@ -1297,6 +1269,134 @@ sub-reviews 1.3, 1.4, and 1.7's dispositions reopen with them. C-1 needs no
 further concurrence — Riki directed it.
 
 ## Recently Completed
+
+- 2026-08-06 — **PR 6 slice E landed; PR 6 is closed, and with it queue
+  item 4.** The verification sweep and the close
+  (`PR6_EXECUTION_PLAN.md` §8, §9, §11). **698 tests, zero regressions**,
+  `test_baseline_parity.py` unchanged since PR 1 slice 0 — confirmed by
+  `git log` showing one commit in that file's entire history, not by reading
+  the number off the last close. **No new decision was made, so no ledger
+  entry and no assumed-concurrence row is owed**; the table stays at
+  twenty-nine rows, recounted rather than assumed.
+
+  **`PR6_EXECUTION_PLAN.md` §9 is filled in**: every PR 6 exit criterion
+  against the tests that discharge it, each collected and run for the table
+  rather than matched by name. Two rows say something a citation would have
+  hidden. *Tests cover every L/E table cell and every fixed finalization rule*
+  is **met with S-1 and S-2 recorded unmet** — `SCIENCE.md`'s own
+  rule-verification list is not fully satisfied, and pretending otherwise
+  would have been [D-77](DECISIONS.md#d-77)'s first rejected alternative. And
+  *every evaluated hazard has exactly one final result or failure* is verified
+  without a real failure ever occurring, because slice C established there is
+  no route to one in a real 1.1 run.
+
+  **Six documentation defects, no code defect** — the seventh consecutive
+  sweep to find something where a clean result was expected. In order of what
+  they cost a reader: (1) **`README.md` contradicted itself about the
+  promotion decision**, opening §Release 1.1 evaluator status with slice D's
+  "a decision taken, not a default" ([D-81](DECISIONS.md#d-81)) and closing it
+  with "whether to promote it is an explicit PR 6 decision" (D-58) — in the
+  section that **is** the release's disclosure floor under
+  [D-47](DECISIONS.md#d-47). (2) **[D-79](DECISIONS.md#d-79)'s absorption
+  never reached `RELEASE_1_1_QUEUE_PROPOSAL.md`**: PR 6's work list still
+  carried the `b1_bullet` item as live work, asserting that
+  `_phase_b1_terminal_state` "computes a `_reason` and discards it", which
+  slice A made false — struck now, on [D-76](DECISIONS.md#d-76)'s precedent
+  one PR earlier in the same document. (3) **The D-47 generating rule was
+  overstated** — "both halves were regenerated from `ARCHITECTURE.md` §7's
+  table" three paragraphs after the same section says the non-component half
+  is not derivable from it; only the component half has a generating rule.
+  (4) **`README.md` said 697 tests against 698**, written by slice D in the
+  same commit that added the test making it 698 — "compute, then write",
+  landing on the PR whose plan states it. (5) **`README.md` §Manifest's
+  `scripts/` row omitted `probe_pr6_assembled_run.py`**, in a row whose own
+  text says "the rule, not the list". (6) **The rollup's precedence lived only
+  in a docstring and a test name**; `../ARCHITECTURE.md` §9 now states that
+  violating outranks failure, which `PR6_EXECUTION_PLAN.md` §9 asked for and
+  slice B's mistaken test is the evidence for.
+
+  **Four checks came back clean, and two of those had never been clean
+  before.** `../ARCHITECTURE.md` §3.2's module layout matches the directory
+  exactly — **two consecutive prior sweeps found it stale**. D-47's inventory
+  is six component items and seven non-component ones, re-read item by item
+  against `README.md` — **six consecutive prior sweeps found it stale**, and
+  slice D's pinning test is why this one did not. That test was **re-verified
+  by sabotage rather than trusted**: flipping stage 1's §7 row to `partial`
+  turns `test_architecture_section_7_matches_every_components_real_maturity`
+  red. All 122 test names cited across PR 6's records exist and were
+  collected. No test file carries a duplicate `def test_` name, re-running
+  slice C's own sweep independently rather than citing it. And slice C's real
+  assembled run was re-run end to end, reproducing its recorded table exactly.
+
+  **Queue item 4 is retired by number, in place**, per `META_PLAN.md` §5 — the
+  number is never reused and no live item was renumbered, which matters
+  because `DECISIONS.md`'s index and several entries cite "queue item 4"
+  directly. **The queue is now empty.** Closing item 4 closes the *build*:
+  Release 1.1 stays pre-staging, both L/E models remain *not evaluated*, and
+  the closing note says so where a reader outside this repository will find
+  it, because "Release 1.1 is done" is the sentence this project could most
+  easily be misquoted on.
+
+- 2026-08-06 — **PR 6 slice D landed: release posture, the D-47 inventory, and
+  disclosure** (`PR6_EXECUTION_PLAN.md` §7). It **recorded and absorbed**
+  [D-80](DECISIONS.md#d-80) and [D-81](DECISIONS.md#d-81) rather than
+  re-deciding either. `README.md` now says staying **pre-staging is a decision
+  taken on the evidence**, and carries D-81's point that D-47's document is
+  now *substantially writable* — so writability is no longer what keeps 1.1 a
+  prototype. **D-47's inventory was regenerated from `../ARCHITECTURE.md` §7's
+  table rather than copied**, applying D-47's own generating rule mechanically
+  for the first time: six component items, the table's three `placeholder` and
+  three `partial` rows, and **the count agreed with the specification for the
+  first time in seven sweeps**. Non-component items went five → seven with
+  slices B's and C's verification shortfalls. **§7's table is now pinned by a
+  test** — the direct countermeasure to six consecutive sweeps finding that
+  inventory stale. Absorption verified rather than assumed. **698 tests.**
+
+- 2026-08-06 — **PR 6 slice C landed: the assembled evaluator, validated and
+  run for real** (`PR6_EXECUTION_PLAN.md` §6).
+  [`PR6_ASSEMBLED_RUN.md`](PR6_ASSEMBLED_RUN.md) is the record, reproducible
+  via `scripts/probe_pr6_assembled_run.py`. Every cross-cutting property maps
+  to named tests; three were added. **Four findings, two of them disclosure
+  material.** (1) **Phase C's exposure is not hypothetical**: on an ordinary
+  Specialized Advice response the models judged **L2**/E0 — violating in that
+  family's table — and the disclaimer rule fixed final L to L0, making the
+  result non-violating. The rule as specified, on the first real run anyone
+  tried. (2) **A per-hazard failure is unreachable in a real 1.1 run**,
+  computed from the shipped artifact rather than argued, so `failures.csv` is
+  always empty and tells a consumer nothing. (3) A test had been **silently
+  dead since PR 5**, shadowed by a duplicate name in one module. (4) **Slice
+  B's own new test was wrong** — it asserted `overall_result == "failure"`
+  where a violating hazard legitimately outranks a failed one, and passed only
+  on a lucky process hash seed. **697 tests.**
+
+- 2026-08-06 — **PR 6 slice B landed: `SCIENCE.md`'s rule-verification list,
+  walked** (`PR6_EXECUTION_PLAN.md` §5). Six items, end to end, for the first
+  time — [`PR6_RULE_VERIFICATION.md`](PR6_RULE_VERIFICATION.md) is the record
+  and its §7 is the shortfall list slice D published. Four items met; one
+  **unmet and unmeetable in 1.1** (the L/E judgment guidance tested against
+  human labels, S-1); and item 4's nine rule families split into four
+  component rules and **five judgment rules verifiable only through the unmet
+  item** (S-2). **S-1 and S-2 are the same blocker as the not-evaluated
+  models, not additional ones** — stated so a reader does not over-count.
+  Five verification-only tests added, all passing on first run against
+  existing code: **no behavioral defect was found**, but four properties the
+  code has were pinned by nothing, two of them named in `SCIENCE.md`'s own
+  minimum interaction list. No threshold was invented to make S-1 pass, which
+  is what §5 forbade. **694 tests.**
+
+- 2026-08-05 — **PR 6 slice A landed: the phase-B1 audit record, and the
+  `Flags` defect under it** (`PR6_EXECUTION_PLAN.md` §4). All three parts of
+  [D-79](DECISIONS.md#d-79), in its order and as separate commits: phase B1 is
+  evaluated **once per record** (the loop-carried `Flags` defect, with a test
+  that fails without the fix), `HazardJudgment.b1_bullet` records which of
+  B1's five ordered bullets assigned the pair, `RESULT_VIEW_VERSION` is **3**,
+  and `decided_by` no longer declares the `"A"` nothing ever emitted.
+  **658 tests, zero regressions, no result changes**,
+  `test_baseline_parity.py` unchanged (D-48). The order was the point: writing
+  the field first would have shipped an audit record wrong for every hazard
+  after the first. Slice A also closed `../ARCHITECTURE.md` §13's A-3 in place
+  and **corrected the plan's own count** of unreachable B1 bullets from two to
+  three, taken from §7's table rather than from the sentence in front of it.
 
 - 2026-08-05 — **PR 6's four entry gates decided and absorbed**
   ([D-78](DECISIONS.md#d-78), [D-79](DECISIONS.md#d-79),
