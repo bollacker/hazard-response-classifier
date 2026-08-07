@@ -30,20 +30,24 @@ installed console scripts, verified against synthetic fixtures and real,
 non-mocked BGE model runs. It has not reached staging and is expected to be
 replaced by the Release 1.1 design.
 
-The Release 1.1 evaluator is being built alongside it, became **runnable** on
-2026-08-05 (`hrc-run`), and now scores with its own fitted three-class L and E
+The Release 1.1 evaluator was built alongside it, became **runnable** on
+2026-08-05 (`hrc-run`), and scores with its own fitted three-class L and E
 models. The whole repository is backed by 698 tests — unit, integration, and
 science — with the baseline's own outputs held byte-identical throughout by
 `tests/integration/test_baseline_parity.py` (D-48).
 
-The active work is **building Release 1.1**: the science-to-decision review
-closed 2026-08-03 and the L/E structure selection closed 2026-08-05, so what
-remains is implementation. [`STATUS.md`](docs/planning/STATUS.md) is the live
-queue and the current source for which phase is in flight — this paragraph
-names the kind of work, not the step.
-[`DECISIONS.md`](docs/planning/DECISIONS.md) is the provenance record —
-why each choice was made and what was rejected — with an index mapping every
-decision to the specification that now carries it.
+**Release 1.1's build closed on 2026-08-06** — all seven PRs of
+[`RELEASE_1_1_QUEUE_PROPOSAL.md`](docs/planning/RELEASE_1_1_QUEUE_PROPOSAL.md)
+landed and its queue item is retired. **Closing the build is not shipping the
+release.** Release 1.1 remains a pre-staging prototype, by a decision taken on
+the evidence rather than by default (`DECISIONS.md` D-81), and both its
+central models are reported *not evaluated* — see
+[§Release 1.1 evaluator status](#release-11-evaluator-status), which is the
+disclosure that says what it does and does not support. Nothing is currently
+queued. [`STATUS.md`](docs/planning/STATUS.md) remains the live queue and the
+source for what is in flight; [`DECISIONS.md`](docs/planning/DECISIONS.md) is
+the provenance record — why each choice was made and what was rejected — with
+an index mapping every decision to the specification that now carries it.
 
 ## Quick start
 
@@ -78,7 +82,8 @@ The first run downloads the BGE embedding model (`BAAI/bge-base-en-v1.5`,
 | `src/hazard_classifier/` | The baseline package: `schema.py` (input validation), `preprocess/` (deobfuscation, segmentation, flags), `embed.py` (BGE embedding + pooling), `heads.py` (per-cell logistic heads), `rules.py` (business rules + ordinal combination), `metrics.py` (evaluation metrics), `model.py` (fit/save/load/score orchestration), `cli/` (the command-line tools) |
 | `src/hazard_classifier/evaluator/` | The Release 1.1 pipeline, alongside the baseline rather than replacing it — see `ARCHITECTURE.md` §3.2 for its module layout and §Release 1.1 evaluator status below for what it does and does not yet do |
 | `tests/` | `unit/`, `integration/` (needs the real BGE model, cached after first run), `science/` (statistical/metric correctness) |
-| `examples/sample_input.csv` | 12-row synthetic fixture used in every doc's smoke-test example |
+| `examples/sample_input.csv` | 12-row synthetic fixture (`hte`/`prv`, labeled) used by the three **baseline** CLIs' smoke-test examples |
+| `examples/sample_run_input.csv` | The same 12 rows in the **Release 1.1** input schema (`request_id`/`response_id`/`supplied_hazard`, unlabeled), for `hrc-run`. Added 2026-08-07: the baseline fixture cannot be fed to `hrc-run` — different schema — so the 1.1 CLI was the one entry point with no runnable example |
 | `data/` | Real labeled datasets, not synthetic fixtures — see that directory's own note below |
 | `scripts/` | Reproducible probes, builders, and one-off validation runs. **The rule, not the list:** every number quoted in a planning document has a script here that re-derives it, so a figure can be checked rather than trusted. Today that includes the probes (`probe_disclaimer_scope.py`, `probe_working_text_delta.py`, `probe_runner_throughput.py`, `probe_pr6_assembled_run.py`, `run_real_data_is9.py`), the interim-split and structure-sweep scripts, `build_release_artifact.py` (the Release 1.1 L/E artifact), and `report_le_dev_metrics.py` (which generates `docs/planning/PR5_DEV_METRICS.md` and its JSON record together, so the two cannot drift). *(`probe_pr6_assembled_run.py` was added to this list 2026-08-06 by PR 6 slice E's sweep, having been written by slice C two commits earlier — this row says "the rule, not the list" precisely because the list is what goes stale, and it did.)* |
 | `docs/` | This documentation set |
@@ -353,7 +358,9 @@ shipping the structure it selected.
 criterion to judge them against is deliberate: `SCIENCE.md` requires all three
 outcomes be treated as equally important, and a single headline number is
 exactly how a collapsed class hides. On the 224-row dev slice, held out from
-fitting:
+fitting — **Enablement over all 224 rows, Legitimization over 200 of them**,
+since the 24 enablement-only rows (`prv`, `sxc_prn`) have no Legitimization to
+score (phase A):
 
 | | L0 / E0 | L1 / E1 | L2 / E2 | Macro-F1 | Worst class |
 |---|---|---|---|---|---|

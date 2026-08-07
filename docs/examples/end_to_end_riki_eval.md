@@ -121,3 +121,20 @@ gitignored — it's a regenerable build output, not an input). Running the
 three commands above in order reproduces them exactly, since both the
 holdout selection and the model itself are deterministic given the same
 input file, seed, and BGE model revision.
+
+**Re-verified 2026-08-07**, and it was worth checking rather than asserting:
+the figures above were recorded on 2026-07-25, *before*
+[D-45](../planning/DECISIONS.md#d-45) removed the constant-probability
+substitute and [D-46](../planning/DECISIONS.md#d-46) changed the blank-label
+error — two changes to fitting behavior that landed between that run and now.
+Steps 1 and 2 were re-run from scratch on the current code and reproduce
+**every digit**: the same 6 reserved seed groups, the same 15 hazards, and
+each metric in `summary.txt` identical to the block above. So this walkthrough
+is a live example, not a historical transcript that happens to still be
+printed here.
+
+**One thing this walkthrough is not.** It exercises the **baseline** CLIs.
+The Release 1.1 evaluator is a separate pipeline with its own entry point —
+see [`../howto/hrc-run.md`](../howto/hrc-run.md) — and its own, much more
+heavily qualified status in `README.md` §Release 1.1 evaluator status. The
+`held_out` numbers above describe the baseline and say nothing about 1.1.

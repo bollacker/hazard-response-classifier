@@ -33,8 +33,16 @@ enablement_value, legitimization_value, is_safe_ground_truth`
 ## Output
 
 The artifact directory: `heads.npz`, `thresholds.json`, `rules.json`,
-`manifest.json`. See [`../ARCHITECTURE.md`](../ARCHITECTURE.md#artifact-format)
-for what each file holds.
+`manifest.json`. See
+[`PLAN.md` §4](../planning/PLAN.md#4-model-artifact-format) for what each file
+holds.
+
+*(Corrected 2026-08-07: this pointed at `ARCHITECTURE.md#artifact-format`, an
+anchor that does not exist — and the section it was reaching for,
+`ARCHITECTURE.md` §10, specifies the **Release 1.1** artifact, which has a
+`model/` directory and no `heads.npz`. `hrc-train` writes the **baseline**
+artifact, and `PLAN.md` §4 is its specification. A reader who followed the old
+link found a description of a different format.)*
 
 ## Example
 

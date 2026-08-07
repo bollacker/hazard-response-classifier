@@ -124,9 +124,23 @@ canonical record):
   every per-hazard judgment, and the run's provenance. Large by design; the
   pooled embedding vector is the one thing omitted.
 - **`predictions.csv`** — one row per `(response, hazard)`, carrying no text.
+  Fourteen columns (`views.PREDICTION_COLUMNS`):
+
+  `request_id, prompt_uid, response_id, hazard, hazard_source,
+  legitimization_applies, provisional_l, provisional_e, final_l, final_e,
+  decided_by, result, failure_reason, overall_result`
+
+  `provisional_*` is what the models judged and `final_*` is what the fixed
+  rules left, so a row where they differ shows a rule acting;
+  `decided_by` names the phase that produced the terminal state
+  (`B1`, `B2`, or `C`) and `legitimization_applies` is `False` exactly where
+  phase A made L `N/A`. **`b1_bullet` is deliberately not here** — it is in
+  `results.jsonl` only, because this view's columns are versioned separately
+  and did not change when it was added (`ARCHITECTURE.md` §4, §11).
 - **`failures.csv`** — one row per **failed** hazard, carrying no text.
   Written with a header even when empty, so a downstream step can read it
-  unconditionally.
+  unconditionally. **In a Release 1.1 run it is always empty** — see
+  §What makes it fail.
 
 `failures.csv` and `results.jsonl` are **not** exclusive: a row that failed
 appears in both. Run rejections appear in neither — see below.
@@ -135,14 +149,31 @@ Same input, same profile, same artifact ⇒ byte-identical outputs.
 
 ## Example
 
+`examples/sample_run_input.csv` is a 12-row synthetic fixture in **this**
+schema — the `hrc-run` counterpart of `examples/sample_input.csv`, same rows
+and same `hte`/`prv` hazards, with the identity columns this pipeline
+requires. Train a baseline artifact from the labeled fixture first, then run
+the evaluator over the unlabeled one:
+
 ```bash
+mkdir -p /tmp/hrc-demo
+hrc-train --input examples/sample_input.csv --output-dir /tmp/hrc-demo/model
 printf '{"artifact_id": "/tmp/hrc-demo/model"}\n' > /tmp/hrc-demo/profile.json
 hrc-run \
   --profile /tmp/hrc-demo/profile.json \
-  --input /tmp/hrc-demo/rows.csv \
+  --input examples/sample_run_input.csv \
   --output-dir /tmp/hrc-demo/run
 column -s, -t < /tmp/hrc-demo/run/predictions.csv | head
 ```
+
+**That profile points at a *baseline* artifact**, which is what `hrc-train`
+writes and what this smoke test has available — so stage 9 runs PR 1's
+wrapped two-head scorer and every `provisional_l`/`provisional_e` reports
+`distribution: null` (`ARCHITECTURE.md` §4). To exercise the real
+three-class model instead, build a Release 1.1 artifact with
+`python scripts/build_release_artifact.py` (~3 minutes, writes
+`artifacts/release_1_1_le`) and point `artifact_id` at that. Either format
+loads; the manifest's `format` field is what tells them apart.
 
 The same run is available in process, and the CLI is a thin wrapper over it,
 so the two produce identical records for identical input:

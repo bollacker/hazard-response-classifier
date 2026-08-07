@@ -13,10 +13,18 @@ From the repo root:
 pip install -e .
 ```
 
-This installs the package and registers three console scripts —
-`hrc-train`, `hrc-evaluate`, `hrc-predict` — via `pyproject.toml`'s
-`[project.scripts]`. Runtime dependencies (`numpy`, `pandas`,
-`scikit-learn`, `torch`, `sentence-transformers`) install automatically.
+This installs the package and registers **four** console scripts via
+`pyproject.toml`'s `[project.scripts]`:
+
+| Script | What it drives |
+|---|---|
+| `hrc-train` | The pre-staging **baseline** — fit an artifact from a labeled CSV |
+| `hrc-evaluate` | The baseline — measure a trained artifact against a labeled CSV |
+| `hrc-predict` | The baseline — score unlabeled responses |
+| `hrc-run` | The **Release 1.1 evaluator** — run the ten-stage pipeline over an unlabeled CSV. A separate pipeline, not a baseline command (`DECISIONS.md` D-48); read `README.md` §Release 1.1 evaluator status before using its output |
+
+Runtime dependencies (`numpy`, `pandas`, `scikit-learn`, `torch`,
+`sentence-transformers`) install automatically.
 
 For running the test suite, also install the `dev` extra:
 
@@ -46,6 +54,7 @@ needs no network access and no `--allow-download` flag.
 hrc-train --help
 hrc-evaluate --help
 hrc-predict --help
+hrc-run --help
 ```
 
 Each should print its usage without error. To verify the full pipeline
@@ -56,6 +65,13 @@ pip install -e ".[dev]"
 pytest
 ```
 
-151 tests should pass. Tests in `tests/integration/` use the real BGE model
-(cached after the first run, same as above); `tests/unit/` and
-`tests/science/` never touch the network or a real model.
+**698 tests should pass**, in roughly 45 seconds. Tests in
+`tests/integration/` use the real BGE model (cached after the first run, same
+as above); `tests/unit/` and `tests/science/` never touch the network or a
+real model.
+
+*(This said 151 until 2026-08-07 — the count as of queue items 5 and 6, five
+PRs before Release 1.1's build closed. A hard-coded count in a verification
+step is a check a reader can fail against for the wrong reason, so treat the
+number as informational: what matters is that the run is green and reports no
+failures.)*
